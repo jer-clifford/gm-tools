@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>When Sea Is Calling — Roller</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+:root {
+  --sky:    #b8dde8;
+  --sea:    #4a9bb5;
+  --deep:   #1e5f74;
+  --abyss:  #0e3347;
+  --sand:   #d4b483;
+  --shore:  #c49a5a;
+  --foam:   #e8f4f8;
+  --white:  #f5f0e8;
+  --hull:   #c4862a;
+  --slate:  #2e5464;
+  --teal:   #3a8fa3;
+  --green:  #5a8a5a;
+  --text:   #1a3a4a;
+  --text2:  #3a6a7a;
+  --btn:    #1e5f74;
+  --btn-h:  #3a8fa3;
+  --wave1:  rgba(74,155,181,0.15);
+  --wave2:  rgba(30,95,116,0.1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body {
+  background: linear-gradient(180deg, var(--sky) 0%, var(--foam) 40%, var(--white) 100%);
+  color: var(--text);
+  font-family: 'Lora', Georgia, serif;
+  font-size: 15px;
+  min-height: 100vh;
+  position: relative;
+}
+/* wave decoration */
+body::before {
+  content: '';
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 120px;
+  background: linear-gradient(180deg, transparent, rgba(74,155,181,0.08));
+  pointer-events: none;
+  z-index: 0;
+}
+#app { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: 0 20px 40px; }
+
+header {
+  text-align: center;
+  padding: 32px 20px 24px;
+  position: relative;
+  margin-bottom: 8px;
+}
+header::after {
+  content: '';
+  display: block;
+  width: 60%;
+  margin: 16px auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--sea), var(--hull), var(--sea), transparent);
+}
+h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
+  font-weight: 700;
+  color: var(--deep);
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 8px rgba(74,155,181,0.2);
+  line-height: 1.1;
+}
+h1 span {
+  color: var(--hull);
+  font-style: italic;
+  font-weight: 700;
+}
+.sub {
+  color: var(--slate);
+  font-style: italic;
+  margin-top: 6px;
+  font-size: 1rem;
+  font-family: 'Lora', serif;
+}
+
+/* rope/wave divider */
+.rope {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 0 20px;
+}
+.rope::before, .rope::after {
+  content: ''; flex: 1;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, var(--sand) 0px, var(--sand) 6px, transparent 6px, transparent 10px);
+  opacity: 0.6;
+}
+.rope-anchor {
+  color: var(--hull);
+  font-size: 1.2rem;
+  opacity: 0.7;
+}
+
+/* Tabs */
+.tabs {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  margin-bottom: 0;
+  padding: 0 4px;
+}
+.tab-btn {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  padding: 10px 20px;
+  background: rgba(74,155,181,0.15);
+  border: 1px solid rgba(74,155,181,0.3);
+  border-bottom: none;
+  color: var(--slate);
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  transition: all .15s;
+  text-transform: uppercase;
+  backdrop-filter: blur(4px);
+}
+.tab-btn:hover { background: rgba(74,155,181,0.3); color: var(--deep); }
+.tab-btn.active {
+  background: var(--foam);
+  color: var(--deep);
+  border-color: rgba(74,155,181,0.4);
+  border-bottom-color: var(--foam);
+  margin-bottom: -1px;
+  font-weight: bold;
+  box-shadow: 0 -2px 8px rgba(74,155,181,0.15);
+}
+.tab-pane { display: none; }
+.tab-pane.active {
+  display: block;
+  background: var(--foam);
+  border: 1px solid rgba(74,155,181,0.3);
+  border-radius: 0 6px 6px 6px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(30,95,116,0.1);
+}
+
+/* Roll all bar */
+.roll-all-bar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed rgba(74,155,181,0.4);
+}
+.btn-all {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  padding: 9px 22px;
+  background: linear-gradient(135deg, var(--deep), var(--sea));
+  border: 1px solid var(--teal);
+  color: var(--foam);
+  cursor: pointer;
+  border-radius: 4px;
+  text-transform: uppercase;
+  transition: all .15s;
+  box-shadow: 0 2px 8px rgba(30,95,116,0.2);
+}
+.btn-all:hover {
+  background: linear-gradient(135deg, var(--teal), var(--sea));
+  box-shadow: 0 4px 16px rgba(30,95,116,0.3);
+  transform: translateY(-1px);
+}
+.hint { color: var(--text2); font-style: italic; font-size: 0.82rem; }
+
+/* Section heads */
+.sec-head {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--deep);
+  background: linear-gradient(90deg, rgba(74,155,181,0.12), transparent);
+  border-left: 3px solid var(--hull);
+  border-bottom: 1px solid rgba(74,155,181,0.2);
+  padding: 8px 14px 8px 12px;
+  margin: 18px 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sec-head:first-of-type { margin-top: 0; }
+.btn-sec {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, var(--deep), var(--sea));
+  border: 1px solid var(--teal);
+  color: var(--foam);
+  cursor: pointer;
+  border-radius: 3px;
+  text-transform: uppercase;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.btn-sec:hover {
+  background: linear-gradient(135deg, var(--teal), var(--sea));
+  transform: translateY(-1px);
+}
+
+/* Grid */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+@media(max-width: 760px){ .grid { grid-template-columns: 1fr; } }
+
+/* Row */
+.row {
+  display: flex; align-items: stretch;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(74,155,181,0.18);
+  border-radius: 3px; overflow: hidden;
+  transition: border-color .15s, box-shadow .15s;
+  backdrop-filter: blur(2px);
+}
+.row:hover { border-color: rgba(74,155,181,0.45); box-shadow: 0 2px 8px rgba(74,155,181,0.1); }
+.row.wide { grid-column: 1 / -1; }
+.lbl {
+  flex: 0 0 185px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  color: var(--text2);
+  background: rgba(184,221,232,0.25);
+  border-right: 1px solid rgba(74,155,181,0.18);
+  display: flex; align-items: center;
+  font-family: 'Lora', serif;
+  line-height: 1.3;
+}
+.res {
+  flex: 1;
+  padding: 8px 12px;
+  font-family: 'Lora', serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--deep);
+  display: flex; align-items: center;
+  min-height: 40px;
+  word-break: break-word;
+  line-height: 1.35;
+}
+.row.wide .res {
+  font-size: 1rem;
+  color: var(--hull);
+  font-style: italic;
+}
+@keyframes splash {
+  0% { opacity: 0.2; transform: translateX(-4px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.splash { animation: splash .14s ease; }
+.btn-row {
+  flex: 0 0 38px;
+  background: rgba(30,95,116,0.08);
+  border: none;
+  border-left: 1px solid rgba(74,155,181,0.2);
+  color: var(--sea);
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s; padding: 0;
+}
+.btn-row:hover { background: var(--sea); color: var(--foam); }
+.btn-row:active { transform: scale(.9); }
+
+footer {
+  text-align: center;
+  color: var(--text2);
+  font-size: 0.78rem;
+  font-style: italic;
+  padding: 24px 0 12px;
+  margin-top: 20px;
+  border-top: 1px solid rgba(74,155,181,0.3);
+  font-family: 'Lora', serif;
+}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <h1>When <span>Sea</span> Is Calling</h1>
+  <div class="sub">A Guide for Nautical Adventures &mdash; Complete Roller</div>
+</header>
+
+<div class="rope"><span class="rope-anchor">&#9875;</span></div>
+
+<div class="tabs" id="tabBar"></div>
+<div id="tabPanes"></div>
+
+<footer>When Sea Is Calling &copy; 2024 Atelier Clandestin &middot; Roller built from official tables</footer>
+</div>
+
+<script>
+var T = {"atSea": ["Ship(s)", "Ship(s)", "Something goes wrong", "Something goes wrong", "Monster(s)", "Special"], "numShips": ["One", "One", "One", "Two", "Two", "Three", "Three", "Four", "Four", "Five", "Six", "Six"], "wrongWhat": ["Ship", "Ship", "Crew", "Crew", "Sea", "Sea"], "wrongShip": ["Broken part (helm, mast, etc.)", "Fire", "Haunted", "Leak", "Lost at sea", "Lost part (anchor, flag, etc.)", "Rats", "Shipworms", "Unable to shoot (wet powder)", "Torn sail"], "wrongCrew": ["Disappearance", "Dead crew member", "Drunk crew", "Famine", "Madness", "Mutiny", "Overboard crew member", "Sabotage", "Scurvy/Unknown illness", "Unrest"], "wrongSea": ["Heatwave", "Killer wave", "No wind", "Reef/Iceberg", "Sandbank", "Strong current", "Submarine volcano", "Storm", "Thick fog", "Whirlpool"], "monsters": ["Crevettes pistolero", "Dragon/Dragon turtle", "El Diablo", "Fishtacos", "Ghosts", "Harpies", "Kraken/Megashark", "Metal turtles", "Narwal jr.", "Shark/Octopus/Turtle-men", "Spermwhale", "Spider crabs"], "special": ["Boom chain", "Cannibals ship", "Curse", "Ghost/Cursed/Undead ship", "Haunted waters", "Mermaids", "Mimic ship", "Monster ship(s)", "Naval mines", "Navy's secret weapon", "Something underwater", "Tax officers ship"], "shipFaction": ["Civilians", "Merchants", "Navy", "Pirates", "Privateers", "Special (Smugglers or Whalers)"], "shipType": ["Caravel", "Xebec", "Junk", "Brig", "Barquentine", "Frigate", "Galleon"], "shipState": ["Wreck (25% hull)", "Wreck (25% hull)", "Damaged (50% hull)", "Damaged (50% hull)", "Damaged (50% hull)", "Damaged (50% hull)", "Damaged (50% hull)", "Damaged (50% hull)", "Good (75% hull)", "Good (75% hull)", "Good (75% hull)", "Good (75% hull)", "Good (75% hull)", "Good (75% hull)", "New (100% hull)", "New (100% hull)", "New (100% hull)", "New (100% hull)", "Reinforced (125% hull)", "Reinforced (125% hull)"], "specEquip": ["None", "None", "None", "Ballista/Catapult", "Chained cannonballs", "Explosive cannonballs", "Grapeshot", "Ram", "Smuggling cache", "Two special items"], "holdCargo": ["Nothing", "Empty barrels", "Food and water (for crew)", "Passenger(s)", "Stowaway", "Ancient (cursed) artifact", "Trade goods", "Trade goods"], "tradeGoods": ["Alcohol", "Animals (75% cattle, 25% rare)", "Gold", "Silk", "Spices", "Tobacco", "Tools", "Weapons"], "shipEvent": ["Attacked by a ship/sea monster", "Being boarded", "Being made prisoner", "Clinging to floating debris", "Dying/Dead crew", "Dropped anchor", "Fleeing a ship/sea monster", "Meeting/Trading", "Mutinying crew", "Sinking/Burning", "Boarding a ship", "Celebrating victory", "Chasing a ship", "Executing a prisoner (walking the plank)", "Hunting a sea monster", "Plundering a ship/coastal town", "Fighting off a curse/ghosts", "Pretending their ship is empty", "Searching for a treasure", "Waiting on divers"], "flagBase": ["Solid", "Bicolor", "Bicolor", "Bicolor", "Bicolor", "Tricolor"], "flagColor": ["Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Red", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "Blue", "White", "White", "White", "White", "White", "White", "White", "White", "White", "White", "White", "White", "White", "White", "White", "White", "Green", "Green", "Green", "Green", "Green", "Green", "Green", "Green", "Green", "Green", "Green", "Green", "Green", "Yellow/Gold", "Yellow/Gold", "Yellow/Gold", "Yellow/Gold", "Yellow/Gold", "Yellow/Gold", "Yellow/Gold", "Yellow/Gold", "Yellow/Gold", "Yellow/Gold", "Yellow/Gold", "Yellow/Gold", "Yellow/Gold", "Black", "Black", "Black", "Black", "Black", "Black", "Black", "Black", "Black", "Orange", "Brown", "Gray", "Purple"], "bicolorDesign": ["Horizontal", "Vertical", "Diagonal", "Orthogonal", "Gyronny", "Diagonal stripe (left)", "Border", "Cross (symmetric)", "Cross (asymmetric)", "Cross (saltire)", "Serrated", "Stripes (horizontal)", "Stripes (vertical)", "Pall", "Diamond/Square", "Star(s)", "Sun/Circle", "Triband (horizontal)", "Triband (vertical)", "Canton"], "tricolorDesign": ["Horizontal", "Vertical", "Diagonal", "Pall", "Ray", "Tribar", "Stripes (horizontal)", "Stripes (vertical)", "Border + central design", "Cross"], "chargeNavy": ["Anchor", "Compass rose", "Crossed cannons", "Crown", "Fleur-de-lys", "Mermaid"], "chargeMerchant": ["Bag of coins", "Barrels", "Chest", "Crossed keys", "Receiving hand", "Wheel"], "chargePirate": ["Broken heart", "Crossed swords/flintlocks", "Devil with trident", "Lit bomb", "Octopus-man head", "Shark jaw", "Skeleton", "Skull and bones", "Skull wearing a tricorn", "Skull with an eye patch"], "chargePirateColor": ["White", "White", "White", "White", "Red", "Red"], "figureheadSize": ["Bust", "Bust", "Bust", "Full figure", "Full figure", "Full figure"], "figureheadType": ["Humanoid", "Humanoid", "Humanoid", "Humanoid", "Animal/Monster", "Animal/Monster"], "figureheadHuman": ["Angel/Devil", "Bride/Widow", "Deity", "High ranked Navy officer", "King/Queen", "Mermaid/Nymph", "Mythological warrior", "Noble", "Personification of an attribute", "Religious figure", "Skeleton", "Young man/woman"], "figureheadAnimal": ["Bear", "Dog/Wolf", "Dolphin", "Dragon", "Eagle", "Fish", "Fishtacos", "Horse/Unicorn", "Lion", "Octopus", "Snake", "Swan"], "figureheadPose": ["Neutral", "Charging", "Greeting", "Laughing", "Mourning", "Pointing", "Praying", "T-posing", "Menacing with a bow", "Menacing with a cutlass/sword", "Menacing with a flintlock", "Menacing with a trident"], "crewNum": ["Severely understaffed (50%)", "Understaffed (75%)", "Understaffed (75%)", "Normal (100%)", "Normal (100%)", "Normal (100%)"], "crewState": ["Disciplined", "Frightened", "Gloomy", "Happy", "Healthy", "Hostile", "Lazy", "Motivated", "Malnourished", "Obedient", "Rebellious", "Sick"], "crewWeapon": ["Clubs", "Cutlasses", "Daggers", "Flintlocks", "Harpoons", "Nets and tridents"], "specialCrew": ["Blind person with a map tattooed on their back", "Cartographer", "Cook", "Crazy old man/hag", "Deposed noble", "Duel expert", "Engineer", "Evangelist", "Hunchback", "Freed slave", "Infiltrated faction member", "Legless cripple", "Macaque", "Person with two hooks", "Sharpshooter", "Simpleton", "Spy", "Surgeon", "Traitor", "Witch doctor"], "navyNameStyle": ["Beautiful [name]", "Brave", "Fancy", "Golden", "HMS King/Queen [name]", "Holy [noun]", "Lone", "Mighty", "Revenge of Saint-[name]", "Royal [noun]", "Saint-[name]", "Silver"], "pirateNameStyle": ["Black", "Corrupted/Fallen", "Crazy", "Cursed/Doomed", "Deadly", "Drunken", "Fallen", "Lost", "Neptunes [noun]", "Rusty", "Wild", "Use Navy name instead"], "shipName": ["Anne", "Catherine", "George", "Harry", "Henry", "James", "Louis", "Marie", "Philip", "William"], "shipNoun": ["Blood", "Bones", "Crab", "Cry", "Dawn/Dusk", "Dream", "Fin", "Heart", "Hook", "Jewel", "King/Queen", "Mermaid/Siren", "Pearl/Clam", "Pelican/Gull/Swan", "Prince(ss)", "Revenge/Nemesis", "Rose", "Sea Dog", "Secret", "Shark", "Soul", "Squid", "Star", "Storm", "Sun/Moon", "Terror", "Tide/Wave", "Treasure", "Whale/Beluga", "Wind"], "shipNameFrench": ["Abondance", "Aurore", "Coquille de Noix", "Dame Blanche", "Eblouissant", "Espadon", "Espoir", "Flambeau", "Forban", "Guerre et Paix", "Liberte", "Marquise", "Meduse", "Mistral", "Orage", "Prosperite", "Redoutable", "Temeraire", "Tempete", "Vinasse"], "shipNameMythology": ["Aquarius", "Aquarius", "Colossus", "Colossus", "Kraken", "Kraken", "Leviathan", "Leviathan", "Milky Way", "Milky Way", "Nemo", "Nemo", "Odyssey", "Odyssey", "Pegasus", "Pegasus", "Triton", "Triton", "Zodiac", "Zodiac"], "shipNameOther": ["Ad Victorium", "Azzuro", "Calima", "Curacao", "Deo Volente", "Diana", "Die Iraes", "Esperanza", "Fortuna", "Fubuki", "Inazuma", "Mare Nostrum", "Santiago", "Sheitan", "Sirocco", "Solis", "Taihou", "Titania", "Tsunami", "Wakaba"], "shipNameStyle": ["Names and adjectives", "Names and adjectives", "Mythology", "French", "French", "Other languages"], "shipNameEng": ["Aquamarine", "Beauty", "Comet", "Explorer", "Fury", "Harbinger", "Jewel of the Seas", "Lightning", "Majestic", "Marlin", "Northstar", "Peace", "Powerful", "Prosperity", "Rapture", "Resplendent", "Rum Barrel", "Serendipity", "Watersplitter", "Waverunner"], "pirateAdj": ["Blind", "Burning", "Crazy", "Dirty", "Drunk", "Fire Eater", "Gambling", "Great", "Lazy", "Left Handed", "Lucky", "Mighty", "One Eyed", "Pegleg", "Short", "Smelly", "Smoking", "Terrible", "Tongue Twisted", "Twisted"], "pirateName": ["Anna", "Beth", "Bill", "Catherine", "Charlotte", "Dominique", "Hank", "Hobbs", "Jack", "Joe", "John", "Lilly", "Liz", "Margaret", "Mary", "Morgan", "Roberts", "Tanya", "Vera", "Willy"], "legendaryTitle": ["Captain", "Captain", "Captain", "Admiral", "Admiral", "Lord/Lady", "Lord/Lady", "Colonel", "Commodore", "Sir/Mrs"], "legendaryAdj": ["Black", "Blazing", "Blood(y)", "Corrupted", "Cursed", "Dead(ly)", "(D)evil", "Ghostly", "Hungry", "Mad", "Silent", "Venomous"], "legendaryName": ["Beard", "Blade", "Eagle", "Hook", "Medusa", "Octopus", "Pistol", "Saber", "Shark", "Siren", "Sparrow", "Volcano"], "pirateState": ["Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Same as crew", "Ghost/Cursed/Undead"], "pirateHair": ["Dreadlocks", "Long hair", "Mohawk", "Mullet", "Shaved head", "Short hair"], "pirateHat": ["None", "None", "None", "Bandanna", "Bicorn", "Feathered hat", "Morion (conquistador hat)", "Navy hat", "Powdered wig", "Straw hat", "Top hat", "Tricorn"], "pirateFace": ["Beard", "Blind eye", "Burns", "Cut nose", "Face paint/Makeup", "Goatee", "Metal teeth", "Missing ear", "Missing teeth", "Mustache", "Scar", "Tattoo"], "pirateClothes": ["Blouse and trousers", "Blouse and trousers", "Blouse and trousers + coat", "Blouse and trousers + jacket", "Dress/Skirt + blouse", "Heavily patched clothes", "None but body paint/tattoo", "Prisoner outfit", "Rags", "Three-piece suit", "Trousers only", "Trousers only"], "pirateAccessoryNum": ["One", "One", "One", "Two", "Two", "Three"], "pirateAccessory": ["Ammunition belt", "Belt", "Bone necklace", "Bracelet", "Cape", "Chains", "Earrings", "Eye patch", "Glass eye", "Glasses", "Hangmans knot", "(High heeled) boots", "Hook", "Nose ring", "Pegleg", "Pendant", "Rings", "Scarf", "Sash", "(Shark) tooth necklace"], "pirateWeapon": ["Club", "Cutlass", "Dagger", "Flintlock", "Harpoon", "Special: Anchor", "Special: Blowgun", "Two weapons (roll 2d6)"], "pirateItem": ["Birth certificate", "Bottle of rum", "Bottle of sand", "Chest", "Compass", "Contract for an apprentice", "Fetish coin", "Fishing pole", "Letter", "Map", "Monkey hat", "Painting", "Parrot cage", "Shrunken head", "Spyglass", "Tankard", "Turtle tank", "Trophy (cup, fishing, etc.)", "Wax seal stamp", "Wedding ring"], "piracyReason": ["It was a way to break ties with their rich family", "It was easier than being a merchant or smuggler", "It was their childhood dream", "The best way to fight pirates was to become one", "There are few options for someone with their temper", "They are a privateer turned pirate for profit", "They are looking for a mythical treasure", "They drank too much rum and became a pirate overnight", "They had no choice if they wanted to survive", "They had to mutiny against an unjust captain", "They inherited it from their parents", "They like the clothes, the hat and the accessories", "They lost a hand and had to get a hook - it seemed like fate", "They married a pirate without knowing it", "They mutinied after discovering what was in the ships hold", "They stole a ship because they had no other choice", "They were betrayed by the Navy after years of service", "They were freed from a life of slavery by other pirates", "They were kidnapped and raised by pirates", "This is what their people do"], "pirateLegend": ["Amassed so much gold every island hides one of their chests", "Came back to life so many times they lost count", "Crossed the Hell Triangle and did not get lost at sea", "Defeated the Navys fleet in a big sea battle with a single ship", "Discovered incredible cities of gold", "Drunk so much rum it gave them supernatural powers", "Escaped from the most secure prison of the Navy, twice", "Found the Fountain of Youth and became immortal", "Founded the legendary pirate capital of Tortuga", "Gathered many pirate captains under their name", "Has never been defeated in a duel of any kind", "Plundered the largest and most famous galleon", "Raised an unstoppable army of trained monkeys", "Raised their ship from the bottom of the ocean", "Survived a year on Monkey Island and kept their sanity", "Symbiosed with the ocean as evidenced by barnacles on their body", "Tamed the mythical Kraken which now protects them", "Used a giant whirlpool to travel back in time", "Was cursed by a voodoo witch but broke the curse", "Went to the edge of the world and came back"], "curse": ["Cannot set foot on the ground, except to dig for treasure on an island", "Contact with gold burns and is unbearable for the sailors", "Water is now the sailors weakness - they sink if they fall overboard", "Ill-gotten wealth crumbles to dust if it leaves the cursed ship", "Obsessed with a sea creature, doomed to seek revenge and never succeed", "Every sea voyage has weather at one extreme or the other", "Cannot get drunk on alcohol, food tastes like dirt, cannot enjoy company", "Cannot find their home port - always end up somewhere else", "Time does not flow the same way for them at sea", "The crew are ghosts who can only spend one day a year on the surface", "The sailors have been turned into parrots by a sea witch", "Always end up becoming criminals no matter how hard they try"], "legend": ["At the edge of the world, the ocean stops and ships fall into the void", "The further you go, the more strange creatures you encounter", "There is a giant whirlpool that can take you back to the past (or future)", "There are lands where all your ancestors wait, only reachable in death", "The world is surrounded by thick ice - ships get trapped", "Sail far enough and you will find the afterlife and can bring back the dead", "A monster so large it can swallow several ships at once lurks in the ocean", "An island appears only a few days a year - home to gold or the Fountain of Youth", "A shortcut exists but a terrible beast lives there", "Children born at sea are taken by a ghost ship from the bottom of the sea"], "beachNatural": ["Barnacle shell", "Bone", "Clam shell", "Crab", "Cuttlebone", "Drift seed", "Driftwood", "Feather", "Jellyfish", "Oyster shell", "Pebble", "Rock", "Scallop shell", "Sea snail shell", "Sea sponge", "Sea urchin", "Seaweed", "Starfish", "Tusk shell", "Worm"], "beachArtificial": ["Bag", "Barrel", "Bottle", "Chest", "Coin", "Compass", "Handkerchief", "Hat", "Hook", "Key", "Necklace", "Parchment", "Pegleg", "Piece of fabric/string", "Ring", "Sandal/Shoe", "Sea glass", "Ship debris", "Spyglass", "Tankard"], "beachBottle": ["Drawing: landscape", "Drawing: mythical creature", "Drawing: ominous symbol", "Freshwater", "Gold flakes", "Map: island location", "Map: marine currents", "Map: mermaid village location", "Map: Navys base", "Map: pirates base", "Map: sunken treasure location", "Map: treasure location", "Map: wreck location", "Message: call for help", "Message: last words", "Message: sea shanty", "Pearls", "Rum", "Ship blueprint", "Wine"], "beachChest": ["Empty", "Books", "Bones", "Coconuts", "Crabs", "Cursed treasure", "Fish bones", "Map: actual treasure location", "Message: Too Late!", "Message: Maybe next time!", "Navy uniforms", "Rats", "Rocks", "Rum bottles", "Shrunken heads", "Skulls", "Talking skull", "Treasure", "Warp portal", "Weapons"], "fishResult": ["Nothing", "Nothing", "Nothing", "Nothing", "Nothing", "Nothing", "Junk", "Junk", "Junk", "Junk", "Treasure", "Bad situation"], "fishSaltwater": ["Anchovy", "Barracuda", "Blowfish", "Bluefish", "Bonefish", "Boxfish", "Cod", "Eel", "Flet", "Flying fish", "Hake", "Halibut", "Lamprey", "Mackerel", "Redfish", "Rockfish", "Salmon", "Sardine", "Shark", "Sole", "Stingray", "Sturgeon", "Tarpon", "Tuna"], "fishFreshwater": ["Bass", "Carp", "Catfish", "Crappie", "Crayfish", "Gar", "Gudgeon", "Herring", "Lamprey", "Lungfish", "Minnows", "Perch", "Pike", "Salmon", "Siluro", "Sturgeon", "Sunfish", "Tilapia", "Trout", "Walleye"], "fishJunk": ["Algae", "Broken fish trap", "Fishbone", "Old boot", "Rusty knife", "Tangled net"], "fishTreasure": ["Bottle (see Beach Finds)", "Chest (see Beach Finds)", "Coin pouch (1d20 gp)", "Gold ring", "Trophy fish (2d6 gp)", "Special fish (invaluable)"], "specialFish": ["Clown fish: tries to bargain for its freedom with a comedy show", "Dead fish: half rotten but still swimming", "Displacing fish: can teleport short distances to escape predators", "Electric fish: wizards use it to power their devices", "Fishing fish: lures people with its coin-shaped appendage", "Ghost fish: magical equipment needed to catch and transport it", "Gold fish: is pure gold and should not be alive", "Jewel fish: each of its scales is a valuable gemstone", "Mechanical fish: created long ago by a mad wizard", "Multi fish: made up of a multitude of small fish, each looking like a scale", "Mutant fish: do not eat it unless you want to mutate", "Poisonous fish: touching it with bare hands causes poisoning", "Rainbow fish: glows in the colors of the rainbow", "Savant fish: knows a great deal about the waters it was caught in", "Skeletal fish: nothing but skin and bones", "Sky fish: flies in the sky and breathes air", "Sniper fish: shoots powerful jets of water at prey", "Symbiotic fish: attaches to a host and allows it to breathe underwater", "Talking fish: asks annoying questions and scares off other fish", "Treasure fish: often full of gold and valuable items"], "fishBadGeneric": ["A coast guard asks for the characters fishing license", "Accidentally catches a monsters offspring and must deal with consequences", "Falls asleep while fishing and wakes up 1d6 hours later", "Falls into the water after a fierce battle against a giant fish", "Attacked by aquatic creatures that emerge from the water", "Grabbed by a hungry aquatic creature and dragged underwater", "Injured and loses 1d2 HP", "Loses an item because of a hole in their pocket/bag"], "fishBadTable": ["Generic", "Generic", "Generic", "Generic", "Equipment related", "Equipment related", "Bait related", "Bait related"], "fishBadEquip": ["An aquatic monster/giant fish flees underwater with the equipment", "Equipment is struck by lightning and catches fire", "The character breaks their equipment beyond repair", "Equipment stolen by children/goblins", "Equipment falls into the water and must be retrieved", "Something that would have been better off at the bottom of the sea is caught"], "fishBadBait": ["Attracted by the bait, a monster emerges and devours the entire bag", "Birds steal some of the bait (1d6) when not looking", "Due to a bad batch, the bait will now repel fish instead", "The character kicks their tackle bag and all bait falls into the water", "Bait is unusable because of the weather (rotten, frozen, etc.)", "The bait attracts stinging insects that chase the character instead of fish"], "whaleType": ["Regular", "Regular", "Regular", "Regular", "Regular", "Regular", "Regular", "Regular", "Regular", "Unique"], "whaleAction": ["Attacked by whalers", "Being groomed by mermaids", "Choking on debris", "Defending itself from sharks", "Destroying a ship", "Diving", "Emerging", "Exhaling", "Fighting a kraken/megashark", "Fleeing - afraid of something", "Giving birth", "Grounded on a beach/reef", "Heading to a whale graveyard", "Jumping out of water", "Meeting a potential mate", "Protecting its young", "Singing", "Swallowing a rowboat", "Swimming (with dolphins)", "Transporting dozens of crevettes pistolero/fishtacos"], "whaleUnique": ["A bloodthirsty whale with an anchor stuck in its mouth up to its brain", "A cosmic whale making a brief stop on Earth before resuming its interstellar journey", "A crystal-covered whale whose appearance reflects the environment of its ancestors", "A delicate and sacred flying whale worshiped as a god by the islanders", "A friendly whale that follows ships and guides them if they get lost", "A prehistoric whale that recently escaped its ice prison", "A sentient whale with answers to almost all questions about the ocean", "A two-headed whale birthed by a wizard trying to get rich by multiplying whales", "A whale completely covered in barnacles forming an impenetrable armor", "A humongous whale hauling an ancient underwater city across the oceans", "A whale so gigantic it has been nicknamed the Whale Goddess", "A whale so old it is said to have existed since the creation of the world", "A whale that is both captain and pirate ship with a crew of shark-men", "A whale carrying a famous treasure island on its back - explorable when it sleeps", "A whale wanted by all pirates since it swallowed a legendary treasure", "A whale with bony plates where tons of harpoons are stuck", "A white whale that killed dozens of whalers and would make an incredible trophy", "A zombie/skeleton/ghost whale used in stories to scare children", "An ethereal whale that carries souls of the dead to the afterlife", "An ordinary looking whale that always seems to be watching the world in silence"], "whaleLegendTruth": ["Greatly exaggerated", "Mostly false", "Mostly false", "As true as it is untrue", "As true as it is untrue", "As true as it is untrue", "As true as it is untrue", "Mostly true", "Mostly true", "Everything is true"], "whaleNameAdj": ["Angry", "Big", "Fair", "Hungry", "Old", "Wise"], "whaleNameWord": ["Blue", "Doll", "John", "Martha", "Sam", "Will", "Big mouth", "Colossus", "Eater of worlds", "Ocean's fury"], "whaleName": ["Big mouth", "Colossus", "Eater of worlds", "Heavyweight", "Iceberg", "Iron lung", "Kirby", "Papa/Mama whale", "Troublemaker", "Oceans fury"], "townAppear": ["Ancient", "Boring", "Colorful", "Gloomy", "Industrial", "Luxurious", "Modern", "Picturesque", "Shabby", "Unsettling"], "townFortif": ["None", "Citadel", "Enclosure wall", "Fort at sea", "Fortified port", "Multiple (roll twice)", "Multiple (roll thrice)", "All of them"], "townSpecialBuild": ["None", "Belfry", "Church", "Lighthouse", "Shipyard", "Multiple (roll twice)", "Multiple (roll thrice)", "All of them"], "townOther": ["Nothing", "Nothing", "Nothing", "Nothing", "Nothing", "Nothing", "Nothing", "Nothing", "Nothing", "Nothing", "Corrupt governor", "Famous for an event (contest, regatta, etc.)", "Famous for their export", "Famous person's house", "Famous port of call", "Highly touristic", "Last town before the unknown", "Overflowing prison", "Strategic point", "Under pirate control"], "townEvent": ["Attack (monsters, pirates, etc.)", "Kidnapping", "Looting", "Prison break", "Theft (ship, item, etc.)", "Wedding"], "townTrade": ["Alcohol", "Cattle", "Fish", "Gold", "Rare animals", "Silk", "Spices", "Tobacco", "Tools", "Weapons"], "townEventTiming": ["Ended earlier", "Is happening now", "Is happening now", "Is happening now", "Will take place in the future", "Will take place in the future"], "underwater": ["Amphorae (1d6)", "Amphorae (1d6)", "Antique coins (1d20)", "Antique coins (1d20)", "Crates (1d3)", "Crates (1d3)", "Regular oysters (1d10)", "Regular oysters (1d10)", "Regular oysters (1d10)", "Regular oysters (1d10)", "Giant oyster", "Giant oyster", "Giant oyster", "Giant oyster", "Giant oyster", "Precious metal vein", "Precious metal vein", "Precious metal vein", "Precious metal vein", "Precious metal vein", "Sea cave", "Sea cave", "Sea cave", "Sea cave", "Sea cave", "Sunken ruin", "Sunken ruin", "Sunken ruin", "Sunken ruin", "Sunken ruin", "Sunken ship", "Sunken ship", "Sunken ship", "Sunken ship", "Sunken ship", "Treasure chest", "Treasure chest", "Treasure chest", "Treasure chest", "Treasure chest", "Underwater naval mine", "Underwater naval mine", "Underwater naval mine", "Underwater naval mine", "Underwater naval mine", "Whale skeleton", "Whale skeleton", "Whale skeleton", "Whale skeleton", "Whale skeleton", "Big fishing net", "Big fishing net", "Big fishing net", "Coral reef", "Coral reef", "Coral reef", "Deep crevice", "Deep crevice", "Deep crevice", "Giant anemones", "Giant anemones", "Giant anemones", "Giant eggs (1d2)", "Giant eggs (1d2)", "Giant eggs (1d2)", "Haunted sunken ship", "Haunted sunken ship", "Haunted sunken ship", "Strange vessel", "Underwater city"], "amphoraeContent": ["Empty/Broken", "Empty/Broken", "Empty/Broken", "Contain oil (worth 5 gp)", "Contain oil (worth 5 gp)", "Contain wine (worth 10 gp)"], "crateContent": ["Empty/Broken", "Empty/Broken", "Empty/Broken", "Wine bottles (1d3, worth 15 gp each)", "Wine bottles (1d3, worth 15 gp each)", "Antique vase (worth 75 gp)"], "metalVein": ["Copper", "Copper", "Copper", "Silver", "Silver", "Gold"], "strangeVessel": ["From outer space", "From outer space", "From outer space", "From the past", "From the past", "From another dimension"], "giantEggs": ["Kraken egg (worth 500 gp)", "Kraken egg (worth 500 gp)", "Kraken egg (worth 500 gp)", "Dragon turtle egg (worth 1000 gp)", "Dragon turtle egg (worth 1000 gp)", "Dragon egg (worth 2000 gp)"], "mermaidName": ["Aquarius", "Atlanna", "Coralie", "Delphine", "Oceane", "Pacifico"], "mermaidFeature": ["Accessory (hair or jewelry)", "Hairstyle", "Memorable face", "More fish than human", "Scar", "Unusual color (eyes, hair, scales, skin, etc.)"], "mermaidCompanion": ["Crab", "Dolphin", "Fish (angelfish, clownfish, etc.)", "Seahorse", "Stingray", "Turtle"], "mermaidSecret": ["They are actually human", "They are a bad swimmer", "They are friends with sharks", "They hate pearls", "They love eating fish", "They want to live on the surface"], "mermaidSituation": ["Brushing their hair", "(Re)Building a shell house", "Captured by shark-men", "Collecting pearls", "Defending their home", "Disarming a naval mine", "Driving out fishtacos", "Escaping monsters", "Feeding their pets", "Having a party", "Patrolling the area", "Saving a drowning person", "Searching for treasures", "Singing with whales", "Struggling not to go feral", "Swimming with dolphins", "Taking care of their kelp farm", "Talking about their discoveries", "Trapped in a fishing net", "Trying out human clothes"], "mermaidHair": ["Blessing of a sea god", "Cleaner shrimps maintain it", "Magic monoi oil", "It is actually algae", "It is fully hydrophobic", "Something weird in the water"], "subSituation": ["Building a secret base", "Exploring underwater ruins", "Fighting off sea monsters", "Gathering intel", "Looking for shipwrecks", "Mapping the seabed", "Moving treasure", "Placing naval mines", "Planning a surprise attack", "Searching for a monsters lair", "Sinking enemy ships", "Transporting troops"], "crewQuarters": ["Infested with lice", "Infested with lice", "Infested with lice", "Suspicious atmosphere", "Suspicious atmosphere", "Sick crew member"], "captainQuarters": ["Chatty parrot", "Chatty parrot", "Chatty parrot", "Mysterious navigation map", "Mysterious navigation map", "Barnacle covered chest"], "officerQuarters": ["Bloody uniforms", "Bloody uniforms", "Bloody uniforms", "Disturbing diary", "Disturbing diary", "Poisoned bottle of rum"], "shipBrig": ["Only one prisoner", "Only one prisoner", "Only one prisoner", "Full of enemies/mutineers", "Full of enemies/mutineers", "Previous captain of the ship"], "intrigueType": ["NPC", "NPC", "NPC", "Monster(s)", "Monster(s)", "Treasure"], "intrigueTreasure": ["A clue to a lost city", "A legendary hoard (has re)surfaced", "A legendary ship", "A ton of gold coins", "An ancient artifact", "An unbeatable cutlass", "An enchanted compass", "Navys secret blueprint", "Neptunes trident", "The biggest diamond", "The hourglass of time", "The spyglass of destiny"], "intrigueTreasureLoc": ["back at the metropolis", "beyond a dense jungle", "in a cave", "in a coastal city", "in a cove", "in a cursed swamp", "in the belly of a beast", "near/in a deep trench", "near/in a pirate town", "near/in a temple", "on a beach", "on the seabed"], "intrigueTreasureTrouble": ["it is a false rumor", "it is coveted by many", "it is cursed", "it is protected by many traps/hazards", "it is well guarded", "it is worthless/fake/an illusion"], "intrigueNPCActor": ["A civilian", "A governor", "A Navy officer", "A (legendary) pirate", "A (escaped) prisoner", "A town guard", "A treasure hunter", "A whaler/smuggler", "A young person", "An adventurer", "An assassin", "An explorer"], "intrigueNPCAction": ["abandoned", "betrayed", "hurt", "joined forces with", "kidnapped", "killed", "left a scar on", "made fun of", "sank the ship of", "seduced", "stole from", "threatened"], "intrigueNPCTarget": ["a civilian", "a foreign noble", "a governor", "a hermit", "a merchant", "a Navy officer/admiral", "a nobles child", "a (legendary) pirate", "a privateer", "a sailor", "a scholar", "a shipwright"], "intrigueNPCConseq": ["a duel is scheduled", "their hand was cut", "there is a price on their head", "there will be revenge", "they are hiding", "they are sentenced to death", "they can never step foot in a city again", "they have killers after them", "they have to repay their debt", "they were arrested", "they were cursed", "they were exiled"], "intrigueMonster": ["Crevettes pistolero", "Dragon/Spermwhale", "El Diablo", "Fishtacos", "Ghosts", "Harpies", "Mermaids", "Octopus-men", "Shark-men", "Spider crabs", "Turtle-men", "Undead"], "intrigueMonsterAction": ["ate/drained the life of", "betrayed", "captured", "chased off (other monster(s))", "hurt (members of)", "invaded the land of", "joined forces with", "killed", "pillaged the home of", "sank the ship of", "scared", "stole from"], "intrigueMonsterTarget": ["a factions leader", "a PCs acquaintance", "an important person", "(an)other monster(s)", "(members of) a faction", "roll on NPC table", "roll on NPC table", "roll on NPC table", "roll on NPC table", "roll on NPC table", "roll on NPC table", "roll on NPC table"], "retireType": ["Generic", "Generic", "Generic", "Generic", "Generic", "Generic", "Faction", "Faction", "Faction", "Special"], "retireGeneric": ["Becomes an artist (painter, writer, etc.)", "Embarks on a political career", "Disappears without a trace", "Finds a regular job and starts a family", "Founds a school and becomes a teacher/trainer", "Grows/Shares their faith", "Lives alone on an island", "Squanders their gold and ends up on the street", "Starts a business (tavern, import-export, etc.)", "Travels the world"], "retireEarly": ["Becomes a mentor for new adventurers", "Becomes an informant", "Dies quickly from their wounds", "Finds an unexpected way to adventure again", "Has to beg to survive", "Is consumed by hate and becomes a villain", "Is treated like a pariah", "Lives a comfortable life thanks to a generous patron", "Spends the rest of their life in a sanatorium", "Will find a way to heal completely and come back"], "retireCriminal": ["Becomes a respectable trader", "Disappears with a fabulous treasure", "Gets double-crossed by one of their old friends", "Goes back to a simpler life", "Is finally caught and executed", "Lives a quiet life but is caught up by their past", "Redeems themselves", "Sets up their own criminal organization", "Spends days in the tavern recounting their exploits", "Uses their influence for good"], "retireMilitary": ["Continues to move up the faction ladder, in an office", "Has a golden retirement paid by the faction", "Is stripped of all their honors because of a jealous colleague", "Opens their own mercenary agency", "Sells faction secrets to earn enough to survive", "Suffers the revenge of an old enemy", "Struggles to re-enter civilian life", "Teaches at the Naval Academy", "Will be called back for one last mission", "Works as a consultant"], "retireSpecial": ["Builds and manages a pirate theme park", "Creates a prestigious boat racing championship/route", "Establishes a settlement where life is good", "Is revered as a god by fishtacos/shark-men/etc.", "Is swallowed by a whale and their minds become one", "Lives underwater in a mermaid village", "Manages to become one with the sea", "Marries the heir of a rich and powerful aristocrat", "Reveals that they are not who they claimed to be", "Solves treasure riddles for fun as a way to keep adventuring"]};
+var TABS = [{"id": "encounters", "label": "Encounters", "sections": [{"title": "At Sea", "rows": [["At Sea Encounter", "atSea"], ["Number of Ships", "numShips"], ["Something Goes Wrong: Category", "wrongWhat"], ["Ship Problem", "wrongShip"], ["Crew Problem", "wrongCrew"], ["Sea Problem", "wrongSea"], ["Monster", "monsters"], ["Special Encounter", "special"]]}]}, {"id": "ships", "label": "Ships", "sections": [{"title": "Ship Generator", "rows": [["Faction", "shipFaction"], ["Ship Type", "shipType"], ["Ship State", "shipState"], ["Special Equipment", "specEquip"], ["Hold Cargo", "holdCargo"], ["Trade Goods (if cargo = trade goods)", "tradeGoods"], ["Current Event on Ship", "shipEvent"]]}, {"title": "Flag", "rows": [["Flag Base", "flagBase"], ["Flag Color 1", "flagColor"], ["Flag Color 2", "flagColor"], ["Bicolor Design", "bicolorDesign"], ["Tricolor Design", "tricolorDesign"], ["Charge: Navy", "chargeNavy"], ["Charge: Merchant", "chargeMerchant"], ["Charge: Pirate", "chargePirate"], ["Pirate Flag Charge Color (d6)", "chargePirateColor"]]}, {"title": "Figurehead & Crew", "rows": [["Figurehead Size", "figureheadSize"], ["Figurehead Type", "figureheadType"], ["Figurehead: Humanoid", "figureheadHuman"], ["Figurehead: Animal/Monster", "figureheadAnimal"], ["Figurehead Pose", "figureheadPose"], ["Crew Number", "crewNum"], ["Crew State", "crewState"], ["Crew Weapon", "crewWeapon"], ["Special Crew Member", "specialCrew"]]}, {"title": "Ship Names", "rows": [["Navy Name Style", "navyNameStyle"], ["Pirate Name Style", "pirateNameStyle"], ["Name Component", "shipName"], ["Noun Component", "shipNoun"], ["French Name", "shipNameFrench"], ["Mythological Name", "shipNameMythology"], ["Other Language Name", "shipNameOther"], ["English Name", "shipNameEng"], ["Other Name Style (d6)", "shipNameStyle"]]}, {"title": "Ship Rooms", "rows": [["Crew Quarters (d6)", "crewQuarters"], ["Captain's Quarters (d6)", "captainQuarters"], ["Officers' Quarters (d6)", "officerQuarters"], ["Brig/Prison (d6)", "shipBrig"]]}]}, {"id": "pirates", "label": "Pirates", "sections": [{"title": "Pirate Generator", "rows": [["Common Pirate Adjective", "pirateAdj"], ["Common Pirate Name", "pirateName"], ["Legendary Pirate Title", "legendaryTitle"], ["Legendary Pirate Adjective", "legendaryAdj"], ["Legendary Pirate Name", "legendaryName"], ["Pirate State", "pirateState"], ["Hairstyle", "pirateHair"], ["Hat", "pirateHat"], ["Face Feature", "pirateFace"], ["Clothes", "pirateClothes"], ["Number of Accessories", "pirateAccessoryNum"], ["Accessory", "pirateAccessory"], ["Weapon", "pirateWeapon"], ["Personal Item", "pirateItem"], ["Why a Life of Piracy", "piracyReason"], ["Tale of Legend", "pirateLegend"]]}]}, {"id": "world", "label": "World & Sea", "sections": [{"title": "Curses & Legends", "rows": [["Curse", "curse"], ["Legend", "legend"]]}, {"title": "Beach Finds", "rows": [["Beach Find: Natural", "beachNatural"], ["Beach Find: Artificial", "beachArtificial"], ["Bottle Contents", "beachBottle"], ["Chest Contents", "beachChest"]]}, {"title": "Coastal Town", "rows": [["Town Appearance", "townAppear"], ["Fortifications", "townFortif"], ["Special Building", "townSpecialBuild"], ["Other Detail", "townOther"], ["Event", "townEvent"], ["Event Timing", "townEventTiming"], ["Import/Export Good", "townTrade"]]}, {"title": "Intrigue Generator", "rows": [["Intrigue Type", "intrigueType"], ["Treasure", "intrigueTreasure"], ["Treasure Location", "intrigueTreasureLoc"], ["Treasure Trouble", "intrigueTreasureTrouble"], ["NPC Actor", "intrigueNPCActor"], ["NPC Action", "intrigueNPCAction"], ["NPC Target", "intrigueNPCTarget"], ["NPC Consequence", "intrigueNPCConseq"], ["Monster", "intrigueMonster"], ["Monster Action", "intrigueMonsterAction"], ["Monster Target", "intrigueMonsterTarget"]]}, {"title": "Retiring", "rows": [["Retirement Type", "retireType"], ["Generic Retirement", "retireGeneric"], ["Early Retirement", "retireEarly"], ["Criminal Retirement", "retireCriminal"], ["Military Retirement", "retireMilitary"], ["Special Retirement", "retireSpecial"]]}]}, {"id": "depths", "label": "Depths & Creatures", "sections": [{"title": "Fishing", "rows": [["Fishing Result", "fishResult"], ["Saltwater Fish", "fishSaltwater"], ["Freshwater Fish", "fishFreshwater"], ["Junk Catch", "fishJunk"], ["Treasure Catch", "fishTreasure"], ["Special Fish", "specialFish"], ["Bad Situation — Table (d8)", "fishBadTable"], ["Bad Situation — Generic (d8)", "fishBadGeneric"], ["Bad Situation — Equipment (d6)", "fishBadEquip"], ["Bad Situation — Bait (d6)", "fishBadBait"]]}, {"title": "Whales", "rows": [["Whale Type", "whaleType"], ["What the Whale is Doing", "whaleAction"], ["Unique Whale", "whaleUnique"], ["How True is the Legend", "whaleLegendTruth"], ["Whale Name (simple)", "whaleName"], ["Whale Name Adjective", "whaleNameAdj"], ["Whale Name Word", "whaleNameWord"]]}, {"title": "Underwater Exploration", "rows": [["Underwater Find", "underwater"], ["Amphora Contents", "amphoraeContent"], ["Crate Contents", "crateContent"], ["Precious Metal", "metalVein"], ["Strange Vessel Origin", "strangeVessel"], ["Giant Eggs", "giantEggs"]]}, {"title": "Mermaids", "rows": [["Mermaid Name", "mermaidName"], ["Distinctive Feature", "mermaidFeature"], ["Companion", "mermaidCompanion"], ["Mermaid Secret", "mermaidSecret"], ["Current Situation", "mermaidSituation"], ["How Hair Stays Beautiful", "mermaidHair"]]}, {"title": "Navy Submarine", "rows": [["Current Submarine Mission", "subSituation"]]}]}];
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function rollKey(key) { return T[key] ? pick(T[key]) : '—'; }
+
+function rerollEl(el, key) {
+  el.textContent = rollKey(key);
+  el.classList.remove('splash');
+  void el.offsetWidth;
+  el.classList.add('splash');
+}
+
+function buildTab(tab) {
+  var h = '<div class="roll-all-bar"><button class="btn-all" data-tab="' + tab.id + '">&#8635; Roll All</button><span class="hint">or click &#8635; on any row</span></div>';
+  for (var s = 0; s < tab.sections.length; s++) {
+    var sec = tab.sections[s];
+    var secId = tab.id + '_sec_' + s;
+    h += '<div class="sec-head"><span>' + sec.title + '</span>'
+       + '<button class="btn-sec" data-sec="' + secId + '">&#8635; Roll Section</button></div>'
+       + '<div class="grid" id="' + secId + '">';
+    for (var ri = 0; ri < sec.rows.length; ri++) {
+      var row = sec.rows[ri];
+      var wide = sec.rows.length === 1 ? ' wide' : '';
+      var uid = tab.id + '_' + s + '_' + ri;
+      h += '<div class="row' + wide + '"><div class="lbl">' + row[0] + '</div>'
+         + '<div class="res splash" id="r_' + uid + '">' + rollKey(row[1]) + '</div>'
+         + '<button class="btn-row" data-uid="' + uid + '" data-key="' + row[1] + '">&#8635;</button></div>';
+    }
+    h += '</div>';
+  }
+  return h;
+}
+
+var bar = document.getElementById('tabBar');
+var panes = document.getElementById('tabPanes');
+for (var i = 0; i < TABS.length; i++) {
+  var tab = TABS[i];
+  var btn = document.createElement('button');
+  btn.className = 'tab-btn' + (i===0?' active':'');
+  btn.textContent = tab.label;
+  btn.setAttribute('data-target', tab.id);
+  bar.appendChild(btn);
+  var pane = document.createElement('div');
+  pane.className = 'tab-pane' + (i===0?' active':'');
+  pane.id = 'pane_' + tab.id;
+  pane.innerHTML = buildTab(tab);
+  panes.appendChild(pane);
+}
+
+bar.addEventListener('click', function(e) {
+  var btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('pane_' + btn.getAttribute('data-target')).classList.add('active');
+});
+
+panes.addEventListener('click', function(e) {
+  var rb = e.target.closest('.btn-row');
+  if (rb) {
+    var el = document.getElementById('r_' + rb.getAttribute('data-uid'));
+    if (el) rerollEl(el, rb.getAttribute('data-key'));
+    return;
+  }
+  var sb = e.target.closest('.btn-sec');
+  if (sb) {
+    var grid = document.getElementById(sb.getAttribute('data-sec'));
+    if (grid) {
+      grid.querySelectorAll('.btn-row').forEach(function(b) {
+        var el = document.getElementById('r_' + b.getAttribute('data-uid'));
+        if (el) rerollEl(el, b.getAttribute('data-key'));
+      });
+    }
+    return;
+  }
+  var ab = e.target.closest('.btn-all');
+  if (ab) {
+    var p = document.getElementById('pane_' + ab.getAttribute('data-tab'));
+    p.querySelectorAll('.btn-row').forEach(function(b) {
+      var el = document.getElementById('r_' + b.getAttribute('data-uid'));
+      if (el) rerollEl(el, b.getAttribute('data-key'));
+    });
+  }
+});
+</script>
+</body>
+</html>

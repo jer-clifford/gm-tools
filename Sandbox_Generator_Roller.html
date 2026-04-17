@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sandbox Generator Roller</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+:root {
+  --bg:#0f0e17; --bg2:#1a1a2e; --bg3:#16213e; --card:#1e1e30; --card2:#252540;
+  --accent:#c8a96e; --accent2:#9b7fd4; --text:#e8e0d0; --text2:#a89880;
+  --border:#3a3a5c; --btn:#3d2f6b; --btn-hover:#5a4490; --sec:#2a2040;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,serif;font-size:16px}
+#app{max-width:1400px;margin:0 auto;padding:20px}
+header{text-align:center;padding:28px 20px 20px;border-bottom:2px solid var(--border);margin-bottom:24px}
+h1{font-family:'Cinzel',serif;font-size:clamp(1.5rem,4vw,2.6rem);font-weight:700;color:var(--accent);letter-spacing:.1em}
+.sub{color:var(--text2);font-style:italic;margin-top:6px;font-size:.9rem}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.tab-btn{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.08em;padding:9px 16px;background:var(--bg2);border:1px solid var(--border);border-bottom:none;color:var(--text2);cursor:pointer;border-radius:4px 4px 0 0;transition:all .15s;text-transform:uppercase}
+.tab-btn:hover{background:var(--card);color:var(--text)}
+.tab-btn.active{background:var(--card);color:var(--accent);border-color:var(--accent2);margin-bottom:-1px}
+.tab-pane{display:none}.tab-pane.active{display:block}
+.roll-all-bar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.btn-all{font-family:'Cinzel',serif;font-size:.82rem;letter-spacing:.1em;padding:10px 24px;background:linear-gradient(135deg,#4a3080,#6a4aaa);border:1px solid var(--accent2);color:#fff;cursor:pointer;border-radius:3px;text-transform:uppercase;transition:all .15s}
+.btn-all:hover{background:linear-gradient(135deg,#6a4aaa,#8a6acc);transform:translateY(-1px)}
+.hint{color:var(--text2);font-style:italic;font-size:.85rem}
+.sec-head{font-family:'Cinzel',serif;font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text);background:var(--sec);border:1px solid var(--accent2);border-left:3px solid var(--accent2);padding:9px 14px;margin:18px 0 3px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+@media(max-width:780px){.grid{grid-template-columns:1fr}}
+.row{display:flex;align-items:stretch;background:var(--card);border:1px solid var(--border);border-radius:2px;overflow:hidden;transition:border-color .15s}
+.row:hover{border-color:var(--accent2)}
+.row.wide{grid-column:1/-1}
+.lbl{flex:0 0 190px;padding:8px 10px;font-size:.78rem;color:var(--text2);background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;line-height:1.3}
+.res{flex:1;padding:8px 12px;font-family:'Crimson Text',serif;font-size:1rem;font-weight:600;color:var(--accent);display:flex;align-items:center;min-height:40px;word-break:break-word}
+.row.wide .res{font-size:1.1rem;color:var(--accent2);font-style:italic}
+@keyframes pop{0%{opacity:.3;transform:scale(.97)}100%{opacity:1;transform:scale(1)}}
+.pop{animation:pop .12s ease}
+.btn-row{flex:0 0 40px;background:var(--btn);border:none;border-left:1px solid var(--border);color:var(--accent);cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .12s;padding:0}
+.btn-row:hover{background:var(--btn-hover);color:#fff}
+.btn-row:active{transform:scale(.9)}
+footer{text-align:center;color:var(--text2);font-size:.78rem;font-style:italic;padding:28px 0 14px;border-top:1px solid var(--border);margin-top:28px}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <h1>&#9876; SANDBOX GENERATOR &#9876;</h1>
+  <div class="sub">Atelier Clandestin &mdash; Complete Roller with All Expansions</div>
+</header>
+<div class="tabs" id="tabBar"></div>
+<div id="tabPanes"></div>
+<footer>Sandbox Generator &amp; Expansions &copy; Atelier Clandestin &middot; Roller built from official tables</footer>
+</div>
+<script>
+var T = {"startBiome": ["Grassland", "Grassland", "Grassland", "Grassland", "Forest", "Forest", "Hills", "Hills", "Marsh", "Mountains"], "nextBiome": ["Same as prev", "Same as prev", "Same as prev", "Same as prev", "Same as prev", "Grassland", "Forest", "Hills", "Marsh", "Mountains"], "hexFeature": ["Landmark", "Landmark", "Landmark", "Settlement", "Lair", "Dungeon"], "settlementType": ["Hamlet", "Village", "City", "Castle", "Tower", "Abbey"], "temperateB": ["Grassland", "Grassland", "Grassland", "Grassland", "Deciduous forest", "Deciduous forest", "Hills", "Hills", "Marsh", "Mountains"], "coldB": ["Moor", "Moor", "Moor", "Moor", "Evergreen forest", "Evergreen forest", "Tundra", "Tundra", "Snowfields", "Frozen peaks"], "hotB": ["Savanna", "Savanna", "Savanna", "Savanna", "Tropical forest", "Tropical forest", "Desert", "Desert", "Swamp", "Plateau"], "deepTemp": ["Clover field", "Haunted forest", "Flooded valley", "Fungal forest", "Volcano"], "deepCold": ["Fen", "Cursed forest", "Hot springs", "Glacier", "Crystal grounds"], "deepHot": ["Thorn field", "Primal jungle", "Oasis", "Toxic swamp", "Lost valley"], "encGrassland": ["Dinosaurs", "Ogres", "Gnolls", "Orcs", "Goblins", "Giant rats", "Wolves", "Bandits", "Berserkers", "Worgs", "Werewolves"], "encForest": ["Ents", "Giant spiders", "Ogres", "Bears", "Goblins", "Boars", "Wolves", "Bandits", "Elves", "Dryads", "Werewolves"], "encHills": ["Manticores", "Basilisks", "Ogres", "Orcs", "Goblins", "Giant rats", "Wolves", "Bandits", "Beastmen", "Giants", "Wyverns"], "encMarsh": ["Moth-men", "Mushroom-men", "Frog-men", "Trolls", "Skeletons", "Crocodiles", "Zombies", "Orcs", "Lizard-men", "Snake-men", "Hydras"], "encMountains": ["Giants", "Griffins", "Dwarves", "Kobolds", "Orcs", "Bears", "Wolves", "Bandits", "Berserkers", "Smilodons", "Vampires"], "encMoor": ["Dephasing beasts", "Will o wisps", "Orcs", "Goblins", "Bandits", "Stags", "Wolves", "Skeletons", "Zombies", "Ghosts", "Werewolves"], "encEvergreen": ["Beaked bears", "Giant spiders", "Ogres", "Bears", "Gnomes", "Stags", "Wolves", "Bandits", "Orcs", "Giant beavers", "Werewolves"], "encTundra": ["Wendigos", "Banshees", "Draugar", "Bisons", "Wolves", "Caribous", "Smilodons", "Berserkers", "Neanderthals", "Mammoths", "Giants"], "encSnowfields": ["Remorhazes", "Frost worms", "Yetis", "Ice trolls", "Bears", "Wolves", "Mammoths", "Will o wisps", "Ice mephits", "Wights", "Frost giants"], "encFrozenPeaks": ["Rocs", "Stone giants", "Yetis", "Ice trolls", "Bears", "Goats", "Smilodons", "Draugar", "Dwarves", "Wights", "Frost giants"], "encSavanna": ["Ankhegs", "Giant beetles", "Gnolls", "Hyenas", "Nomads", "Antelopes", "Lions", "Giant ants", "Giant bats", "Rhinoceroses", "Elephants"], "encTropical": ["Lamias", "White apes", "Lizard-men", "Giant spiders", "Jaguars", "Baboons", "Snakes", "Snake-men", "Rakshasas", "Werejaguars", "Couatls"], "encDesert": ["Sphinxes", "Sand-men", "Giant scorpions", "Cat-men", "Mummies", "Scarab swarms", "Nomads", "Giant ant-lions", "Manscorpions", "Djinni/Efreet", "Sandworms"], "encSwamp": ["Giant snakes", "Turtle-men", "Giant toads", "Toad-men", "Stirges", "Crocodiles", "Giant snapping turtles", "Piranhas", "Shambling mounds", "Giant leeches", "Hydras"], "encPlateau": ["Dracolisks", "Cyclops", "Manticores", "Dwarves", "Bandits", "Lamas", "Cougar", "Bears", "Condors", "Bird-men", "Rocs"], "lmNatType": ["Fauna (A)", "Fauna (B)", "Flora (A)", "Flora (B)", "Geology (A)", "Geology (B)", "Hydrology (A)", "Hydrology (B)"], "lmArtType": ["Economy", "Labor", "Military", "Mystery", "Ruin", "Small structure", "Travel", "Worship"], "lmMagType": ["Area under a spell", "Eerie place", "Enchanted item", "Magic path", "Magic remains", "Misunderstood tech", "Place of power", "Strange phenomenon"], "lmContent": ["Hazard (25% treasure)", "Empty (15% treasure)", "Empty (15% treasure)", "Special (variable)", "Monsters (50%)", "Monsters (50%)"], "faunaA": ["Animal boneyard", "Anthill", "Beaver dam", "Giant animal (exo)skeleton", "Giant bird nest", "Giant snail shell", "Huge galleries", "Location covered with crows", "Predators hunting ground", "Ransacked area"], "faunaB": ["Abandoned burrow", "Animal nuptial parade spot", "Fossil", "Game trail", "Gestation grounds", "Giant animal footprint", "Migration zone", "Moulting field", "Spiderweb-covered area", "Territorial markings"], "floraA": ["Berry bush", "Bramble overgrown area", "Burnt area", "Centennial tree", "Dead tree", "Exotic tree", "Fallen tree", "Flower circle", "Fruit tree", "Giant flower"], "floraB": ["Giant mushroom", "Hollow tree", "Impenetrable thicket", "Mushroom circle", "Mushroom spot", "Mycelial proliferation", "Rare plant spot", "Root arch", "Tree alignment", "Water-filled plant"], "geoA": ["Animal shaped rock", "Cave", "Chasm", "Crater", "Crystalline proliferation", "Giant crystal", "Lava pool", "Mudpit", "Pit", "Precious metal vein"], "geoB": ["Ravine", "Rift", "Rock hole", "Rock needle", "Scree", "Sinkhole", "Stone arch", "Stone bridge", "Stone stairs", "Very big rock"], "hydroA": ["Ford", "Hotspring", "Lake", "Pond", "Rapids", "River", "Spring", "Stream", "Water-filled cave", "Waterfall"], "hydroB": ["Confluence", "Dry river", "Flood zone", "Flooded chasm", "Geyser", "Heavy erosion", "Lake island", "Natural dam", "Underground river", "Water-filled crater"], "artEconomy": ["Busy trade route", "Canal", "Caravanserai", "Cattle market", "Mill/Watermill", "Orchard", "Slavers camp", "Toll", "Merchants tent", "Guild hall"], "artLabor": ["Barn", "Felled trees", "Field", "Granary", "Labor camp", "Meadow", "Quarry", "Straw man", "Swidden field", "Water tower"], "artMilitary": ["Archery range", "Battlefield", "Checkpoint", "Ideal place for an ambush", "Mass grave", "Prisoner camp", "Statue", "Tourney grounds", "Trench", "War monument"], "artMystery": ["Carved rock", "Dolmen", "Hanging bones", "Heads on spikes", "Masks", "Pile of bones", "Rock stack", "Standing stones", "Straw dolls", "Totem"], "artRuin": ["Abandoned tavern", "Burnt barn", "Collapsed mine entrance", "Decrepit mansion", "Desecrated church", "Destroyed house", "Overgrown tower", "Pile of rubble", "Razed village", "Ruined castle"], "artSmall": ["Bench", "Bivouac area", "Gazebo", "Hunters cabin", "Hunting tower", "Kennel", "Outhouse", "Palisade", "Well", "Wooden fence"], "artTravel": ["Boardwalks", "Boundary stone", "Bridge", "Broken bridge", "Danger sign", "Ledge", "Signboard", "Stairs", "Suspension bridge", "Zipline"], "artWorship": ["Bell/Gong", "Calvary", "Cemetery", "Cross", "Holy place", "Idol", "Shrine", "Tomb", "Tumulus", "Vault"], "magSpell": ["Always snowy area", "Anti-magic zone", "Area bringing back the dead", "Area where nothing grows", "Bad luck area", "Dome of darkness", "Force field", "Incessant cyclone", "Protection from Evil", "Time is frozen"], "magEerie": ["Blood pool", "Eternal mist", "Flashing eldritch memories", "Floating island", "Glowing obelisk", "Haunted house", "Intersection between realities", "Standing door", "Sunless area", "Whispering pool"], "magEnchanted": ["Curative basin", "Enchanted bell", "Fertility stone", "Magic fountain/spring", "Magic fruits tree", "Mutation pit", "Stone of knowledge", "Sword stuck in a rock", "Visions pool", "Witch cauldron"], "magPath": ["Breathable water", "Glowing mushrooms trail", "Illusory path", "Invisible bridge", "Levitating staircase", "Magic mirror", "Rainbow bridge", "Riddle bridge", "Walkable water", "Wormhole"], "magRemains": ["Area covered with fairy dust", "Bloody altar", "Corpse covered in crystals", "Corrupt area", "Destroyed golem", "Magic battlefield", "Old shrine", "Petrified travelers", "Remnants of a ceremony", "Signs of an explosion"], "magTech": ["Alien device", "Crashed spacecraft", "Cryogenics lab", "Fallen satellite", "High-tension line", "Landfill", "Radio antenna", "Remainder of a tarmac road", "Star portal", "Talking machine"], "magPower": ["Ancient burial grounds", "Birthplace/Tomb of a saint", "Magic beacon", "Mana well", "Neolithic rock monument", "Preserved natural place", "Root of the World Tree", "Sacred waters", "Sun focal point", "Ziggurat of old"], "magStrange": ["Everburning tree", "Evermelting ice", "Floating crystal", "Ghost building", "Luminous engravings", "Reverse waterfall", "Singing crystal", "Strong magnetism", "Talking rock", "Whispers in the wind"], "hazard": ["Acid pits", "Allergenic plants", "Ancient dormant illness", "Curse", "Dangerous footing", "Easy to get lost", "Fog", "Fumes", "Ghosts", "Hallucinogenic spores", "Hidden pits", "Hunting traps", "Magic corruption", "Plague", "Quicksands", "Radiations", "Sabotage/Trap", "Unstable/Likely to break", "Venomous animals", "Volcanic area"], "emptyInfo": ["Info about nearby monsters", "Info about nearby monsters", "Info about nearby monsters", "Info about nearby monsters", "Info about nearby monsters", "Alchemy recipe", "Curative effects", "Directions to a settlement", "Dungeon location", "Future event", "Important past event", "Legend/Myth", "Local custom", "Password", "Secret passage location", "Spell/Ritual", "Tale about a magic weapon", "Toxicity of something", "Upcoming weather", "Words from a random monster language"], "factionRel": ["Open war", "Hostility", "Hostility", "Hostility", "Indifference", "Indifference", "Indifference", "Peace/Trade", "Peace/Trade", "Peace/Trade", "Alliance"], "eventTiming": ["Ended earlier", "Is happening now", "Is happening now", "Is happening now", "Will take place in the future", "Will take place in the future"], "factionEvent": ["Assassination", "Celebration", "Curse", "Holy quest", "Hostage situation", "Mysterious ally", "Negotiations with another faction", "New headquarters", "New leader", "Plague", "Treaty signed with another faction", "War"], "randomEnc": ["Dragon", "Other faction", "Faction", "Faction", "Faction", "NPCs", "Biome", "Biome", "Biome", "Biome", "Wizard"], "nobilityTitle": ["Knight/Dame - Fief (1 layer)", "Knight/Dame - Fief (1 layer)", "Knight/Dame - Fief (1 layer)", "Knight/Dame - Fief (1 layer)", "Knight/Dame - Fief (1 layer)", "Baron/Baroness - Barony (2)", "Baron/Baroness - Barony (2)", "Baron/Baroness - Barony (2)", "Baron/Baroness - Barony (2)", "Viscount/Viscountess - Viscountcy (4)", "Viscount/Viscountess - Viscountcy (4)", "Viscount/Viscountess - Viscountcy (4)", "Count/Countess - County (8)", "Count/Countess - County (8)", "Count/Countess - County (8)", "Marquess/Marchioness - March (16)", "Marquess/Marchioness - March (16)", "Duke/Duchess - Duchy (32)", "Duke/Duchess - Duchy (32)", "Prince/Princess - Principality (64)"], "vassalRel": ["Vassal is sabotaging", "Vassal is unwilling", "Vassal is unwilling", "Vassal is unwilling", "Mutual respect", "Mutual respect", "Mutual respect", "Lord is neglectful/biased", "Lord is neglectful/biased", "Lord is neglectful/biased", "Lord is oppressive"], "neighborRel": ["Open war", "Hostility", "Hostility", "Hostility", "Indifference", "Indifference", "Indifference", "Friendship", "Friendship", "Friendship", "Alliance"], "wizardPresence": ["Hated", "Feared", "Feared", "Feared", "Tolerated/Ignored", "Tolerated/Ignored", "Tolerated/Ignored", "Proves useful", "Proves useful", "Proves useful", "Appreciated"], "openWarReason": ["Cultural conflict", "Preemptive strike", "Religion war", "Resource scarcity", "Revenge", "Rulers are old enemies", "Territorial dispute", "Treason", "Witch-hunt", "Xenophobia"], "friendshipNature": ["Co-dependency", "Common enemy", "Common interests", "Facade", "Freedom of movement", "Growing trust", "Peace treaty", "Rulers know each other well", "Shared beliefs", "Trade"], "contestedReason": ["Cultural significance", "Historical belonging", "Inheritance gone wrong", "Natural landmark", "Religious landmark", "Resources (general)", "Resources (special/unique)", "Schism (cultural/religious)", "Separatism", "Vague boundaries"], "domainEventType": ["Crime", "Crime", "Economy", "Economy", "Natural/Magical", "Natural/Magical", "Political", "Political", "Social", "Social"], "crimeEvent": ["Assassination", "Kidnapping", "New criminal org.", "Peasant revolt", "Pillaged caravans", "Raids (bandits, pirates)", "Snake oil vendors", "Tithe unpaid by villagers", "Vigilante", "Wanted criminal spotted"], "econEvent": ["Disappearing caravans", "Domain is ruined", "Embargo", "Famine", "Invaluable resources discovery", "New guild", "Price cuts", "Price hikes", "Profitable trade agreement", "Tax increase"], "politicalEvent": ["Approaching army", "Call to crusade/holy quest", "Conscription", "Death of foreign ambassador", "Missing heir", "Neighboring faction delegation", "New ruler", "Skirmish", "Treaty signature", "Unjust new ruler"], "socialEvent": ["Birth", "Birth (illegitimate child)", "Death of a notable", "Disappearance", "Divorce", "Funeral", "Mass exodus/immigration", "New cult", "New fad", "Wedding"], "natMagEvent": ["Bloodthirsty beast", "Curse", "Enthralled people/ruler", "Flooding", "Landslide", "Magical incident", "Meteor impact", "Plague", "Rare magic phenomenon", "Undead invasion"], "factionGoal": ["Abolish slavery", "Amass enormous wealth", "Bring honor to their name", "Control the country", "Create a monster free realm", "Destroy another faction", "Destroy another faith", "Enforce justice", "Eradicate undead", "Establish an immortal empire", "Find a powerful relic", "Fulfill a prophecy", "Help the weak and poor", "Impose their faith", "Prevent a prophecy", "Prohibit (black) magic", "Resurrect their founder", "Serve a powerful patron", "Territorial expansion", "Trading monopoly"], "honorableMeans": ["Comradeship", "Confidentiality", "Dignity", "Education", "Fair play", "Generosity", "Honesty", "Penance", "Piety", "Respect"], "dishonorableMeans": ["Assassination", "Black magic", "Blackmail", "Cheating", "Corruption", "Fanaticism", "Flattery", "Lying", "Sucker punch", "Treason"], "factionInitiation": ["No initiation", "No initiation", "No initiation", "Feast", "Feast", "Blood oath", "Consecration/Baptism", "Occult ritual", "Pilgrimage", "Spiritual retreat", "Test of faith", "Trials"], "nobleJoinMethod": ["Marriage", "Marriage", "Marriage", "Sponsor", "Sponsor", "Buying a domain", "Gambling/Betting", "Inheritance from a relative", "Overthrowing another noble", "Winning a tournament", "Winning a tournament", "Winning a tournament"], "nobleFirstName": ["Adrian", "Agatha", "Agnes", "Alaric", "Alexandra", "Alice", "Anastasia", "Andrew", "Ann", "Archibald", "Arthur", "Astrid", "Augusta", "Aurelius", "Balthazar", "Beatrice", "Blanche", "Carl", "Cecily", "Cedric", "Charles", "Charlotte", "Christian", "Clare", "Clement", "Constance", "Cordelia", "Diana", "Dorian", "Edith", "Edmund", "Edward", "Eleanor", "Elizabeth", "Elodie", "Eugenie", "Ferdinand", "Fiona", "Frederick", "Garrick", "George", "Gertrude", "Gideon", "Giselle", "Grace", "Hadrian", "Harry", "Helene", "Henry", "Hildegarde", "Hubert", "Humphrey", "Isabella", "Iseult", "Isolde", "James", "Jane", "John", "Judith", "Leonore", "Leticia", "Lilibeth", "Louis", "Louisa", "Lysandre", "Madeleine", "Magnus", "Margaret", "Margot", "Marjorie", "Martha", "Mary", "Maud", "Michael", "Midas", "Nicholas", "Octavius", "Oswald", "Peregrine", "Philip", "Priscillia", "Richard", "Roderic", "Roland", "Rosalind", "Rupert", "Sabina", "Sibyl", "Sigismund", "Sophie", "Stephanie", "Stephen", "Thibault", "Tristan", "Ulric", "Victor", "Victoria", "Wanda", "William", "Yves"], "nobleLastP1": ["Beau", "Black", "Brave", "Dragon", "Durn", "Dusk", "Ever", "Frost", "God", "Golden", "Iron", "Light", "Lion", "Nord", "Raven", "Sacred", "Sea", "Somer", "Thorne", "Vale"], "nobleLastP2": ["Bride", "Child", "Cloak", "Crest", "Fall", "Foot", "Forge", "Hall", "Hart/Heart", "Mind", "Rider", "Rock", "Rush", "Scar", "Shade", "Soul", "Storm", "Touch", "Vale", "Wood"], "nobleNickname": ["Apostle", "Architect", "Bastard", "Benevolent", "Bold", "Brave", "Brute", "Chaste", "Cold", "Conqueror", "Cruel", "Crusader", "Diplomat", "Divine", "Elegant", "Feared", "Fearless", "Foolish", "Generous", "Glorious", "Good", "Great", "Greedy", "Heartbreaker", "Heretic", "Holy", "Honorable", "Impaler", "Judge", "Just", "Lone", "Magnificent", "Merciless", "Meticulous", "Oppressor", "Peaceful", "Pious", "Revered", "Sage", "Scholar", "Seer", "Shepherd", "Silent", "Simple", "Sly", "Terrible", "Usurper", "Valiant", "Wicked", "Wild"], "nobleProperName": ["Asturia", "Baccavar", "Chehebomond", "Daekiver", "Draetun", "Egumnon", "Eradiu", "Fassithia", "Hepett", "Jildis", "Krogem", "Lihisos", "Nuvgar", "Ommadell", "Phunnilan", "Rabolar", "Ruclalyn", "Saedrenia", "Westocrys", "Ystopomos"], "domainAdj": ["August", "Autonomous", "Exalted", "Free", "Glorious", "Grand", "Great", "Mighty", "Noble", "Shining", "Sublime", "Supreme"], "relDomainAdj": ["Blessed", "Divine", "Hallowed/Holy", "Papal", "Sacred", "Saint"], "nobleWeapon": ["Axe", "Bow", "Crossbow", "Flail", "Lance", "Longsword", "Mace", "Rapier", "Saber", "Spear", "Two-handed sword", "Warhammer"], "magicWeaponEffect": ["+1", "+1d4 Acid damage", "+1d4 Electric damage", "+1d4 Fire damage", "+1d4 Frost damage", "+1d4 Holy damage"], "nobleRenown": ["Their lineage", "Climbed the social ladder", "Collects ears of their enemies", "Has a beautiful partner", "Has a terrible addiction", "Has dozens of children", "Hosts lavish parties", "Is a leper", "Is cursed", "Is feared on the battlefield", "Their generosity is limitless", "Their prisons are overflowing", "Tortures prisoners for fun", "Was made a saint in their lifetime", "Was thought to be dead", "Witnessed a miracle", "Witnessed a miracle", "Witnessed a miracle", "Witnessed a miracle", "Witnessed a miracle"], "nobleTrait": ["Nothing", "Nothing", "Nothing", "Nothing", "Nothing", "Beautiful/Ugly", "Birthmark", "Burned face", "Deformity", "Dresses humbly", "Giant hat", "Heterochromia", "Intricate tattoos", "Is missing an arm/an eye", "Nasty scar", "Ostentatious clothing", "Red-hot branding", "Very colorful clothing", "Very long hair/beard", "Reroll and combine"], "noblePersonalGoal": ["Nothing notable", "Nothing notable", "Nothing notable", "Nothing notable", "Nothing notable", "Atone", "Avenge someone", "Be better than their rival", "Become a famous artist", "Become a mentor", "Become immortal/a god", "Conquer their demons", "End their suffering", "Find enlightenment", "Find the truth", "Lift a curse", "Raise and prepare an heir", "Repay a life debt", "Reunite with someone", "Write their memoir"], "hamletBuilding": ["Brewery/Vineyard", "Chapel", "Farm/Ranch", "Manor", "Mill", "Mine", "Sawmill", "Shop", "Tavern", "Toll", "Tourney grounds", "Watchtower"], "hamletSecret": ["Cannibals", "Cultists", "Dopplegangers", "Inbred", "Lycanthropes/Vampires", "Murderers"], "villageSize": ["Small (grade 1)", "Small (grade 1)", "Medium (grade 2)", "Medium (grade 2)", "Medium (grade 2)", "Big (grade 3)"], "villageRuler": ["Bandits", "Council", "Mayor", "Merchant", "Priest", "Vampire/Lycanthrope", "Village elder", "Witch"], "villageNotable": ["Aggressive guard", "Annoying minstrel", "Bandit in disguise", "Beggar who knows a lot", "Curious waitress", "Cute dog", "Frightened peasant", "Lonely widow", "Misunderstood witch", "Old fool/hag", "One-handed lumberjack", "Retired mercenary", "Seasoned adventurer", "Sick child", "Stubborn magician", "Talented craftsman", "Traveling merchant", "Troubled hunter", "Vampire/Werewolf hunter", "Village idiot"], "villageEvent": ["Adventurers passing by", "Announcement by a crier", "Ceremony", "Controlled by monsters", "Disappearances", "Famine", "Festival/Fair", "Fire", "Looting", "Market day", "Plague", "Visit of a notable"], "villageSpecial": ["Abandoned building", "Apothecary", "Bakery", "Burnt/Ruined building", "Butcher", "Castle-farm", "Church", "Famous persons house", "General store", "Graveyard", "Guard post", "Guildhouse", "Gypsy wagon", "Horse stables", "Library", "Mill", "Monument/Memorial", "Orchard", "School", "Tailor"], "villageDefense": ["Wooden palisade", "Wooden palisade", "Wooden palisade", "Motte (mound)", "Motte (mound)", "Chevaux de frise", "Moat (trench)", "Watchtowers"], "villageSecret": ["Animals turned human", "Curse", "Elder god cult", "Eternal youth", "Hidden treasure", "Hiding outlaws", "Hivemind", "Inability to leave", "Pact with a demon", "Sadistic rituals", "Secret society", "Underground galleries"], "disposition": ["Attack on sight", "Hostile", "Hostile", "Hostile", "Neutral", "Neutral", "Neutral", "Welcoming", "Welcoming", "Welcoming", "Enthusiastic"], "cityChar": ["Nothing", "Nothing", "Nothing", "Nothing", "Nothing", "Corrupt", "Crowded", "Destroyed", "Dry", "Filthy", "Holy city", "Humid", "Narrow", "Noisy", "Open", "Renowned", "Silent", "Tiered", "Unsafe", "Windy"], "cityAppear": ["Cluttered", "Cobblestone", "Colorful", "Covered with art", "Dark", "Eerie", "Flowers", "Geometric", "Huge windows", "Light", "Lots of canals", "Lots of stairs", "Misaligned buildings", "Red bricks", "Stark", "Tall towers", "White marble", "Wondrous", "Wooden", "Specific color scheme"], "castleP1": ["Apple", "Battle", "Black", "Bleak", "Blood(y)", "Bright", "Broken", "Cloud", "Dark", "Dawn", "Dragon", "Dusk", "Fire", "Gold(en)", "Hammer", "Hawk", "Horse", "Ice", "Light", "Lion", "Moon", "Oak", "Raven", "Red", "River", "Rose", "Silver", "Star", "Stone", "Wind(y)"], "castleP2": ["Bane", "Bridge", "Fall/Fell", "Fang", "Foot", "Heart", "Herd", "Hold", "Hook", "Keep", "Maw", "Mist", "Moor", "Peak", "Rock", "Shield", "Skull", "Song", "Soul", "Storm", "Thorn", "Vale", "Way", "Wood"], "castleCondition": ["Perfect", "Worn", "Worn", "Aged", "Aged", "Crumbling"], "castleMoat": ["Nothing", "Nothing", "Nothing", "Nothing", "Crocodiles", "Electric eels", "Leeches", "Piranha"], "abbeyName": ["Blessed-Land", "Clear-Water", "Fruitful-Garden", "Good-Help", "Good-Hope", "Peaceful-Soul", "Sacred-Heart", "Saint (roll Saints table)", "Saint (roll Saints table)", "Saint (roll Saints table)"], "abbeySize": ["Small", "Small", "Small", "Small", "Small", "Major"], "dungeonPrefix": ["... of Death", "... of Doom", "... of Evil", "Black ...", "Bloody ...", "Crumbling ...", "Deadly ...", "Desolated ...", "Destroyed ...", "Forgotten ...", "Haunted ...", "Hellish ...", "Infernal ...", "Mossy ...", "Mourning ...", "Overgrown ...", "Scarlet ...", "Secret ...", "Twilight ...", "Unholy ..."], "dungeonNoun": ["Burrow(s)", "Cavern(s)", "Cell(s)", "Chamber(s)", "Corridor(s)", "Delve", "Grotto", "Labyrinth", "Maze", "Pit(s)", "Tomb(s)", "Tunnel(s)"], "dungeonTheme": ["None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "Burnt", "Crystalline", "Demonic", "Flooded", "Fortified", "Fungal", "Haunted", "Vegetal"], "doorType": ["Stuck door", "Stuck door", "Stuck door", "Stuck door", "Stuck door", "Stuck door", "Stuck door", "Stuck door", "Stuck door", "Stuck door", "Locked wooden door", "Locked wooden door", "Locked wooden door", "Locked wooden door", "Locked wooden door", "Portcullis", "Portcullis", "Portcullis", "Locked metal door", "Magic door"], "roomType": ["Trap (25% treasure)", "Empty (15%)", "Empty (15%)", "Special (variable)", "Monsters (50%)", "Monsters (50%)"], "factionsOnLevel": ["One", "Two", "Two", "Two", "Three", "Three"], "monster1": ["Bandits", "Dwarves/Elves", "Giant centipedes", "Giant rats", "Goblins", "Kobolds", "Orcs", "Pixies", "Skeletons", "Stirges"], "monster2": ["Berserkers", "Cultists", "Ghouls", "Giant spiders", "Gnolls", "Hobgoblins", "Lizard-men", "Troglodytes", "Wolves", "Zombies"], "monster3": ["Bugbears", "Giant ants", "Giant frogs", "Giant lizards", "Harpies", "Moth-men", "Ochre jellies", "Ogres", "Wererats", "Wights"], "monster4": ["Doppelgangers", "Gargoyles", "Ghasts", "Giant scorpions", "Giant snakes", "Giant wasps", "Mushroom-men", "Skinwalkers", "Werewolves", "Wraiths"], "monster5": ["Cockatrices", "Manticores", "Medusae", "Minotaurs", "Mummies", "Rust monsters", "Satyrs", "Specters", "Trolls", "Wyverns"], "monster6": ["Basilisks", "Black mages", "Chaotic lords", "Dragons", "Evil patriarchs", "Giants", "Gorgons", "Hydras", "Purple worms", "Vampires"], "specialRoom": ["Advanced technology", "Amplified magic room", "Ancient memories sphere", "Animated furniture", "Anti-magic room", "Armor disintegrating ray", "Aviary", "Body exchange", "Boss monster", "Bottomless pit", "Ceaseless wailing", "Cleaning receptacle", "Crying statues", "Cursed room", "Cursed treasure", "Demon trap", "Demonic portal", "Devouring coin", "Divination basin", "Divine altar", "Dungeon tavern", "Duplicating machine", "Emergency exit", "Ethereal voices", "Evil altar", "Fake treasure", "Fear room", "Flesh room", "Flood lever", "Floor is lava", "Food rot room", "Freshly walled corridor", "Gold statue", "Golden apple tree", "Greed room", "Hallucinogenic spores", "Healing lava pool", "Heart of the dungeon", "High up item", "Human outpost", "Hungry mouth", "Illusory treasure", "Interplanar portal", "Invisible bridge", "Key storage room", "Lava pit", "Maddening mural", "Magic berry bush", "Magic forge", "Magic fountain", "Magic pool", "Magic stairs", "Medical office", "Merchant in a wall", "Minecart", "Mirror of opposites", "Mirror room", "Mislabeled potions", "Monster market", "Moving statues", "Musical slabs", "Mutation room", "Neutral altar", "No way back", "Orb of transformation", "Parasitized monster", "Party room", "Peace room", "Petrified adventurers", "Powerful electromagnet", "Rabbit switch", "Reverse gravity", "Room out of time", "Rotating cylinders", "Rotating room", "Safe", "Shrinking pedestal", "Shrinking ray", "Sleep inducing room", "Slot machine", "Sphinx", "Strange eggs", "Structural treasure", "Switch in a hole", "Talking basin", "Talking skull", "Talking statue", "Tentacles room", "Trampoline floor", "Translating device", "True intentions room", "Truth room", "Valuable monster (alive)", "Valuable monster (part)", "Vending machine", "Voices of the ancestors", "Vortex", "Water to wine machine", "Wheel of fortune", "Wish fountain"], "tavernP1": ["Adventurer(s)", "Angry", "Big", "Black", "Bleeding", "Blind", "Bloody", "Blue", "Broken", "Burlesque", "Burly", "Burning", "Busty", "Classy", "Cracked", "Crazy", "Crooked", "Cursed", "Daddys", "Dancing", "Dangerous", "Dark", "Deadly", "Deep", "Dirty", "Divine", "Doctors", "Dragons", "Drinking", "Dripping", "Drunken", "Dwarves", "Elves", "Empty", "Enchanted", "Fighting", "Fireside", "Flaming", "Fresh", "Golden", "Green", "Grog", "Hags", "Halflings", "Hanging", "Happy", "Holy", "Honest", "Horny", "Hot", "Hungry", "Iron", "Joes", "Kings", "Last", "Laughing", "Lazy", "Lonely", "Lovely", "Lucky", "Magical", "Marvelous", "Minstrels", "Naked", "Naughty", "Nymphs", "Oiled", "Orcs", "Peasants", "Princes", "Puking", "Queens", "Raging", "Red", "Rotten", "Rusty", "Safe", "Sailors", "Screaming", "Sexy", "Shiny", "Silver", "Sleepy", "Slimy", "Smelly", "Smiling", "Strange", "Sunny", "Swearing", "Tasty", "Thirsty", "Thugs", "Tired", "Travelers", "Unkempt", "Vulgar", "Wet", "White", "Witches", "Yawning"], "tavernP2": ["Barmaid", "Brew", "Brewery", "Bucket", "Cafe", "Castle", "Cauldron", "Cavern", "Club", "Cup", "Den", "Flask", "Hall", "Head", "Hole", "Home", "Inn", "Keg", "Kettle", "Lodge", "Loft", "Lounge", "Market", "Pub", "Rest", "Stool", "Stop", "Tavern", "Tower", "Wineskin"], "tavernDecor": ["Birdhouses", "Bookshelves", "Carved wood", "Draperies", "Fishing trophies", "Flags", "Furs", "Glowing crystals", "Hunting trophies", "Naughty drawings", "Naval themed items", "Old tools", "Old weapons", "Painted plates", "Paintings", "Plants", "Porcelain dolls", "Quest/Wanted posters", "Shields", "Skulls and bones", "Stuffed animals", "Tapestries", "Torture instruments", "Trophies"], "tavernRumor": ["A dead body was found near the river, disfigured", "A fearless bear emptied the cellar of several houses", "A treasure chest is buried in the forest", "A wild child lives in the woods", "A witch-hunter terrifies old women and midwives", "Bandits have been more aggressive recently", "Children have gone missing", "The dead are restless at night", "Goblins are scheming something", "Last night there were flying lights in the sky", "Demons conclude pacts more and more often", "Some calves are born with two heads", "Someone important is coming to the village", "Someone is having an affair", "Someone with a bounty is hiding nearby", "The bartender pisses in the beer", "The hunter hides something", "The village well is bottomless", "There is a dungeon under the village", "They are hiring in the military"], "rumorTruth": ["True", "True", "Not quite true", "Not quite true", "False", "False"], "bestRoom": ["Suite", "Richly decorated and comfortable", "Cozy with a view", "Bed, dresser and desk", "Creaking bed and table", "Mattress and chamber pot"], "npcFirst": ["Ann", "Arthur", "Bella", "Cecilia", "David", "Dina", "Eliza", "Finn", "Georg", "Hank", "Helen", "Ingol", "John", "Lilly", "Mona", "Olov", "Sophie", "Thomas", "Tisha", "Will"], "npcLast": ["Briggs", "Burrows", "Button", "Cray", "Flint", "Gibbs", "Griffith", "Hartley", "Head", "Hook", "Lloyd", "Moore", "Poole", "Powell", "Quinn", "Robinson", "Shaw", "Smith", "Taylor", "Wright"], "npcAttitude": ["Aggressive", "Apathetic", "Cheerful", "Condescending", "Confident", "Depressed", "Friendly", "Neutral", "Outgoing", "Secretive", "Seductive", "Submissive"], "npcHobby": ["None", "Camping", "Collecting", "Cooking", "Drawing", "Embroidery", "Fishing", "Flea markets", "Gambling", "Gardening", "Hiking", "Hunting", "Music", "Painting", "Partying", "Reading", "Sewing", "Sports", "Traveling", "Woodworking"], "npcDream": ["None", "Becoming an adventurer", "Being famous", "Being powerful", "Being respected", "Being rich", "Being self-sufficient", "Bringing peace to the world", "Buying a big property", "Changing occupation", "Discovering something new", "Dominating others", "Finding true love", "Helping others", "Living a peaceful life", "Living elsewhere", "Organizing an event", "Starting a family", "Touring the world", "Writing a book"], "npcSecret": ["Has a dark past", "Has a huge debt", "Has an addiction", "Has an affair", "Has questionable connections", "Has stolen someones identity", "Has stolen something", "Hides an illness/mutation", "Is from a very rich family", "Is part of a secret organization", "Was adopted", "Was once kidnapped"], "dragonName": ["Arkos", "Dalum", "Enoch", "Franil", "Irken", "Myriad", "Numin", "Ragor", "Sarhin", "Tychos", "Xerius", "Zephyr"], "dragonAge": ["Baby", "Young", "Young", "Adult", "Adult", "Adult", "Adult", "Adult", "Adult", "Old", "Old", "Ancient"], "dragonBreath": ["Acid (line)", "Fire (cone)", "Ice (cone)", "Lightning (line)"], "dragonAlign": ["Chaotic", "Chaotic", "Chaotic", "Neutral", "Neutral", "Lawful"], "dragonStrength": ["Armor (+2 AC)", "Bone plates (+1 AC)", "Good nose", "Lies detection", "Persuasive voice", "Poisonous claws", "Poisonous spines", "Tail club (+1d6 damage)", "Two hearts", "Underwater breathing"], "dragonWeakness": ["Competitive mind", "Cupidity", "Curiosity", "Flattery", "Hurt scale (-1 AC)", "Perforated wings (-2 AC)", "Pride", "Remorse", "Sunlight", "Too much self-confidence"], "dragonFood": ["None", "Adventurers", "Cattle", "Children", "Humans", "Nobles", "Other monsters", "Rare animals"], "dragonLair": ["Cave", "Desecrated church", "Giant nest", "Giant tree", "Mine", "Overgrown tower", "Razed village", "Ruined castle", "Tumulus", "Volcano"], "wizardLevel": ["Level 7", "Level 8", "Level 8", "Level 8", "Level 9", "Level 9", "Level 9", "Level 10", "Level 10", "Level 10", "Level 11"], "wizardSpec": ["None (generalist)", "None (generalist)", "None (generalist)", "None (generalist)", "None (generalist)", "Alchemy", "Elemental magic - Air", "Elemental magic - Earth", "Elemental magic - Fire", "Elemental magic - Water", "Illusion", "Invocation", "Necromancy", "Strange unique domain", "White magic"], "wizardGoal": ["Lust for power", "Lust for power", "Lust for power", "Lust for power", "Lust for power", "Altruism", "Creating a new spell", "Impressing someone", "Madness", "Money", "Quest for immortality", "Revenge"], "staffTop": ["Angel", "Claw", "Crystal/Precious stone", "Deer head", "Dragon head", "Eagle", "Eye", "Fish head", "Heart", "Holy symbol", "Orb", "Plain", "Pointy", "Question mark shape", "Skeletal hand", "Skull", "Snake head", "Sun/Moon/Star", "Talking skull", "Weighted"], "towerAdj": ["None", "None", "None", "None", "None", "Arrogant", "Bizarre", "Black", "Corrupt", "Deceptive", "Enchanted", "Forbidden", "Hidden", "Inverted", "Lone", "Occult", "Stark", "Twisted", "Veiled", "Warped"], "towerNoun": ["Asylum", "Bastion", "Beacon", "Belfry", "Belvedere", "Haven", "Lookout", "Monolith", "Obelisk", "Observatory", "Pillar", "Pylon", "Redoubt", "Refuge", "Retreat", "Sanctuary", "Shelter", "Spire", "Tower", "Turret"], "towerOf": ["None", "None", "None", "None", "None", "Arcana", "Darkness", "Destiny", "Dreams/Nightmares", "Eternity", "Faith", "Ivory", "Mystery", "Power", "Prophecy", "Shadows", "Solitude", "the Night", "the Stars", "Thunder"], "towerAccess": ["Locked door", "Locked door", "Locked door", "Locked door", "Locked door", "Locked door", "Locked door", "Locked door", "Locked door", "Locked door", "Cable car", "Decrepit bridge", "Floating stairwell", "Invisible door", "Magic door", "Maze", "Secret door", "Teleportation portal", "Underwater tunnel", "Zip line"], "towerSentry": ["Nobody/Nothing", "Nobody/Nothing", "Nobody/Nothing", "Nobody/Nothing", "Nobody/Nothing", "Nobody/Nothing", "Nobody/Nothing", "Nobody/Nothing", "Nobody/Nothing", "Nobody/Nothing", "Animated armor", "Automatons", "Chained dragon", "Elementals", "Enthralled monsters", "Golem", "Living statues/Sphinx", "Mercenaries", "Pack of hounds", "Undead"], "towerTrap": ["None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "Deafening alarm", "Energy bubbles", "Fear-inducing mushrooms", "Flying daggers", "Life-draining crystals", "Magic land mines", "Pits hidden by illusory ground", "Seals of paralysis", "Talking mist", "Teleporting cage"], "towerSurroundings": ["Beautiful garden", "Broken glass vats", "Cemetery/Tombs", "Failed experiments", "Fortifications", "Giant snail stable", "Giant vegetables", "Homegrown crystal", "Magic fair", "Magic landfill", "Medicinal garden", "Mutated plants", "Permanent bad weather", "Piles of severed limbs", "Prisoner pit", "Scorched area", "Sphere of protection", "Statues", "Tent encampment", "Toxic waste pond"], "familiarType": ["None", "None", "None", "None", "None", "Bat", "Cat", "Chicken", "Dog", "Falcon", "Ferret", "Hamster", "Lizard", "Owl", "Rat", "Raven", "Snake", "Tiny demon", "Toad", "Turtle"], "familiarName": ["Berry", "Blinky", "Bliss", "Bubbles", "Clover", "Echo", "Enigma", "Equinox", "Frost", "Gizmo", "Ivy", "Jester", "Luna", "Nox", "Pepper", "Rune", "Saffron", "Salem", "Sparky", "Whisper"], "familiarQuirk": ["All it can do is a party trick", "Always misunderstands orders", "Cannot keep a secret", "Constantly has hiccups", "Dreams of another life", "Easy to corrupt", "Has keen eyesight", "Has no concept of risk", "Hides under masters hat", "Is a great ventriloquist", "Is addicted to sweets", "Is clumsy like no other", "Is up to something", "Its master saved its life", "Knows a very useful skill", "Knows the tower inside out", "Makes incisive comments", "Often steals masters stuff", "Plays an instrument", "Was the wizards apprentice"], "familiarAppear": ["None", "None", "None", "None", "None", "Albinos", "Covered with pustules", "Glows in the dark", "Grizzled", "Has been roughly patched up", "Missing fur/feather/scale", "Missing limb/organ", "Scar", "Skeleton/Zombie version", "Star shaped mark", "Unusual color", "Wears a small wizard hat", "Wears clothes/a cape", "Wears jewelry", "Well kept"], "wizNameP1": ["Aza", "Ber", "Cha", "Dar", "Fol", "Gri", "Jil", "Lar", "Ley", "Lo", "Ma", "Mer", "Pet", "Su", "Ta", "Tyr", "Wor", "Xe", "Yo", "Zag"], "wizNameP2": ["-do", "-gael", "-gurd", "-h", "-hid", "-kai", "-kal", "-lin", "-mi", "-na", "-nium", "-ol", "-rac", "-ri", "-sa", "-soom", "-su", "-to", "-tron", "-zul"], "wizTitle": ["(related to specialty)", "The all-seeing", "The blind", "The blissful", "The conjurer", "The cursed", "The enchanter", "The eternal", "The exiled", "The flamboyant", "The mad", "The malevolent", "The misunderstood", "The old/ancient", "The scarred", "The second/third", "The shriveled", "The sorcerer", "The tempestuous", "The wise/sage"], "criminalActivity": ["Assassination", "Betting", "Blackmailing", "Burglary", "Caravan attacks", "Demolition", "Fencing", "Forgery", "Gambling", "Kidnapping", "Loan sharking", "Mercenary work", "Money laundering", "Pickpocketing", "Poisoning", "Prostitution", "Racketing", "Robbery", "Scamming", "Selling drugs", "Smuggling", "Spying", "Starting riots", "Two main activities"], "nameB": ["Abbey", "Arch", "Bank", "Barrack", "Bench", "Bridge", "Castle", "Chapel", "Church", "Court", "Cross", "Farm", "Forge", "Gate", "Hall", "Home", "Hospital", "House", "Inn", "Mall", "Market", "Mill", "Mine", "Post", "Road", "Stall", "Temple", "Tower", "Union", "Wall"], "nameC": ["Anna", "Arthur", "Bernard", "Charles", "Elizabeth", "Fanny", "George", "Helen", "Ilia", "John", "Kathleen", "King", "Louis", "Marcus", "Mary", "Nicholas", "Prince", "Princess", "Queen", "Tilly"], "nameD": ["Avery", "Bayley", "Carm", "Dun", "Ensal", "Folton", "Galgar", "Haye", "Idar", "Julvet", "Kanth", "Loy", "Marsan", "Nisme", "Ourar", "Peulin", "Rundur", "Solin", "Thaas", "Unvary", "Vanau", "Wark", "Yverne", "Zalek"], "nameF": ["Borough", "Bourg", "Camp", "Cester", "Citadel", "City", "County", "Dorf", "Ham", "Hamlet", "Haven", "Heim", "Keep", "Stead", "Town", "Village", "Ville", "Ward", "Wihr", "Worth"], "nameG": ["Bottom", "Down", "East", "Far", "Fort", "Haute", "High", "Little", "Lost", "Low", "Mount", "New", "North", "Old", "Port", "Saint", "South", "Under", "Up", "West"], "nameNoun": ["Acorn", "Angel", "Apple", "Atelier", "Autumn", "Axe", "Baker", "Bard", "Baron", "Barrow", "Berry", "Birch", "Bird", "Boar", "Book", "Bow", "Butcher", "Candle", "Cheese", "Cloud", "Corn", "Cow", "Crow", "Dawn", "Day", "Deer", "Demon", "Dragon", "Dream", "Dusk", "Dust", "Dwarf", "Eagle", "Elf", "Feather", "Fire", "Fish", "Flower", "Fog", "Fox", "Frog", "Ghost", "Gnoll", "Goblin", "Grave", "Halfling", "Hare", "Hawk", "Heaven", "Hell", "Hook", "Hope", "Horn", "Horse", "Hunter", "Knight", "Kobold", "Leaf", "Letter", "Lion", "Mage", "Moon", "Night", "Oak", "Orchid", "Pine", "Pork", "Rabbit", "Rain", "Ram", "River", "Robin", "Rose", "Salt", "Seed", "Sky", "Snake", "Snow", "Sorrow", "Spice", "Spring", "Squirrel", "Star", "Summer", "Sun", "Sword", "Thief", "Thorn", "Thunder", "Toad", "Tournament", "Tulip", "Violet", "Warrior", "Water", "Wind", "Winter", "Witch", "Wolf", "Wyvern"], "nameAdj": ["Bad", "Black", "Bloody", "Blue", "Bony", "Brave", "Brown", "Burnt", "Charming", "Coal", "Cold", "Copper", "Coral", "Crystal", "Damp", "Dark", "Dry", "Dusty", "False", "Fast", "Free", "Giant", "Glass", "Golden", "Good", "Gray", "Great", "Green", "Hidden", "Hot", "Indigo", "Iron", "Light", "Long", "Metal", "Mithral", "Obsidian", "Purple", "Red", "Rock", "Royal", "Silent", "Silver", "Small", "Stone", "True", "White", "Wild", "Wine", "Yellow"], "nameTopo": ["Bay", "Beach", "Bone", "Break", "Burrow", "Cliff", "Corner", "Creek", "Dale", "End", "Fall", "Field", "Forest", "Garden", "Glade", "Glen", "Grove", "Heid", "Helm", "Hill", "Hold", "Hole", "Hollow", "Island", "Lake", "Land", "Limit", "Marsh", "Mont", "Moor", "Mount", "Mountain", "Park", "Pass", "Path", "Peak", "Plain", "Point", "Pool", "Rest", "Run", "Source", "Summit", "Trail", "Tree", "Valley", "View", "Way", "Well", "Wood"], "urbanSettlement": ["Town (1 focal point)", "Town (1 focal point)", "City (1d2+1 focal points)", "City (1d2+1 focal points)", "City (1d2+1 focal points)", "Metropolis (1d2+3 focal points)"], "riverShape": ["No river", "Canal", "Confluence (Y)", "Meanders (S)", "Straight", "Turn"], "mainFocal": ["Belfry", "Belfry", "Castle", "Castle", "Church", "Church", "Cathedral", "Tower"], "secFocalType": ["Business", "Culture", "Dungeon", "Economy", "Magic", "Monument", "Nature", "Official", "Religious", "Other"], "focalBusiness": ["Apothecary", "Bathhouse", "Blacksmith", "Brewery", "Brothel", "Clothier", "Hostel", "Printhouse", "Slaughterhouse", "Tannery"], "focalCulture": ["Amphitheater", "Archives", "Bards college", "Coliseum", "Library", "Museum", "Observatory", "Opera", "Theater", "Zoo"], "focalEconomy": ["Bank", "Caravanserail", "Emporium", "Granary", "Guildhouse", "Market hall", "Mint", "Post-office", "Prisoners market", "Spice market"], "focalMagic": ["Elemental sanctuary", "Floating island", "Giant crystal", "Giant weapon stuck in rock", "Haunted castle/manor", "Mana well", "Petrified dragon/giant", "Souls well", "Tower", "Warp door"], "focalMonument": ["Antique ruins", "Commemorative garden", "Fountain", "Lighthouse", "Megaliths", "Memorial", "Obelisk", "Pyramid", "Statue/Colossus", "Triumphal arch"], "focalOfficial": ["Barracks", "Belfry", "Castle", "College", "Embassy", "Execution grounds", "Military school", "Prison", "Tribunal", "University"], "focalNature": ["Crater", "Dormant volcano", "Giant exoskeleton", "Giant tree", "Gorge", "Hanging tree", "Huge stone boulder", "Lake", "Stone pillar", "Waterfall"], "focalReligious": ["Cathedral", "Church", "Graveyard", "Mausoleum", "Miracle site", "Monastery", "Necropolis", "Religious statue", "Religious symbol", "Ziggurat"], "districtShape": ["Circle", "Circle", "Circle", "Pentagon", "Pentagon", "Square"], "bridgeType": ["Stone arch", "Stone arch", "Wooden", "Wooden", "Drawbridge", "Fortified/Inhabited"], "vassalEventNature": ["Abuse of power", "Compulsory conscription", "Dispute between vassals", "Financial support not given", "Gift from the lord", "Inheritance", "Lord's rise in title", "Military assistance not given", "Oath sworn to the vassal", "Political marriage", "Rebellion against the lord", "Trial at the lord's city/castle"], "vassalEventTiming": ["Ended earlier", "Is happening now", "Is happening now", "Is happening now", "Will take place in the future", "Will take place in the future"], "openWarDesc": ["Cultural conflict", "Preemptive strike", "Religion war", "Resource scarcity", "Revenge", "Rulers are old enemies", "Territorial dispute", "Treason", "Witch-hunt", "Xenophobia"], "hostilityDesc": ["Armistice", "Arrogance", "Chauvinism", "Divergence in beliefs", "Fear", "Former allies", "Jealousy", "Pride", "Rancor", "Rivalry"], "indifferenceDesc": ["Coldness", "Cordial agreement", "Disregard", "Isolationism", "Lack of interest", "Lassitude", "Neutrality", "Non-belligerency pact", "Self-focus", "Suspicion"], "friendshipDesc": ["Co-dependency", "Common enemy", "Common interests", "Facade", "Freedom of movement", "Growing trust", "Peace treaty", "Rulers know each other well", "Shared beliefs", "Trade"], "allianceDesc": ["Dissuasive", "Fragile", "Long-lasting", "Political marriage", "Powerful", "Prestigious", "Shared knowledge/technology", "Strong economic benefits", "Temporary", "Unity"], "commQuest": ["Bringing vital information", "Capturing an enemy noble", "Clearing a lair", "Foiling a conspiracy", "Freeing a captured noble", "Killing many enemy soldiers", "Killing/Capturing a dragon", "Retrieving a relic", "Saving their lord (or family)", "Taking over an enemy position"], "noLandReason": ["Banned/Exiled", "Betrayed (by) their faction", "Comes from a foreign land", "Is deemed too young", "Is the last of their lineage", "Land was given to another", "Lost it in the war", "Their faction was destroyed", "Was not (yet) given land", "Was prisoner for a long time"], "nobleOtherTitle": ["None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "... son/daughter of ... (generate another name)", "... the second/the third"], "nobleRenownFull": ["Their lineage", "Climbed the social ladder", "Collects ears of their enemies", "Has a beautiful partner", "Has a terrible addiction", "Has dozens of children", "Hosts lavish parties", "Is a leper", "Is cursed", "Is feared on the battlefield", "Their generosity is limitless", "Their prisons are overflowing", "Tortures prisoners for fun", "Was made a saint in their lifetime", "Was thought to be dead", "Witnessed a miracle", "Witnessed a miracle", "Witnessed a miracle", "Witnessed a miracle", "Witnessed a miracle"], "familySecret": ["Colonization/Distant trading", "Divine intervention", "Pact with demons", "Pillaging", "Slavery", "Stealing", "Treason", "Warmongering", "Working for a dragon", "Working for a wizard", "Working with a criminal organization", "Working with monsters"]};
+var TABS = [{"id": "world", "label": "World Map", "sections": [{"title": "Biomes", "rows": [["Starting Hex Biome", "startBiome"], ["Next Hex Biome", "nextBiome"], ["Cluster Size (d12)", "__clustersize__"], ["Hex Feature", "hexFeature"], ["Settlement Type", "settlementType"]]}, {"title": "Climate (Biomes Expansion)", "rows": [["Temperate Biome", "temperateB"], ["Cold Biome", "coldB"], ["Hot Biome", "hotB"], ["Deep Biome (Temperate)", "deepTemp"], ["Deep Biome (Cold)", "deepCold"], ["Deep Biome (Hot)", "deepHot"]]}]}, {"id": "wilderness", "label": "Wilderness Pointcrawl", "sections": [{"title": "Biome Types and Links", "rows": [["First Biome Type (d20)", "__wildFirstBiome__"], ["Number of Links (d10)", "__wildLinkNum__"], ["Link Direction (d8)", "__wildLinkDir__"], ["Link Duration (d20)", "__wildLinkDur__"], ["Link Type (d8)", "__wildLinkType__"]]}, {"title": "Adjacent Biomes", "rows": [["Adjacent to Grassland (d20)", "__wildAdjGrassland__"], ["Adjacent to Forest (d20)", "__wildAdjForest__"], ["Adjacent to Hills (d20)", "__wildAdjHills__"], ["Adjacent to Swamp (d20)", "__wildAdjSwamp__"], ["Adjacent to Mountains (d20)", "__wildAdjMountains__"]]}, {"title": "Points of Interest", "rows": [["Starting Node (d8)", "__wildStartNodeFull__"], ["Number of POIs (d10)", "__wildPOINum__"], ["POI Type (d20)", "__wildPOIType__"], ["Settlement (d20)", "__wildSettlement__"], ["Marvel (d30)", "__wildMarvel__"]]}, {"title": "Landmarks", "rows": [["Landmark Type (d20)", "__wildLmType__"], ["Landmark Content (d6)", "__wildLmContent__"], ["Natural Landmark (d100)", "__wildNatural__"], ["Artificial Landmark (d100)", "__wildArtificial__"], ["Magical Landmark (d100)", "__wildMagical__"]]}]}, {"id": "encounters", "label": "Encounters", "sections": [{"title": "Random Encounters", "rows": [["Encounter Type (2d6)", "__randomenc__"], ["Factions Involved (d6, if contested hex)", "__factionsInvolved__"]]}, {"title": "Encounters — Temperate", "rows": [["Grassland", "encGrassland"], ["Forest", "encForest"], ["Hills", "encHills"], ["Marsh", "encMarsh"], ["Mountains", "encMountains"]]}, {"title": "Encounters — Cold (Expansion)", "rows": [["Moor", "encMoor"], ["Evergreen Forest", "encEvergreen"], ["Tundra", "encTundra"], ["Snowfields", "encSnowfields"], ["Frozen Peaks", "encFrozenPeaks"]]}, {"title": "Encounters — Hot (Expansion)", "rows": [["Savanna", "encSavanna"], ["Tropical Forest", "encTropical"], ["Desert", "encDesert"], ["Swamp", "encSwamp"], ["Plateau", "encPlateau"]]}, {"title": "Encounters — Deep Biomes (Expansion)", "rows": [["Clover Field (d6)", "__encDeepClover__"], ["Haunted Forest (d6)", "__encDeepHaunted__"], ["Flooded Valley (d6)", "__encDeepFlooded__"], ["Fungal Forest (d6)", "__encDeepFungal__"], ["Volcano (d6)", "__encDeepVolcano__"], ["Fen (d6)", "__encDeepFen__"], ["Cursed Forest (d6)", "__encDeepCursed__"], ["Hot Springs (d6)", "__encDeepHotSprings__"], ["Glacier (d6)", "__encDeepGlacier__"], ["Crystal Grounds (d6)", "__encDeepCrystal__"], ["Thorn Field (d6)", "__encDeepThorn__"], ["Primal Jungle (d6)", "__encDeepPrimal__"], ["Oasis (d6)", "__encDeepOasis__"], ["Toxic Swamp (d6)", "__encDeepToxic__"], ["Lost Valley (d6)", "__encDeepLost__"]]}]}, {"id": "landmarks", "label": "Landmarks", "sections": [{"title": "Landmark Type", "rows": [["Landmark Type (d6)", "__lmType__"], ["Natural Landmark (d6 cat + d10)", "__lmNatural__"], ["Artificial Landmark (d6 cat + d10)", "__lmArtificial__"], ["Magic Landmark (d6 cat + d10)", "__lmMagic__"]]}, {"title": "Content", "rows": [["Content (d6)", "__lmContent__"], ["Hazard (d20)", "__lmHazard__"], ["Empty — Information (d20)", "__lmEmpty__"], ["Special (d12)", "__lmSpecial__"]]}]}, {"id": "lairs", "label": "Lairs", "sections": [{"title": "Lair Setup", "rows": [["Layout (d8)", "__lairLayout__"], ["Monsters Outside — Patrol % (d6 × 10%)", "__lairOutside__"], ["Patrol Hex Position (d8)", "__lairPatrolHex__"]]}]}, {"id": "factions", "label": "Factions", "sections": [{"title": "Factions — Core", "rows": [["Relationship (2d6)", "factionRel"], ["Event Timing", "eventTiming"], ["Event Nature", "factionEvent"]]}, {"title": "Noble Title & Domain", "rows": [["Noble Title and Domain (d20)", "nobilityTitle"]]}, {"title": "Vassalage", "rows": [["Vassal Relationship (2d6)", "vassalRel"], ["Event Timing (d6)", "vassalEventTiming"], ["Vassalage Event Nature (d12)", "vassalEventNature"]]}, {"title": "Contested Areas", "rows": [["Contested Area Reason (d10)", "contestedReason"], ["Wizard Presence (2d6)", "wizardPresence"]]}, {"title": "Neighbors", "rows": [["Neighbor Relation (2d6)", "neighborRel"], ["Open War Description (d10)", "openWarDesc"], ["Hostility Description (d10)", "hostilityDesc"], ["Indifference Description (d10)", "indifferenceDesc"], ["Friendship Description (d10)", "friendshipDesc"], ["Alliance Description (d10)", "allianceDesc"]]}, {"title": "Domain Events", "rows": [["Domain Event Type (d10)", "domainEventType"], ["Crime Event (d10)", "crimeEvent"], ["Economy Event (d10)", "econEvent"], ["Political Event (d10)", "politicalEvent"], ["Social Event (d10)", "socialEvent"], ["Natural/Magic Event (d10)", "natMagEvent"]]}, {"title": "Faction Names", "rows": [["Faction Proper Name (d20)", "nobleProperName"], ["Domain Adjective (d12)", "domainAdj"], ["Religious Domain Adj (d6)", "relDomainAdj"]]}, {"title": "Faction Functioning", "rows": [["Faction Goal (d20)", "factionGoal"], ["Means Type (d10)", "__factionMeansType__"], ["Honorable Means (d10)", "honorableMeans"], ["Dishonorable Means (d10)", "dishonorableMeans"], ["Faction Initiation (d12)", "factionInitiation"], ["How to Join — Noble (d12)", "nobleJoinMethod"], ["How to Join — Commoner Quest (d10)", "commQuest"], ["No Land Reason (d10)", "noLandReason"]]}, {"title": "Noble Generator", "rows": [["First Name (d100)", "nobleFirstName"], ["Last Name Part 1 (d20)", "nobleLastP1"], ["Last Name Part 2 (d20)", "nobleLastP2"], ["Nickname / The... (d100)", "nobleNickname"], ["Other Title (d12)", "nobleOtherTitle"], ["Distinctive Trait (d20)", "nobleTrait"], ["Personal Goal (d12)", "noblePersonalGoal"], ["Renown/Infamy (d20)", "nobleRenownFull"], ["Family Secret (d12, on 1 result)", "familySecret"], ["Preferred Weapon (d12)", "nobleWeapon"], ["Magic Weapon Effect (d6)", "magicWeaponEffect"]]}]}, {"id": "settlements", "label": "Settlements", "sections": [{"title": "Settlement Type", "rows": [["Settlement (d6)", "__settlementtype__"]]}, {"title": "Hamlet", "rows": [["Settlement Name", "__settleName__"], ["Building", "hamletBuilding"], ["Layout (d3)", "__hamletlayout__"], ["Secret", "hamletSecret"], ["Disposition", "disposition"]]}, {"title": "Village", "rows": [["Settlement Name", "__settleName__"], ["Size (d6)", "villageSize"], ["Occupation(s) (d6)", "__villageoccupation__"], ["Layout (d3)", "__villagelayout__"], ["Point of Interest (d4)", "__villagepoi__"], ["Special Location (d20)", "villageSpecial"], ["Defense (d8)", "villageDefense"], ["Guards (d3+3 × grade)", "__villageguards__"], ["Disposition (2d6)", "disposition"], ["Notable NPC (d20)", "villageNotable"], ["Ruler (d8)", "villageRuler"], ["Ruler Disposition (d6)", "__rulerdisp__"], ["Secret (d12)", "villageSecret"], ["Event (d12)", "villageEvent"]]}, {"title": "City", "rows": [["Settlement Name", "__settleName__"], ["Size (d6)", "__citysize__"], ["Occupation (d10)", "__cityoccupation__"], ["Characteristic (d20)", "cityChar"], ["Appearance (d20)", "cityAppear"], ["Points of Interest (1dn per type)", "__citypoi__"], ["Special Location (d20)", "__cityspecialloc__"], ["Buildings of Interest (roll 1 time / grade)", "__citybuilding__"], ["Walled? (50%)", "__citywalled__"], ["Gate Entrances (1 per grade, d4 direction)", "__cityentrance__"], ["Gate Door Type (d6)", "__citygatedoor__"], ["Guards (1d3+3 × 5 × grade)", "__cityguards__"], ["Siege Supplies (2d6 months, if walled)", "__citysiege__"], ["Disposition (2d6)", "disposition"], ["Notable NPC (roll 1 time / grade)", "__citynpc__"], ["Ruler(s) (d8)", "__cityruler__"], ["Ruler Disposition (d6)", "__cityrulerdisp__"], ["Event Timing (d6)", "__cityeventtiming__"], ["Event Nature (d12)", "__cityevent__"]]}, {"title": "Castle", "rows": [["Name Part 1 (d30)", "castleP1"], ["Name Part 2 (d24)", "castleP2"], ["Condition (d6)", "castleCondition"], ["Keep Shape (d6)", "__keepshape__"], ["Keep Levels (1d3+1)", "__keeplevels__"], ["Keep Defensive Feature (d12)", "__keepdefensive__"], ["Keep Non-Defensive Feature (d12)", "__keepnondefensive__"], ["Keep Jails (2d6 commoners, 1d3 nobles)", "__keepjails__"], ["Keep Siege Supplies (2d6 months)", "__keepsiege__"], ["Keep Treasure", "__keeptreasure__"], ["Defensive Structures (d4)", "__castledefnum__"], ["Defensive Structure Type (d6)", "__castledeftype__"], ["Tower & Wall Shape (d8)", "__castletowershape__"], ["Gatehouse Closure (d6)", "__castlegatehouse__"], ["Moat (d4)", "castleMoat"], ["Moat Encounter (d8)", "__castlemoatenc__"], ["Garrison (3d6 × 10)", "__castlegarrison__"], ["Disposition (2d6)", "disposition"], ["Event Timing (d6)", "__castleeventtiming__"], ["Event Nature (d12)", "__castleevent__"]]}, {"title": "Abbey", "rows": [["Name (d10)", "abbeyName"], ["Size (d6)", "abbeySize"], ["Saint (d30)", "__abbeysaint__"], ["Monks/Nuns", "__abbeymonks__"], ["Garden (d4)", "__abbeygarden__"], ["Infirmary (d4)", "__abbeyinfirmary__"], ["Religious Building (d4)", "__abbeyreligious__"], ["Other Location (d6)", "__abbeyother__"], ["Farming Activities (d12 × 2)", "__abbeyfarming__"], ["Workshop Activity (d6)", "__abbeyworkshop__"], ["Other Activity (d6)", "__abbeyactother__"], ["Fame (d20)", "__abbeyfame__"], ["Relic (d20 type + d30 saint + d20 level)", "__abbeyrelic__"], ["Event Timing (d6)", "__abbeyeventtiming__"], ["Event Nature (d12)", "__abbeyevent__"], ["History (d12)", "__abbeyhistory__"]]}, {"title": "Tower", "rows": [["Aboveground Levels (d12)", "__towerabove__"], ["Underground Levels (d12)", "__towerbelow__"], ["Levels Connection (d12)", "__towerconnect__"], ["Material (d20)", "__towermaterial__"], ["Shape (d20)", "__towershape__"], ["Details (d20 × 1d3)", "__towerdetails__"], ["Inside Appearance (d10)", "__towerinside__"], ["Special Equipment (d20)", "__towerequip__"], ["Ground Level (d8)", "__towerground__"], ["Aboveground Level Use (d12)", "__toweraboveuse__"], ["Top Level (d20)", "__towertop__"], ["Bottom Level (d20)", "__towerbottom__"], ["Underground Level Use (d12)", "__towerunderuse__"]]}]}, {"id": "cityname", "label": "Urban Expansion", "sections": [{"title": "Mapping — Settlement & River", "rows": [["Settlement Type (d6)", "urbanSettlement"], ["River Shape (d6)", "riverShape"]]}, {"title": "Mapping — Districts & Roads", "rows": [["District Shape (d6)", "districtShape"], ["Bridge Type (d6)", "bridgeType"], ["Secondary Sub-Districts per Side (d6)", "secSubDistricts"]]}, {"title": "Focal Points — Main (d8)", "rows": [["Main Focal Point", "mainFocal"]]}, {"title": "Focal Points — Secondary", "rows": [["Secondary Focal Type (d10)", "secFocalType"], ["Business (d10)", "focalBusiness"], ["Culture (d10)", "focalCulture"], ["Economy (d10)", "focalEconomy"], ["Magic (d10)", "focalMagic"], ["Monument (d10)", "focalMonument"], ["Nature (d10)", "focalNature"], ["Official (d10)", "focalOfficial"], ["Religious (d10)", "focalReligious"], ["Other (d10)", "focalOther"]]}, {"title": "City Name Generator", "rows": [["Generated Name (d30 structure)", "__cityNameFull__"]]}, {"title": "City Name Components", "rows": [["A — Nouns (d30)", "__cnA__"], ["B — First Names & Titles (d20)", "__cnB__"], ["C — Fictional City Names (d24)", "__cnC__"], ["D — Adjectives & Colors (d30)", "__cnD__"], ["E — Suffixes: General (d10)", "__cnE__"], ["F — Suffixes: Buildings (d24)", "__cnF__"], ["G — Suffixes: Nature & Topography (d40)", "__cnG__"], ["H — Prefixes: Directions & Buildings (d20)", "__cnH__"]]}, {"title": "Criminal Organization", "rows": [["Main Activity", "criminalActivity"]]}]}, {"id": "citypointcrawl", "label": "City Pointcrawl", "sections": [{"title": "General", "rows": [["City Size (d20)", "__cpSize__"], ["Characteristic 1 (d50)", "__cpChar__"], ["Characteristic 2 (d50)", "__cpChar__"], ["Appearance (d20)", "__cpAppear__"], ["Color Scheme (if Specific Color Scheme)", "__cpColor__"]]}, {"title": "Mapping", "rows": [["Settlement Type", "urbanSettlement"], ["River Shape", "riverShape"], ["Bridge Type", "bridgeType"], ["District Shape", "districtShape"]]}, {"title": "Points of Interest", "rows": [["POI Number (d10)", "__cpPOINum__"], ["POI Type (d20)", "__cpPOIType__"], ["Landmark Content (d6)", "__cpLmContent__"], ["Landmark (d100)", "__cpLandmark__"], ["Building Type (d20)", "__cpBuildingType__"], ["Housing (d20)", "__cpHousing__"], ["Business (d50)", "__cpBusiness__"], ["Official (d20)", "__cpOfficial__"], ["Religious (d12)", "__cpReligious__"], ["Public (d20)", "__cpPublic__"], ["Military (d20)", "__cpMilitary__"], ["Marvel (d24)", "__cpMarvel__"]]}, {"title": "Focal Points", "rows": [["Main Focal Point", "mainFocal"], ["Secondary Focal Type", "secFocalType"], ["Business Focal", "focalBusiness"], ["Culture Focal", "focalCulture"], ["Economy Focal", "focalEconomy"], ["Magic Focal", "focalMagic"], ["Monument Focal", "focalMonument"], ["Official Focal", "focalOfficial"], ["Nature Focal", "focalNature"], ["Religious Focal", "focalReligious"]]}, {"title": "Districts & Links", "rows": [["First District Type (d20)", "__cpFirstDistrict__"], ["Adjacent to Poor (d20)", "__cpAdjPoor__"], ["Adjacent to Middle-class (d20)", "__cpAdjMiddle__"], ["Adjacent to Wealthy (d20)", "__cpAdjWealthy__"], ["Adjacent to Ethnic (d20)", "__cpAdjEthnic__"], ["Adjacent to Abandoned (d20)", "__cpAdjAbandoned__"], ["Link Number (d10)", "__cpLinkNum__"], ["Link Direction (d8)", "__cpLinkDir__"], ["Link Duration (d6)", "__cpLinkDur__"], ["Link Type (d8)", "__cpLinkType__"]]}]}, {"id": "dungeons", "label": "Dungeons", "sections": [{"title": "Dungeon Setup", "rows": [["Area Name Prefix", "dungeonPrefix"], ["Area Name Noun", "dungeonNoun"], ["Theme", "dungeonTheme"], ["Levels (d6)", "__levels__"], ["Links per Level (d8)", "__links__"], ["Rooms per Level (2d20+10)", "__rooms__"], ["Factions on Level", "factionsOnLevel"]]}, {"title": "Dungeon Room Setup", "rows": [["Room Type", "roomType"], ["Room Size (d6)", "__roomsize__"], ["Room Shape (d20)", "__roomshape__"], ["Doors (d12)", "__doors__"], ["Door Location (d6)", "__doorloc__"], ["Door Type", "doorType"], ["Secret Door (d6)", "__secretdoor__"], ["Hidden Secret Door (d12)", "__hiddendoor__"], ["Hidden Secret Door Clue (d12)", "__hiddendoorclue__"], ["In Plain Sight (d8)", "__inplainsight__"], ["Door Mechanism (d20)", "__doormech__"], ["Magic Door (d6)", "__magicdoor__"], ["Demon Door Task (d10)", "__demondoor__"], ["Trap (d100)", "__trap__"], ["Empty Room (d100)", "__emptyroom__"]]}, {"title": "Monsters by Depth", "rows": [["Level 1", "monster1"], ["Level 2", "monster2"], ["Level 3", "monster3"], ["Level 4", "monster4"], ["Level 5", "monster5"], ["Level 6", "monster6"]]}, {"title": "Special Room (d100)", "rows": [["Special Room", "specialRoom"]]}]}, {"id": "dungeonpc", "label": "Dungeon Pointcrawl", "sections": [{"title": "General", "rows": [["Size (d20)", "__dpcSize__"], ["Dungeon Type (d12)", "__dpcType__"], ["Architecture Type (d20)", "__dpcArch__"], ["Additional Aesthetic (d20)", "__dpcAesthetic__"]]}, {"title": "Entrance & Links", "rows": [["Entrance Protection (d12)", "__dpcEntrance__"], ["Link Number (d6)", "__dpcLinkNum__"], ["Link Direction (d8)", "__dpcLinkDir__"], ["Link Type (d12)", "__dpcLinkType__"], ["Obstacle Type (d20)", "__dpcObstacle__"], ["Vertical — Both Ways (d20)", "__dpcVertBoth__"], ["Vertical — Going Down (d6)", "__dpcVertDown__"]]}, {"title": "Points of Interest", "rows": [["POI Type (d20)", "__dpcPOIType__"], ["Content Type (d6)", "__dpcContent__"], ["Faction Relations — Animals (d3)", "__dpcFactionAnimal__"], ["Faction Relations — Intelligent (d6)", "__dpcFactionInt__"]]}, {"title": "Traps (d50)", "rows": [["Trap", "__dpcTrap__"]]}, {"title": "Empty Rooms (d100)", "rows": [["Empty Room", "__dpcEmpty__"]]}, {"title": "Secret Doors", "rows": [["Appearance (d6)", "__dpcSecretAppear__"], ["Camouflage (d12)", "__dpcCamo__"], ["Clue to Find It (d12)", "__dpcClue__"], ["In Plain Sight (d8)", "__dpcPlainSight__"], ["Mechanism (d20)", "__dpcMechanism__"]]}, {"title": "Hidden & Magic Doors", "rows": [["Hidden Door (d10)", "__dpcHiddenDoor__"], ["Hidden Stairs (d12)", "__dpcHiddenStairs__"], ["Magic Door Type (d6)", "__dpcMagicDoor__"], ["Demon Door Task (d10)", "__dpcDemonTask__"]]}]}, {"id": "wizard", "label": "Wizard", "sections": [{"title": "Wizard Name Generator", "rows": [["Name Part 1", "wizNameP1"], ["Name Part 2", "wizNameP2"], ["Title", "wizTitle"]]}, {"title": "Wizard (Core)", "rows": [["Level", "wizardLevel"], ["Specialty", "wizardSpec"], ["Goal", "wizardGoal"], ["Staff Top", "staffTop"]]}, {"title": "Familiar (Wizardry Expansion)", "rows": [["Type", "familiarType"], ["Name", "familiarName"], ["Quirk", "familiarQuirk"], ["Appearance", "familiarAppear"]]}, {"title": "Wizardry Expansion — Tower", "rows": [["Tower Name Adjective", "towerAdj"], ["Tower Name Noun", "towerNoun"], ["Tower of...", "towerOf"], ["Access", "towerAccess"], ["Sentry", "towerSentry"], ["Magic Trap", "towerTrap"], ["Surroundings", "towerSurroundings"]]}]}, {"id": "generators", "label": "Generators", "sections": [{"title": "Tavern", "rows": [["Name Part 1 (d100)", "tavernP1"], ["Name Part 2 (d30)", "tavernP2"], ["Wall Decoration", "tavernDecor"], ["Rumor", "tavernRumor"], ["Rumor Truth", "rumorTruth"], ["Best Room", "bestRoom"]]}, {"title": "NPC", "rows": [["First Name", "npcFirst"], ["Last Name", "npcLast"], ["Attitude", "npcAttitude"], ["Hobby", "npcHobby"], ["Dream", "npcDream"], ["Secret", "npcSecret"]]}, {"title": "Dragon", "rows": [["Name", "dragonName"], ["Age", "dragonAge"], ["Breath", "dragonBreath"], ["Alignment", "dragonAlign"], ["Strength", "dragonStrength"], ["Weakness", "dragonWeakness"], ["Favorite Food", "dragonFood"], ["Lair", "dragonLair"]]}]}];
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function rollKey(key) {
+  if (key === '__levels__') return String(Math.floor(Math.random()*6)+1);
+  if (key === '__links__') {
+    var r = Math.floor(Math.random()*8)+1;
+    if (r <= 4) return 'Zero';
+    if (r <= 6) return 'One';
+    if (r === 7) return 'Two';
+    return 'One, secret (door or stairs)';
+  }
+  if (key === '__rooms__') return String((Math.floor(Math.random()*20)+1)+(Math.floor(Math.random()*20)+1)+10) + ' rooms';
+  if (key === '__roomsize__') {
+    var r = Math.floor(Math.random()*6)+1;
+    var l, w;
+    if (r <= 2) {
+      l = Math.floor(Math.random()*3)+1+1;
+      w = Math.floor(Math.random()*3)+1+1;
+      return 'Small — ' + l + ' × ' + w + ' sq';
+    } else if (r <= 5) {
+      l = Math.floor(Math.random()*4)+1+2;
+      w = Math.floor(Math.random()*4)+1+2;
+      return 'Medium — ' + l + ' × ' + w + ' sq';
+    } else {
+      l = Math.floor(Math.random()*6)+1+3;
+      w = Math.floor(Math.random()*6)+1+3;
+      return 'Large — ' + l + ' × ' + w + ' sq';
+    }
+  }
+  if (key === '__roomshape__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 14) return 'Rectangle';
+    if (r === 15) return 'Parallelogram';
+    if (r === 16) return 'Trapezium';
+    if (r === 17) return 'Pentagon';
+    if (r === 18) return 'Hexagon';
+    if (r === 19) return 'Octagon';
+    return 'Oval';
+  }
+  if (key === '__doors__') {
+    var r = Math.floor(Math.random()*12)+1;
+    if (r <= 3) return 'None (or Reroll)';
+    if (r <= 6) return 'One';
+    if (r <= 9) return 'Two';
+    if (r <= 11) return 'Three';
+    return 'Secret Door';
+  }
+  if (key === '__doorloc__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r <= 2) return 'Front';
+    if (r <= 4) return 'Left';
+    return 'Right';
+  }
+  if (key === '__secretdoor__') {
+    var r = Math.floor(Math.random()*6)+1;
+    return r <= 4 ? 'Hidden' : 'In Plain Sight';
+  }
+  if (key === '__hiddendoor__') {
+    var r = Math.floor(Math.random()*12)+1;
+    if (r <= 6) return 'Looks like the wall';
+    if (r === 7) return 'Illusory Wall';
+    if (r === 8) return 'Mirror';
+    if (r === 9) return 'Painting';
+    if (r === 10) return 'Part of bas-relief';
+    if (r === 11) return 'Part of bookshelf';
+    return 'Wardrobe back panel';
+  }
+  if (key === '__hiddendoorclue__') {
+    var r = Math.floor(Math.random()*12)+1;
+    if (r <= 4) return 'None';
+    if (r === 5) return 'Air flow';
+    if (r === 6) return 'Cleaner/Dirtier floor or wall';
+    if (r === 7) return 'Clue related to appearance';
+    if (r === 8) return 'Different material/color';
+    if (r === 9) return 'Footprints';
+    if (r === 10) return 'Interrupted trail of blood';
+    if (r === 11) return 'Ray of light';
+    return 'Worn out floor';
+  }
+  if (key === '__inplainsight__') {
+    var r = Math.floor(Math.random()*8)+1;
+    if (r <= 5) return 'Metal door with no handle';
+    if (r <= 7) return 'Wooden door with no handle';
+    return 'Wall of fire/steam/energy';
+  }
+  if (key === '__doormech__') {
+    var r = Math.floor(Math.random()*20)+1;
+    var opts = ['Align Items','Antlers of a deer head','Book in library','Brick protruding from a wall','Candle holder','Details of a statue in an unusual position','Extinguish a specific candle','Fireplace poker in a stand','Go through it with confidence','Halberd/Sword of an armor','Hit a target','Insert a missing piece','Insert a sword in a hole','Magical detection of a specific monster','Password','Play a series of notes','Pressure plate','Reverse pressure plate','Thirsty/Hungry mouth','Weapon hanging on wall behind a shield'];
+    return opts[r-1];
+  }
+  if (key === '__magicdoor__') {
+    return Math.floor(Math.random()*6)+1 <= 5 ? 'Demon door' : 'Magic seal';
+  }
+  if (key === '__demondoor__') {
+    var r = Math.floor(Math.random()*10)+1;
+    var opts = ['Bring it a specific item','Do an evil deed in front of it','Find its “key” (random item)','Find its password','Kill a specific monster','Listen to it (lie)','Listen to it (monologue)','Listen to it (warning)','Solve a riddle','Take a leap of faith'];
+    return opts[r-1];
+  }
+  if (key === '__trap__') {
+    var opts = ['Acid Pool','Alarm','Banana peel','Blade','Cage','Caltrops','Circular saw','Crossbow','Crushed glass','Crushing ceiling','Crushing wall(s)','Dart throwers','Electric shock','Electrified ground','Elevator to another level','Extreme temperature','Fills with sand','Fills with water','Flamethrowers','Flammable gas','Flashing light','Gas (confusion, death, sleep)','Illusory floor','Landslide','Lasso','Lava flow','Lava pool','Magic (casts a spell)','Mist dispenser','Piston','Pit','Poisoned caltrops','Portcullis closing','Projectile wall (arrows, etc)','Quicksand','Ram','Rolling stone','Slippery floor','Spike pit','Spray (acid, smelly, sticky)','Sticky ground','Stretched spiky branch','Taut rope','Trapdoor (pit)','Trapdoor (spike pit)','Trapdoor (to lower level)','Vacuum chamber','Violent air stream','Violent water stream','Wolf trap'];
+    return opts[Math.floor(Math.random()*opts.length)];
+  }
+  if (key === '__citynpc__') {
+    var opts = ['Aggressive guard','Annoying minstrel','Bandit in disguise','Beggar who knows a lot','Clever orphan','Corrupted official','Curious waitress','Distracted scholar','Haughty nobleman','Lonely widow','Nervous tax collector','Penniless merchant','Princess on the run','Retired mercenary','Seasoned adventurer','Shady diplomat','Stubborn wizard','Talented craftsman','Traveler from a distant land','Vampire/Werewolf hunter'];
+    return opts[Math.floor(Math.random()*20)];
+  }
+  if (key === '__cityruler__') {
+    var r = Math.floor(Math.random()*8)+1;
+    if (r <= 2) return 'Noble';
+    if (r === 3) return 'Clergy';
+    if (r === 4) return 'Council';
+    if (r === 5) return 'Mayor';
+    if (r === 6) return "Merchants' guild";
+    if (r === 7) return "Thieves' guild";
+    return 'Vampire';
+  }
+  if (key === '__cityrulerdisp__') {
+    return Math.floor(Math.random()*6)+1 <= 4 ? 'Same as citizens' : 'Opposite';
+  }
+  if (key === '__cityeventtiming__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r === 1) return 'Ended earlier';
+    if (r <= 4) return 'Is happening now';
+    return 'Will take place in the future';
+  }
+  if (key === '__cityevent__') {
+    var opts = ['Announcement by a crier','Assassination','Ceremony (wedding, etc.)','Disappearances','Festival/Fair','Fire','Market day','Plague','Siege/Looting','Tournament','Vermin invasion','Visit of a religious person'];
+    return opts[Math.floor(Math.random()*12)];
+  }
+  if (key === '__abbeysaint__') {
+    var saints = ['Adelie','Agath','Alexia','Aubreda','Bardolphus','Barthelemy','Beatrix','Berengerius','Bernard(us)','Cecilia','Cedany','Emelote','Gaufridus','Geffrey','Geroldin','Guillotin','Jaclyn','Jacomus','Madeleine','Marion','Mariorie','Martin','Mary','Melchior','Paul','Petasse','Peter','Remy','Thomasse','Victor'];
+    return saints[Math.floor(Math.random()*30)];
+  }
+  if (key === '__abbeymonks__') {
+    var r = Math.floor(Math.random()*2);
+    if (r === 0) {
+      var n = (Math.floor(Math.random()*4)+1)*10+20;
+      return 'Small abbey: ' + n + ' monks/nuns';
+    } else {
+      var n = (Math.floor(Math.random()*24)+1)*10+90;
+      return 'Major abbey: ' + n + ' monks/nuns';
+    }
+  }
+  if (key === '__abbeygarden__') {
+    var opts = ['Flower garden','Fountain','Kitchen garden','Physic garden (medicine)'];
+    return opts[Math.floor(Math.random()*4)];
+  }
+  if (key === '__abbeyinfirmary__') {
+    var opts = ['Bloodletting & purging room','Drugstore','Physician\'s residence','Room for critical patients'];
+    return opts[Math.floor(Math.random()*4)];
+  }
+  if (key === '__abbeyreligious__') {
+    var opts = ['Chapter house (for meetings)','Parlour','School','Scriptorium and library'];
+    return opts[Math.floor(Math.random()*4)];
+  }
+  if (key === '__abbeyother__') {
+    var opts = ["Abbot's gateway",'Barns and stables','Guest rooms','Vestarium (clothing storage)','Washhouse','Watchtower'];
+    return opts[Math.floor(Math.random()*6)];
+  }
+  if (key === '__abbeyfarming__') {
+    var opts = ['Barley (beer)','Chickens (meat, eggs)','Cotton','Cows (meat, milk and cheese)','Goats (meat, milk and cheese)','Grapes (wine)','Hops (beer)','Orchard (fruits and preserves)','Pigs (meat)','Sheep (meat and wool)','Vegetables','Wheat (flour and bread)'];
+    var r1 = Math.floor(Math.random()*12);
+    var r2 = Math.floor(Math.random()*12);
+    while (r2 === r1) r2 = Math.floor(Math.random()*12);
+    return opts[r1] + ' + ' + opts[r2];
+  }
+  if (key === '__abbeyworkshop__') {
+    var opts = ['Candle makers','Cutlers','Potters','Shoemakers','Smiths','Tanners'];
+    return opts[Math.floor(Math.random()*6)];
+  }
+  if (key === '__abbeyactother__') {
+    var opts = ['Bee keeping','Bookshop','Catering','Copy & translation','Exorcism','Guided tour'];
+    return opts[Math.floor(Math.random()*6)];
+  }
+  if (key === '__abbeyfame__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 11) {
+      var opts = ['Age','Architecture','Cattle baptism','Curative (hot) springs','Domain and landscapes','Grave of well known bishop','Key religious celebration','Meals served to travelers','Pilgrimage','Power','Quality of products'];
+      return opts[r-1];
+    }
+    var artifacts = ['Ancient parchment','Art piece','Crown','Holy sword','Precious book','Relic'];
+    return 'Religious artifact: ' + artifacts[Math.floor(Math.random()*6)];
+  }
+  if (key === '__abbeyrelic__') {
+    var opts = ['Arm','Blood','Bones (vertebra, phalanx)','Eye','Flesh','Head','Heart','Item that killed the saint','Leg','Piece of clothing','Prayer book','Religious symbol','Ring','Sandals','Scalp','Shroud','Skin','Tongue','Tooth','Walking stick'];
+    var relic = opts[Math.floor(Math.random()*20)];
+    var saints = ['Adelie','Agath','Alexia','Aubreda','Bardolphus','Barthelemy','Beatrix','Berengerius','Bernard(us)','Cecilia','Cedany','Emelote','Gaufridus','Geffrey','Geroldin','Guillotin','Jaclyn','Jacomus','Madeleine','Marion','Mariorie','Martin','Mary','Melchior','Paul','Petasse','Peter','Remy','Thomasse','Victor'];
+    var saint = saints[Math.floor(Math.random()*30)];
+    var lvlRoll = Math.floor(Math.random()*20)+1;
+    var lvl = lvlRoll <= 8 ? 1 : lvlRoll <= 14 ? 2 : lvlRoll <= 17 ? 3 : lvlRoll <= 19 ? 4 : 5;
+    return relic + ' of Saint ' + saint + ' (spell level ' + lvl + ')';
+  }
+  if (key === '__abbeyeventtiming__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r === 1) return 'Ended earlier';
+    if (r <= 4) return 'Is happening now';
+    return 'Will take place in the future';
+  }
+  if (key === '__abbeyevent__') {
+    var opts = ['Broken device','Cowls shrunken/dyed in red','Demonic corruption','Disappearance of the abbot','Drought/Flood','Festival/Fair','Fire','Looting','Moles/Rats infestation','Plague','Scandal','Visit of a notable person'];
+    return opts[Math.floor(Math.random()*12)];
+  }
+  if (key === '__abbeyhistory__') {
+    var r = Math.floor(Math.random()*12)+1;
+    var opts = ['Abandoned then used again','Changed confession','Claimed its autonomy','Destroyed then rebuilt','Founded ' + ((Math.floor(Math.random()*10)+1 + Math.floor(Math.random()*10)+1)*10) + ' years ago','Has seen better days','Only one original building remains','Sponsored by a rich patron','Started as a knight hermitage','Used to be a boarding school','Was relocated','Was under a spell'];
+    return opts[r-1];
+  }
+  if (key === '__keepshape__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r <= 3) return 'Square/Rectangle';
+    if (r <= 5) return 'Round';
+    return 'Shell (hollow cylinder)';
+  }
+  if (key === '__keeplevels__') {
+    return String(Math.floor(Math.random()*3)+1+1) + ' levels';
+  }
+  if (key === '__keepdefensive__') {
+    var r = Math.floor(Math.random()*12)+1;
+    if (r <= 6) return 'None';
+    var opts = ['Ballista','Boiling oil','Catapult','Hoarding','Iron spikes','Piles of rocks'];
+    return opts[r-7];
+  }
+  if (key === '__keepnondefensive__') {
+    var r = Math.floor(Math.random()*12)+1;
+    if (r <= 6) return 'None';
+    var opts = ['Banners/Flags','Gargoyles','Heads/Bodies','Overgrown','Religious symbols','Secret passage'];
+    return opts[r-7];
+  }
+  if (key === '__keepjails__') {
+    var commoners = Math.floor(Math.random()*6)+1 + Math.floor(Math.random()*6)+1;
+    var nobles = Math.floor(Math.random()*3)+1;
+    return commoners + ' commoners, ' + nobles + ' noble(s)';
+  }
+  if (key === '__keepsiege__') {
+    return (Math.floor(Math.random()*6)+1 + Math.floor(Math.random()*6)+1) + ' months of supplies';
+  }
+  if (key === '__keeptreasure__') {
+    var parts = [];
+    if (Math.random() < 0.5) parts.push((Math.floor(Math.random()*4)+1) + '0,000 gp');
+    if (Math.random() < 0.5) parts.push((Math.floor(Math.random()*6)+1) + ' × 5,000 gp');
+    if (Math.random() < 0.25) parts.push((Math.floor(Math.random()*6)+1 + Math.floor(Math.random()*6)+1 + Math.floor(Math.random()*6)+1) + ' gems');
+    if (Math.random() < 0.25) parts.push((Math.floor(Math.random()*10)+1) + ' piece(s) of jewelry');
+    if (Math.random() < 0.15) parts.push('4 magic items + ' + (Math.floor(Math.random()*6)+1) + ' scrolls');
+    return parts.length ? parts.join(' | ') : 'Nothing';
+  }
+  if (key === '__castledefnum__') {
+    return String(Math.floor(Math.random()*4)+1) + ' defensive structure(s)';
+  }
+  if (key === '__castledeftype__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r <= 3) return 'Stone walls and towers';
+    if (r === 4) return 'Moat (trench)';
+    if (r === 5) return 'Motte (mound)';
+    return 'Wooden palisade';
+  }
+  if (key === '__castletowershape__') {
+    var r = Math.floor(Math.random()*8)+1;
+    var shapes = ['Square/Rectangle (4 towers)','Trapezium (4 towers)','Pentagon (5 towers)','Hexagon (6 towers)','Octagon (8 towers)','Star (10 towers)','Cross (12 towers)','Circle (1d5+3 towers)'];
+    if (r === 8) {
+      return 'Circle (' + (Math.floor(Math.random()*5)+1+3) + ' towers)';
+    }
+    return shapes[r-1];
+  }
+  if (key === '__castlegatehouse__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r <= 3) return 'Portcullis and wooden door';
+    if (r <= 5) return 'Drawbridge';
+    return 'Both (portcullis, wooden door + drawbridge)';
+  }
+  if (key === '__castlemoatenc__') {
+    var r = Math.floor(Math.random()*8)+1;
+    if (r <= 4) return 'Nothing';
+    var opts = ['Crocodiles','Electric eels','Leeches','Piranha'];
+    return opts[r-5];
+  }
+  if (key === '__castlegarrison__') {
+    var fighters = (Math.floor(Math.random()*6)+1 + Math.floor(Math.random()*6)+1 + Math.floor(Math.random()*6)+1) * 10;
+    return fighters + ' fighters total';
+  }
+  if (key === '__castleeventtiming__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r === 1) return 'Ended earlier';
+    if (r <= 4) return 'Is happening now';
+    return 'Will take place in the future';
+  }
+  if (key === '__castleevent__') {
+    var opts = ['Assassination','Big monster attack','Ceremony (wedding, etc.)','Festival/Fair','Fire','Plague','Resources/Gold dwindling','Rival lord scouting','Siege/Looting','Small monsters wanting to establish a lair nearby','Tournament','Visit of a notable person'];
+    return opts[Math.floor(Math.random()*12)];
+  }
+  if (key === '__citybuilding__') {
+    var r = Math.floor(Math.random()*20)+1;
+    var type, result;
+    if (r <= 3) {
+      type = 'Housing';
+      var housing = ['Studio','One bedroom apartment','Two bedrooms apartment','Bungalow','Maisonnette','Penthouse','Mansion','Hotel room','Tower','Boarding house','Tent','Houseboat','Under a bridge','Shanty','Squat','Underground bunker','Wagon','Treehouse','Basement','Hut'];
+      result = housing[Math.floor(Math.random()*20)];
+    } else if (r <= 10) {
+      type = 'Business';
+      var business = ['Alchemist','Alchemist','Animal trainer','Animal trainer','Apothecary','Apothecary','Armorer','Armorer','Artist','Artist','Astronomer','Astronomer','Baker','Baker','Bank','Bank','Blacksmith','Blacksmith','Bookmaker','Bookmaker','Botanist','Botanist','Brewery','Brewery','Brothel','Brothel','Butcher','Butcher','Candlemaker','Candlemaker','Candy shop','Candy shop','Carpenter','Carpenter','Cartographer','Cartographer','Casino','Casino','Cheesemaker','Cheesemaker','Doctor','Doctor','Dollmaker','Dollmaker','Florist','Florist','Fortuneteller','Fortuneteller','Foundry','Foundry','General store','General store','Glassblower','Glassblower','Hairdresser','Hairdresser','Hardware store','Hardware store','Jeweler','Jeweler','Lawyer','Lawyer','Locksmith','Locksmith','Pawnshop','Pawnshop','Perfumer','Perfumer','Pet shop','Pet shop','Potter','Potter','Restaurant','Restaurant','Sage','Sage','Sauna','Sauna','Scribe','Scribe','Siege engines seller','Siege engines seller','Slaughterhouse','Slaughterhouse','Stables','Stables','Tailor','Tailor','Tanner','Tanner','Tapestry maker','Tapestry maker','Tavern','Tavern','Tinker','Tinker','Veterinarian','Veterinarian','Wine merchant','Wine merchant'];
+      result = business[Math.floor(Math.random()*100)];
+    } else if (r <= 13) {
+      type = 'Official';
+      var official = ['Arcane university','Archives','Asylum','City hall','Conservatory','Dispensary','Embassy','Fire station','Mayor office','Meteorological institute','Mint','Palace','Post office','School','Sewers','Tax office','Tourist office','Tribunal','University','Water tower'];
+      result = official[Math.floor(Math.random()*20)];
+    } else if (r === 14) {
+      type = 'Religious';
+      var religious = ['Catacombs','Cathedral','Church','Covent','Mausoleum','Monastery','Necropolis','Orphanage','Sanctuary','Seminar','Shrine','Ziggurat'];
+      result = religious[Math.floor(Math.random()*12)];
+    } else if (r <= 17) {
+      type = 'Public';
+      var pub = ['Aquarium','Arena','Art gallery','Auction hall','Botanical garden','Event center','Guildhouse','Gymnasium','Historical building','Hospital','House for sale','Library','Morgue','Museum','Observatory','Opera','Public baths','Theater','Workshop','Zoo'];
+      result = pub[Math.floor(Math.random()*20)];
+    } else {
+      type = 'Military';
+      var military = ['Armory','Barracks','Canteen','Citadel','Fort','Guard post','Guard tower','Menagerie','Military archives','Military hospital','Military school','Military surplus','Oubliette','Prison','Recruitment center','Siege workshop','Spy academy','Training hall','Underground vault','Warehouse'];
+      result = military[Math.floor(Math.random()*20)];
+    }
+    return type + ': ' + result;
+  }
+  if (key === '__citysize__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r <= 2) return 'Small (grade 2)';
+    if (r <= 5) return 'Medium (grade 3)';
+    return 'Big (grade 4)';
+  }
+  if (key === '__cityoccupation__') {
+    var opts = ['Brewing (breweries) or Viticulture (vineyard)','Cattle breeding (farms, meadows)','Farming crops (farms, fields)','Fishing (fishery)','Hunting (tannery)','Logging (sawmills)','Metallurgy (forge, foundry)','Mining (mine)','Pottery (workshop)','Trading (caravanserai/port)'];
+    return opts[Math.floor(Math.random()*10)];
+  }
+  if (key === '__citypoi__') {
+    var grade = Math.floor(Math.random()*3)+2; // 2-4
+    var roll = function(n){ return Math.floor(Math.random()*n)+1; };
+    var bs = roll(grade), cem = roll(grade), ch = roll(grade), gs = roll(grade), mkt = roll(grade), st = roll(grade), tav = roll(grade);
+    return bs+' blacksmith(s), '+cem+' cemetery/ies, '+ch+' church(es), '+gs+' general store(s), '+mkt+' market(s), '+st+' stable(s), '+tav+' tavern(s)';
+  }
+  if (key === '__cityspecialloc__') {
+    var opts = ['Abandoned building','Aqueduct','Archaeological site','Bridge','Burnt/Ruined building','Calvary','Carriage stop','Construction site','Famous street','Fighting pit','Fountain','Gallows','Junkyard','Market hall','Military cemetery','Monument/Memorial','Park','Pilgrimage','Plaza','Slave pit'];
+    return opts[Math.floor(Math.random()*20)];
+  }
+  if (key === '__citywalled__') {
+    return Math.random() < 0.5 ? 'Walled (50%)' : 'Not walled (50%)';
+  }
+  if (key === '__cityentrance__') {
+    var dirs = ['North','East','South','West'];
+    var used = [];
+    var grade = Math.floor(Math.random()*3)+2;
+    for (var i = 0; i < grade; i++) {
+      var avail = dirs.filter(function(d){ return used.indexOf(d) === -1; });
+      if (avail.length === 0) break;
+      used.push(avail[Math.floor(Math.random()*avail.length)]);
+    }
+    return used.join(', ');
+  }
+  if (key === '__citygatedoor__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r <= 3) return 'Wooden doors';
+    if (r <= 5) return 'Portcullis';
+    return 'Both (wooden doors + portcullis)';
+  }
+  if (key === '__cityguards__') {
+    var grade = Math.floor(Math.random()*3)+2;
+    var roll = Math.floor(Math.random()*3)+1+3;
+    var total = roll * 5 * grade;
+    return (roll+3) + ' × 5 × grade ' + grade + ' = ' + total + ' guards';
+  }
+  if (key === '__citysiege__') {
+    var months = Math.floor(Math.random()*6)+1 + Math.floor(Math.random()*6)+1;
+    return months + ' months of supplies';
+  }
+  if (key === '__villageoccupation__') {
+    var opts = ['Brewing (breweries) or Viticulture (vineyards)','Fishing (fisheries)','Hunting (tanneries)','Logging (sawmills)','Mining (mines)','Pottery (workshops)'];
+    return opts[Math.floor(Math.random()*6)];
+  }
+  if (key === '__villagelayout__') {
+    var opts = ['Heap','Round','Row'];
+    return opts[Math.floor(Math.random()*3)];
+  }
+  if (key === '__villagepoi__') {
+    var opts = ['Blacksmith','Market','Tavern','Well'];
+    return opts[Math.floor(Math.random()*4)];
+  }
+  if (key === '__villageguards__') {
+    var roll = Math.floor(Math.random()*3)+1+3;
+    return roll + ' × village grade (e.g. grade 1→' + roll + ', grade 2→' + (roll*2) + ', grade 3→' + (roll*3) + ')';
+  }
+  if (key === '__rulerdisp__') {
+    var r = Math.floor(Math.random()*6)+1;
+    return r <= 4 ? 'Same as villagers' : 'Opposite to villagers';
+  }
+  if (key === '__hamletlayout__') {
+    var opts = ['Heap','Round','Row'];
+    return opts[Math.floor(Math.random()*3)];
+  }
+  if (key === '__towerabove__') {
+    var r = Math.floor(Math.random()*12)+1;
+    if (r === 1) return 'One';
+    if (r <= 3) return 'Two';
+    if (r <= 6) return 'Three';
+    if (r <= 9) return 'Four';
+    if (r <= 11) return 'Five';
+    return 'Six';
+  }
+  if (key === '__towerbelow__') {
+    var r = Math.floor(Math.random()*12)+1;
+    if (r <= 6) return 'Zero';
+    if (r <= 8) return 'One';
+    if (r <= 10) return 'Two';
+    if (r === 11) return 'Three';
+    return 'Four';
+  }
+  if (key === '__towerconnect__') {
+    var r = Math.floor(Math.random()*12)+1;
+    if (r <= 3) return 'Staircase';
+    if (r <= 6) return 'Spiral staircase';
+    if (r <= 8) return 'Ladder';
+    if (r <= 10) return 'Elevator';
+    if (r === 11) return 'Magic Elevator';
+    return 'Teleportation portals';
+  }
+  if (key === '__towermaterial__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 5) return 'Cobblestone';
+    if (r <= 10) return 'Wood';
+    if (r <= 13) return 'Brick';
+    if (r <= 16) return 'Sandstone';
+    if (r <= 18) return 'Limestone';
+    if (r === 19) return 'Marble';
+    return 'Metal';
+  }
+  if (key === '__towershape__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 5) return 'Square';
+    if (r <= 10) return 'Round';
+    if (r <= 13) return 'Conical';
+    if (r <= 16) return 'Tilted';
+    if (r === 17) return 'Asymmetrical';
+    if (r === 18) return 'S-shaped';
+    if (r === 19) return 'Stacked';
+    return 'Twisted';
+  }
+  if (key === '__towerdetails__') {
+    var opts = ['Balcony','Banners','Battlements','Climbing plants','Flags','Moldings','Porch','Stained glass','Statues/Gargoyles','Turrets'];
+    var rolls = Math.floor(Math.random()*3)+1;
+    var results = [];
+    for (var i = 0; i < rolls; i++) {
+      var r = Math.floor(Math.random()*20)+1;
+      if (r <= 10) { if (results.length === 0) results.push('Nothing'); }
+      else results.push(opts[r-11]);
+    }
+    results = results.filter(function(v,i,a){ return a.indexOf(v)===i; });
+    return results.join(', ') || 'Nothing';
+  }
+  if (key === '__towerinside__') {
+    var opts = ['Colorful','Cozy','Dark','Dusty','Extravagant','Luxurious','Moldy','Old fashioned','Stark','Well decorated'];
+    return opts[Math.floor(Math.random()*10)];
+  }
+  if (key === '__towerequip__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 10) return 'Nothing';
+    var opts = ['Acoustic tube','Alarm system','Dumbwaiter','Emergency ladder/stairs','Garbage chute','Oversized pet doors','Pneumatic tubes','Secret passage','Slide','Ventilation system'];
+    return opts[r-11];
+  }
+  if (key === '__towerground__') {
+    var opts = ['Empty and dusty','Fortified room','Hallway','Reception desk','Ruined Room','Shop/Tavern','Trapped room','Unloading room'];
+    return opts[Math.floor(Math.random()*8)];
+  }
+  if (key === '__toweraboveuse__') {
+    var opts = ['Abandoned/Cursed level','Archives','Armory','Bedroom(s)','Kitchen and dining room','Laboratory','Library','Meeting room','Museum','Music room/Art room','Office/Study','Storage room'];
+    return opts[Math.floor(Math.random()*12)];
+  }
+  if (key === '__towertop__') {
+    var opts = ['Aviary','Beacon','Duel platform','Foghorn','Golden apple tree','Greenhouse','High security prison','Landing platform','Lightning rod','Lookout post','Magic searchlight','Monster nest','Observatory','Panic room','Ruined/Overgrown','Siege engine','Throne room','Treasure room','Weather station','Windmill'];
+    return opts[Math.floor(Math.random()*20)];
+  }
+  if (key === '__towerbottom__') {
+    var opts = ['Abyss','Ancient ruins','Arena','Boudoir','Creature mouth','Excavation site','Flesh pit','Flooded pit','Gambling den','Magic portal','Magic well','Mine','Oubliette','Secret society headquarters','Tomb','Tunnel to a lair','Tunnel to the center of the planet','Tunnel to the surface','Vault','Well'];
+    return opts[Math.floor(Math.random()*20)];
+  }
+  if (key === '__towerunderuse__') {
+    var opts = ['Abandoned/Cursed level','Alchemy lab','Cellar','Chapel','Forge','Menagerie','Mushroom cave','Prison','Rituals room','Storage','Torture room','Wine cellar'];
+    return opts[Math.floor(Math.random()*12)];
+  }
+  if (key === '__factionMeansType__') {
+    var r = Math.floor(Math.random()*10)+1;
+    if (r <= 2) return 'Any (roll once on each sub-table)';
+    if (r <= 6) return 'Honorable';
+    return 'Dishonorable';
+  }
+  if (key === '__settlementtype__') {
+    var opts = ['Hamlet','Village','City','Castle','Tower','Abbey'];
+    return opts[Math.floor(Math.random()*6)];
+  }
+  if (key === '__wildFirstBiome__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 6) return 'Grassland';
+    if (r <= 12) return 'Forest';
+    if (r <= 16) return 'Hills';
+    if (r <= 18) return 'Swamp';
+    return 'Mountains';
+  }
+  if (key === '__wildLinkNum__') {
+    var r = Math.floor(Math.random()*10)+1;
+    if (r <= 6) return 'One';
+    if (r <= 9) return 'Two';
+    return 'Three';
+  }
+  if (key === '__wildLinkDir__') {
+    var dirs = ['North','North-East','East','South-East','South','South-West','West','North-West'];
+    return dirs[Math.floor(Math.random()*8)];
+  }
+  if (key === '__wildLinkDur__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 3) return '30 min';
+    if (r <= 7) return '1 hour';
+    if (r <= 13) return '2 hours';
+    if (r <= 17) return '4 hours';
+    if (r <= 19) return '8 hours (1 day of walking)';
+    return '2 days';
+  }
+  if (key === '__wildLinkType__') {
+    var r = Math.floor(Math.random()*8)+1;
+    if (r <= 4) return 'Normal';
+    if (r <= 6) return 'Difficult (duration × 2 or risk of getting lost)';
+    if (r === 7) return 'Dangerous (risk of injury or death)';
+    return 'Special (magic or strange)';
+  }
+  if (key === '__wildAdjGrassland__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 10) return 'Grassland';
+    if (r <= 16) return 'Forest';
+    if (r <= 18) return 'Swamp';
+    if (r === 19) return 'Hills';
+    return 'Mountains';
+  }
+  if (key === '__wildAdjForest__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 10) return 'Forest';
+    if (r <= 16) return 'Grassland';
+    if (r <= 18) return 'Hills';
+    if (r === 19) return 'Mountains';
+    return 'Swamp';
+  }
+  if (key === '__wildAdjHills__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 10) return 'Hills';
+    if (r <= 16) return 'Mountains';
+    if (r <= 18) return 'Forest';
+    if (r === 19) return 'Grassland';
+    return 'Swamp';
+  }
+  if (key === '__wildAdjSwamp__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 10) return 'Swamp';
+    if (r <= 16) return 'Grassland';
+    if (r <= 18) return 'Forest';
+    if (r === 19) return 'Hills';
+    return 'Mountains';
+  }
+  if (key === '__wildAdjMountains__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 10) return 'Mountains';
+    if (r <= 16) return 'Hills';
+    if (r <= 18) return 'Forest';
+    if (r === 19) return 'Grassland';
+    return 'Swamp';
+  }
+  if (key === '__wildStartNode__') {
+    return Math.floor(Math.random()*6)+1 <= 6 ? (Math.floor(Math.random()*6)+1 <= 6 ? 'Tavern' : 'Village') : 'Village';
+  }
+  if (key === '__wildStartNodeFull__') {
+    var r = Math.floor(Math.random()*8)+1;
+    return r <= 6 ? 'Tavern' : 'Village';
+  }
+  if (key === '__wildPOINum__') {
+    var r = Math.floor(Math.random()*10)+1;
+    if (r <= 6) return 'One';
+    if (r <= 9) return 'Two';
+    return 'Three';
+  }
+  if (key === '__wildPOIType__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 8) return 'Landmark';
+    if (r <= 12) return 'Settlement';
+    if (r <= 15) return 'Lair';
+    if (r <= 19) return 'Ruins';
+    return 'Marvel';
+  }
+  if (key === '__wildLmType__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 10) return 'Natural';
+    if (r <= 18) return 'Artificial';
+    return 'Magical';
+  }
+  if (key === '__wildLmContent__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r === 1) return 'Hazard (25% treasure)';
+    if (r <= 3) return 'Empty (15% treasure)';
+    if (r === 4) return 'Special (variable treasure)';
+    return 'Monsters (50% treasure)';
+  }
+  if (key === '__wildNatural__') {
+    var opts = ['Alluvial deposits','Animal cemetery','Animal shaped rock','Animal skeleton/carcass','Anthill','Beaver dam','Bedrock','Beehive in a tree','Berry bush','Bog','Burning area','Burnt area','Burrow','Bush','Carnivorous plant','Cave','Centennial tree','Circle of standing stones','Cliff','Cocoons','Colluvial deposits','Crater','Crystalline proliferation','Dead tree','Deformed tree','Dry area','Ferruginous spring','Flower circle','Ford','Fruit tree','Geyser','Giant animal footprint','Giant animal skeleton','Giant crystal','Giant exoskeleton','Giant manure pile','Giant mushroom','Giant root','Ground lined with flowers','Hollow tree','Hot spring','Landslide','Lava pool','Lichen covered rock','Lifeless area','Lonely tree','Meteorite','Moss covered ground','Mudpit','Mudslide','Mushroom circle','Mushroom covered tree','Mycelial proliferation','Natural bridge','Natural stairs','Natural stone arch','Nest of a giant bird','Particular rock','Permanent fog','Petrified tree','Phosphorescent mushrooms','Pit','Place covered with cobwebs','Place struck by lightning','Plant overgrowth','Point of view','Pond','Poison ivy','Precious metal vein','Rapids','Rare flower','Ravine','Resurgence source','Rift','River','Rock formation','Rock needle','Rock slide','Rock with keyhole','Root arch','Sinkhole','Sandy area','Scree','Soil turned by wild boars','Spring','Squirrel\'s nut cache','Stone with fossil','Stream','Thistles','Thorn bush','Tree alignment','Tree damaged by a deer/bear','Tree stump','Tree with colorful leaves','Unstable rock','Uprooted tree','Waterfall','Water-filled cave','Wild roses','Wild vegetables'];
+    return opts[Math.floor(Math.random()*100)];
+  }
+  if (key === '__wildArtificial__') {
+    var opts = ['Abandoned market stall','Altar','Anchor','Animal shaped bush','Archery target','Banner','Battlefield','Beehives','Belvedere','Bench','Bird netting','Birdhouse','Bivouac area','Boundary stone','Bridge','Broken cart','Cage hanging from a tree','Cairn','Carved rock','Chains anchored in the ground','Collapsed mine entrance','Commemorative cross','Construction site','Copper emblem on a pole','Crashed aircraft','Crucifixion beam','Decrepit fence','Dolmen','Drinker','Duckboards','Dump','Fallow field','Fenced pasture','Field ready to be harvested','Firewood reserve','Fish pond','Fishing pontoon','Freshly dug grave','Gallows','Garland of bones','Golem in pieces','Graveyard','Greenhouse','Hammock between two trees','Hanging bridge','Hay bale','Heads on spears','Hieroglyphics covered wall','Hunting tower','Information panel (map)','Latrines','Log cabin','Manure pit','Marble table and chairs','Menhir','Monster statue','Obelisk','Pagan altar','Pile of branches','Pile of stones/dirt','Pillory','Pit full of bones','Plundered caravan','Pyre ready to be lit','Quarry','Remains of a ritual','Rotting trebuchet','Ruined staircase','Ruined wall','Sacrifice table','Scarecrow','Sculpted tree','Shipwreck','Signboard','Skulls hanging from trees','Snare','Statue','Stone arch','Stone calendar','Street lantern','Sundial','Swing','Sword in a rock','Symbols drawn on the ground','Tanning rack','Tent','Tombstone','Tomb with gisant','Totem','Tree house','Triggered trap','Tumulus','Vault','Vegetable patch','Watchtower','Well','Wood sculpture','Wooden arch','Wooden barrier','Wrought iron gate'];
+    return opts[Math.floor(Math.random()*100)];
+  }
+  if (key === '__wildMagical__') {
+    var opts = ['Abrupt change of season','Activation pedestal','Ancestors stone','Antimagic zone','Area known for will-o\'-wisps','Area marked by a magic duel','Area where everything is food','Area where illusions appear','Area where time is frozen','Area with different gravity','Armillary sphere','Body covered with crystals','Breathable water','Bubbling witch cauldron','Circle protecting from Evil','Confusion zone','Corrupted area','Crash zone of an angel','Curative basin','Cursed area','Dome of darkness','Enchanted area','Energy ball flying above a pillar','Eternal fireball','Evergreen tree','Fairy pond','Ferryman\'s call bell','Fertility stone','Field of rolling stones','Fire giving off colorful smoke','Floating crystal','Force field','Fountain of luck','Ghost building','Giant plants','Giant vegetables','Glittering sculpture','Golem mold & scaffolding','Holy area','Holy bush','Illuminated area','Illusory wall','Incessant cyclone','Invisible bridge','Lake of the Lady','Lake with spread waters','Levitating staircase','Levitating tower','Levitating wooden cabin','Light symbol','Lightweight area','Local magic nexus','Luminous engravings','Mage eye','Magic amphitheater','Magic beacon','Magic circle','Magic fountain','Magic plants garden','Magic terminal','Magical swirls escaping from the ground','Magic spring','Magnetic pylon','Mana well','Musical flowers','Mutation tank','Object stuck in never melting ice','Perfect black cube','Perfectly smooth cylindrical hole','Petrified traveler','Plants growing abnormally fast','Protective dome','Purifying basin','Rainbow bridge','Reverse waterfall','Riddle bridge','Singing crystal','Singing stone','Soil made of living flesh','Spell etched in bark','Stack of empty scrolls','Staff stuck in the ground','Star forge','Stone of knowledge','Stones impossibly stacked','Suffering chained souls','Summoning circle','Talking rock','Total silence zone','Tree with fruits all year round','Tree of a dryad','Tree with shiny fruits','Vegetal throne','Visions pool','Voice whispering in the wind','Vortex','Walkable water','Wizard\'s experimental zone','Wormhole','Wormhole ring'];
+    return opts[Math.floor(Math.random()*100)];
+  }
+  if (key === '__wildSettlement__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r <= 3) {
+      var hamlet = ['House(s)','House(s)','House(s)','House(s)','House(s)','House(s)','House(s)','House(s)','House(s)','House(s)','Tavern/Shop','Tavern/Shop','Tavern/Shop','Farmhouse','Farmhouse','Farmhouse','Manor','Manor','Ranch','Ranch','Mill','Mill','Sawmill','Sawmill','Toll','Toll','Brewery','Lighthouse/Watchtower','Circus/Festival','Race field'];
+      return 'Hamlet: ' + hamlet[Math.floor(Math.random()*30)];
+    } else if (r <= 10) {
+      return 'Village';
+    } else if (r <= 13) {
+      var strong = ['Bastion','Bastion','Bastion','Bastion','Bastion','Bastion','Wizard tower','Wizard tower','Castle/Palace','Prison','Prison','Vault/Archive'];
+      return 'Stronghold*: ' + strong[Math.floor(Math.random()*12)];
+    } else if (r === 14) {
+      var camp = ['Military','Military','Military','Military','Refugees','Refugees','Labor (mine)*','Labor (mine)*'];
+      return 'Camp: ' + camp[Math.floor(Math.random()*8)];
+    } else if (r <= 17) {
+      var relig = ['Temple/Monastery','Temple/Monastery','Temple/Monastery','Temple/Monastery','Crypt','Crypt'];
+      return 'Religious building*: ' + relig[Math.floor(Math.random()*6)];
+    } else {
+      return 'City';
+    }
+  }
+  if (key === '__wildMarvel__') {
+    var opts = ['Celestial staircase','City of gold','Cornucopia','Demonic idol','Dimensional portal','Divine altar','Divine throne','End of a rainbow','Entrance to the fairy kingdom','Flying castle','Flying island','Fountain of youth','Garden of Eden','Garden of revelations','Giant bean plant','Global magic nexus',"Hell's gate",'Hidden magic school','Illusory village','Miraculous fishing lake','Mythical ruined city','Petrified army','Portal to the winter world','Protective wall (magical or not)','Teleporting portal','Treasure cave','Valley of the Gods','Volcano','Wishing well','World tree'];
+    return opts[Math.floor(Math.random()*30)];
+  }
+  if (key === '__lairLayout__') {
+    var r = Math.floor(Math.random()*8)+1;
+    var layouts = [
+      'Layout 1 — 1 room (100%)',
+      'Layout 2 — 2 rooms (75% / 25%)',
+      'Layout 2 — 2 rooms (75% / 25%)',
+      'Layout 3 — 3 rooms (40% / 30% / 30%)',
+      'Layout 4 — 4 rooms (20% / 50% / 10% / 20%)',
+      'Layout 4 — 4 rooms (20% / 50% / 10% / 20%)',
+      'Layout 5 — 5 rooms (10% / 20% / 15% / 10% / 15%)',
+      'Layout 5 — 5 rooms (10% / 20% / 15% / 10% / 15%)'
+    ];
+    return layouts[r-1];
+  }
+  if (key === '__lairOutside__') {
+    var r = Math.floor(Math.random()*6)+1;
+    return (r * 10) + '% of monsters are outside the lair (patrol)';
+  }
+  if (key === '__lairPatrolHex__') {
+    var r = Math.floor(Math.random()*8)+1;
+    if (r === 8) return 'Split into 2 groups — roll 1d8 for each group’s hex position';
+    var hexPos = ['Same hex as lair','Hex 2 (NE)','Hex 3 (E)','Hex 4 (SE)','Hex 5 (S)','Hex 6 (SW)','Hex 7 (W)'];
+    return 'Hex ' + r + ' — ' + hexPos[r-1];
+  }
+  if (key === '__cpSize__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r===1) return 'Tiny (4 nodes, ~800 people)';
+    if (r<=5) return 'Small (8 nodes, ~1600 people)';
+    if (r<=12) return 'Medium (12 nodes, ~2400 people)';
+    if (r<=17) return 'Big (20 nodes, ~4000 people)';
+    if (r<=19) return 'Huge (50 nodes, ~10000 people)';
+    return 'Infinite (∞ nodes)';
+  }
+  if (key === '__cpChar__') {
+    var r = Math.floor(Math.random()*50)+1;
+    if (r<=20) return 'Nothing';
+    if (r<=35) return 'Walled';
+    if (r===36) return 'Corrupt';
+    if (r===37) return 'Crowded';
+    if (r===38) return 'Destroyed';
+    if (r===39) return 'Dry';
+    if (r===40) return 'Filthy';
+    if (r===41) return 'Holy city';
+    if (r===42) return 'Humid';
+    if (r===43) return 'Narrow';
+    if (r===44) return 'Noisy';
+    if (r===45) return 'Open';
+    if (r===46) return 'Renowned';
+    if (r===47) return 'Silent';
+    if (r===48) return 'Tiered';
+    if (r===49) return 'Unsafe';
+    return 'Windy';
+  }
+  if (key === '__cpAppear__') {
+    var opts = ['Cluttered','Cobblestone','Colorful','Covered in art','Dark','Eerie','Flowers','Geometric','Huge windows','Light','Lots of canals','Lots of stairs','Misaligned buildings','Red bricks','Stark','Tall towers','White marble','Wondrous','Wooden','Specific color scheme'];
+    return opts[Math.floor(Math.random()*20)];
+  }
+  if (key === '__cpColor__') {
+    var opts = ['Greyscale','Black and white','Blue and white','Sand and terracotta','Sand and pink','Black, red and white'];
+    return opts[Math.floor(Math.random()*6)];
+  }
+  if (key === '__cpFirstDistrict__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r<=6) return 'Poor';
+    if (r<=12) return 'Middle-class';
+    if (r<=16) return 'Wealthy';
+    if (r<=18) return 'Ethnic';
+    return 'Abandoned';
+  }
+  if (key === '__cpAdjPoor__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r<=10) return 'Poor'; if (r<=16) return 'Abandoned'; if (r<=18) return 'Ethnic'; if (r===19) return 'Middle-class'; return 'Wealthy';
+  }
+  if (key === '__cpAdjMiddle__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r<=10) return 'Middle-class'; if (r<=16) return 'Wealthy'; if (r<=18) return 'Ethnic'; if (r===19) return 'Poor'; return 'Abandoned';
+  }
+  if (key === '__cpAdjWealthy__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r<=10) return 'Wealthy'; if (r<=16) return 'Middle-class'; if (r<=18) return 'Ethnic'; if (r===19) return 'Abandoned'; return 'Poor';
+  }
+  if (key === '__cpAdjEthnic__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r<=10) return 'Ethnic'; if (r<=16) return 'Middle-class'; if (r<=18) return 'Wealthy'; if (r===19) return 'Abandoned'; return 'Poor';
+  }
+  if (key === '__cpAdjAbandoned__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r<=10) return 'Abandoned'; if (r<=16) return 'Poor'; if (r<=18) return 'Ethnic'; if (r===19) return 'Middle-class'; return 'Wealthy';
+  }
+  if (key === '__cpLinkNum__') {
+    var r = Math.floor(Math.random()*10)+1;
+    if (r<=6) return 'One'; if (r<=9) return 'Two'; return 'Three';
+  }
+  if (key === '__cpLinkDir__') {
+    var opts = ['North','North-East','East','South-East','South','South-West','West','North-West'];
+    return opts[Math.floor(Math.random()*8)];
+  }
+  if (key === '__cpLinkDur__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r<=3) return '5 min'; if (r<=5) return '10 min'; return '15 min';
+  }
+  if (key === '__cpLinkType__') {
+    var r = Math.floor(Math.random()*8)+1;
+    if (r<=4) return 'Normal'; if (r<=6) return 'Difficult (duration ×2 or risk of getting lost)'; if (r===7) return 'Dangerous (risk of injury or death)'; return 'Special (magic or strange)';
+  }
+  if (key === '__cpPOINum__') {
+    var r = Math.floor(Math.random()*10)+1;
+    if (r<=6) return 'One'; if (r<=9) return 'Two'; return 'Three';
+  }
+  if (key === '__cpPOIType__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r<=8) return 'Landmark'; if (r<=12) return 'Building'; if (r<=15) return 'Lair'; if (r<=19) return 'Ruins'; return 'Marvel';
+  }
+  if (key === '__cpLmContent__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r===1) return 'Hazard (25% treasure)'; if (r<=3) return 'Empty (15% treasure)'; if (r===4) return 'Special (variable)'; return 'Monsters (50% treasure)';
+  }
+  if (key === '__cpLandmark__') {
+    var opts = ['Aqueduct','Arch','Archaeological site','Bridge','Building miniature','Burnt building','Buttercross','Cage','Calvary','Caravanserai','Carriage stop','Carved rock','Cats\' den','Centennial tree','Checkerboard floor','Chess table','Circus','Construction site','Covered street','Crater','Crossroads','Dangerous street','Dead tree','Exotic tree','Famous street','Fighting pit','Fish market','Floating rock','Flower bed','Flowery street','Fountain','Gallows','Gargoyle','Graveyard','Guillotine','Haunted site','Hedge maze','Hidden pagan symbol','Historical ruins','Hollow tree','Holy ground','Idol','Informative plaque','Junkie corner','Junkyard','Kiosk','Long staircase','Lovers\' bench','Mailbox','Manhole','Market','Memorial','Menhir','Merry-go-round','Military cemetery','Monolith','Moss covered area','Obelisk','Observation point','Outdoor art exhibition','Painted wall','Parade grounds','Park','Picnic area','Pilgrimage','Playground','Pond','Public works','Quest board','Religious symbol','Remnants of war','Restricted zone','River crossing on freestone','Rooftop','Sculpture','Septic tank','Shooting range','Signboard','Skating rink','Skull shaped brick','Slave pit','Sport field','Square','Statue','Storage area','Sundial','Sword stuck in a rock','Symbolic statue','Thief symbol','Toll','Tomb','Tourney field','Tunnel','Underpass','Wanted notice','Wasteland','Water pump','Water well','Waterfall','Wishing well'];
+    return opts[Math.floor(Math.random()*100)];
+  }
+  if (key === '__cpBuildingType__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r<=3) return 'Housing'; if (r<=10) return 'Business'; if (r<=13) return 'Official'; if (r===14) return 'Religious'; if (r<=17) return 'Public'; return 'Military';
+  }
+  if (key === '__cpHousing__') {
+    var opts = ['Studio','1 bedroom apartment','2 bedrooms apartment','Bungalow','Maisonnette','Penthouse','Mansion','Hotel room','Tower','Boarding house','Tent','Houseboat','Under a bridge','Shanty','Squat','Underground bunker','Caravan','Treehouse','Basement','Hut'];
+    return opts[Math.floor(Math.random()*20)];
+  }
+  if (key === '__cpBusiness__') {
+    var opts = ['Alchemist','Animal trainer','Apothecary','Armorer','Artist','Astronomer','Bakery','Bank','Blacksmith','Bookmaker','Botanist','Brewery','Brothel','Butcher','Candy shop','Candlemaker','Carpenter','Cartographer','Casino','Cheesemaker','Doctor','Dollmaker','Florist','Fortuneteller','Foundry','Glassblower','General store','Hairdresser','Hardware store','Jeweller','Lawyer','Locksmith','Pawnshop','Perfumer','Pet shop','Potter','Restaurant','Sage','Sauna','Scribe','Siege engines seller','Slaughterhouse','Stables','Tailor','Tanner','Tapestry maker','Tavern','Tinker','Veterinarian','Wine shop'];
+    return opts[Math.floor(Math.random()*50)];
+  }
+  if (key === '__cpOfficial__') {
+    var opts = ['Arcane university','Archives','Asylum','City hall','Conservatory','Dispensary','Embassy','Fire station','Mayor office','Meteorological institute','Mint','Palace','Post office','School','Sewers','Tax office','Tourist office','Tribunal','University','Water tower'];
+    return opts[Math.floor(Math.random()*20)];
+  }
+  if (key === '__cpReligious__') {
+    var opts = ['Catacombs','Cathedral','Covent','Mausoleum','Monastery','Necropolis','Orphanage','Sanctuary','Seminar','Shrine','Temple','Ziggurat'];
+    return opts[Math.floor(Math.random()*12)];
+  }
+  if (key === '__cpPublic__') {
+    var opts = ['Aquarium','Arena','Auction hall','Botanical garden','Event center','Gallery','Gymnasium','Haunted house','House for sale','Hospital','Library','Morgue','Museum','Observatory','Opera','Guild','Public baths','Theater','Workshop','Zoo'];
+    return opts[Math.floor(Math.random()*20)];
+  }
+  if (key === '__cpMilitary__') {
+    var opts = ['Armory','Barracks','Canteen','Citadel','Fort','Guard post','Guard tower','Jail','Menagerie','Military archives','Military hospital','Military school','Military surplus','Prison','Recruitment center','Siege workshop','Spy academy','Training hall','Underground vault','Warehouse'];
+    return opts[Math.floor(Math.random()*20)];
+  }
+  if (key === '__cpMarvel__') {
+    var opts = ['Airship docks','Automated factory','Cloud tower','Crooked tower','Crystal palace','Dimensional trade hub','Emperor\'s tomb','Endless museum','Everlasting garden','Flying castle','Forbidden palace','Giant windmill','Gigantic statue','Gingerbread house','Infinite library','Magic portal','Magic water spring','Midnight circus','National bank','Religious focal point','Royal military school','Stables of flying beasts','Universal zoo','World tree'];
+    return opts[Math.floor(Math.random()*24)];
+  }
+  if (key === '__cnA__') { var o=['Autumn','Baker','Bard','Berry','Birch','Butcher','Dawn','Day','Dragon','Dream','Dusk','Eagle','Flower','Heaven','Hope','Knight','Lion','Night','Oak','Orchid','Pine','Robin','Rose','Spring','Summer','Sword','Thorn','Tournament','Violet','Winter']; return o[Math.floor(Math.random()*30)]; }
+  if (key === '__cnB__') { var o=['Anna','Arthur','Bernard','Charles','Elizabeth','Fanny','George','Helen','Ilia','John','Kathleen','King','Louis','Marcus','Mary','Nicholas','Prince','Princess','Queen','Tilly']; return o[Math.floor(Math.random()*20)]; }
+  if (key === '__cnC__') { var o=['Avery','Bayley','Carm','Dun','Ensal','Folton','Galgar','Haye','Idar','Julvet','Kanth','Loy','Marsan','Nisme','Ourar','Peulin','Rundur','Solin','Thaas','Unvary','Vanau','Wark','Yverne','Zalek']; return o[Math.floor(Math.random()*24)]; }
+  if (key === '__cnD__') { var o=['Bad','Black','Blue','Brave','Charming','Coal','Cold','Copper','Coral','Crystal','Damp','Dry','False','Giant','Golden','Good','Great','Green','Grey','Hot','Little','Red','Rock','Silent','Silver','Small','Stone','True','White','Wine']; return o[Math.floor(Math.random()*30)]; }
+  if (key === '__cnE__') { var o=['Bourg','Burg','Citadel','City','County','Hamlet','Town','Village','Ville','Ward']; return o[Math.floor(Math.random()*10)]; }
+  if (key === '__cnF__') { var o=['Abbey','Arch','Bank','Bridge','Castle','Chapel','Church','Court','Cross','Farm','Forge','Gate','Hall','Home','Hospital','House','Market','Mall','Mill','Post','Road','Temple','Union','Wall']; return o[Math.floor(Math.random()*24)]; }
+  if (key === '__cnG__') { var o=['Beach','Bone','Burrow','Cliff','Corner','Creek','Dale','End','Fall','Field','Forest','Garden','Grove','Hill','Hole','Hollow','Island','Lake','Land','Limit','Marsh','Mont','Mount','Mountain','Path','Park','Pass','Peak','Plain','Point','Run','Spring','Summit','Trail','Tree','Valley','View','Way','Wells','Wood']; return o[Math.floor(Math.random()*40)]; }
+  if (key === '__cnH__') { var o=['Bottom','Center','Down','East','Fort','Great','Haute','High','Little','Low','Mount','New','North','Old','Port','Saint','South','Under','Up','West']; return o[Math.floor(Math.random()*20)]; }
+  if (key === '__cityNameFull__') {
+    var A = ['Autumn','Baker','Bard','Berry','Birch','Butcher','Dawn','Day','Dragon','Dream','Dusk','Eagle','Flower','Heaven','Hope','Knight','Lion','Night','Oak','Orchid','Pine','Robin','Rose','Spring','Summer','Sword','Thorn','Tournament','Violet','Winter'];
+    var B = ['Anna','Arthur','Bernard','Charles','Elizabeth','Fanny','George','Helen','Ilia','John','Kathleen','King','Louis','Marcus','Mary','Nicholas','Prince','Princess','Queen','Tilly'];
+    var C = ['Avery','Bayley','Carm','Dun','Ensal','Folton','Galgar','Haye','Idar','Julvet','Kanth','Loy','Marsan','Nisme','Ourar','Peulin','Rundur','Solin','Thaas','Unvary','Vanau','Wark','Yverne','Zalek'];
+    var D = ['Bad','Black','Blue','Brave','Charming','Coal','Cold','Copper','Coral','Crystal','Damp','Dry','False','Giant','Golden','Good','Great','Green','Grey','Hot','Little','Red','Rock','Silent','Silver','Small','Stone','True','White','Wine'];
+    var E = ['Bourg','Burg','Citadel','City','County','Hamlet','Town','Village','Ville','Ward'];
+    var F = ['Abbey','Arch','Bank','Bridge','Castle','Chapel','Church','Court','Cross','Farm','Forge','Gate','Hall','Home','Hospital','House','Market','Mall','Mill','Post','Road','Temple','Union','Wall'];
+    var G = ['Beach','Bone','Burrow','Cliff','Corner','Creek','Dale','End','Fall','Field','Forest','Garden','Grove','Hill','Hole','Hollow','Island','Lake','Land','Limit','Marsh','Mont','Mount','Mountain','Path','Park','Pass','Peak','Plain','Point','Run','Spring','Summit','Trail','Tree','Valley','View','Way','Wells','Wood'];
+    var H = ['Bottom','Center','Down','East','Fort','Great','Haute','High','Little','Low','Mount','New','North','Old','Port','Saint','South','Under','Up','West'];
+    var p = function(arr){ return arr[Math.floor(Math.random()*arr.length)]; };
+    var r = Math.floor(Math.random()*30)+1;
+    if (r===1)  return p(A)+' '+p(E);
+    if (r===2)  return p(A)+' '+p(F);
+    if (r===3)  return p(A)+' '+p(G);
+    if (r===4)  return p(A)+' '+p(G)+' '+p(E);
+    if (r===5)  return p(B)+' '+p(E);
+    if (r===6)  return p(B)+' '+p(F);
+    if (r===7)  return p(B)+' '+p(G);
+    if (r===8)  return p(C);
+    if (r===9)  return p(C)+' '+p(E);
+    if (r===10) return p(C)+' '+p(F);
+    if (r===11) return p(C)+' '+p(G);
+    if (r===12) return p(C)+'borough';
+    if (r===13) return p(C)+'by';
+    if (r===14) return p(C)+'-by-sea';
+    if (r===15) return p(C)+'-in-'+p(C);
+    if (r===16) return p(C)+'ington';
+    if (r===17) return p(C)+'-le-'+p(C);
+    if (r===18) return p(C)+'-les-bains';
+    if (r===19) return p(C)+'-on-the-hill';
+    if (r===20) return p(C)+'thorpe';
+    if (r===21) return p(C)+'ton';
+    if (r===22) return p(D)+' '+p(A);
+    if (r===23) return p(D)+' '+p(C);
+    if (r===24) return p(D)+' '+p(E);
+    if (r===25) return p(D)+' '+p(F);
+    if (r===26) return p(D)+' '+p(G);
+    if (r===27) return p(H)+' '+p(A);
+    if (r===28) return p(H)+' '+p(C);
+    if (r===29) return 'Trou-au-'+p(C);
+    return 'Trou-de-'+p(C);
+  }
+
+  if (key === '__dpcSize__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r===1) return 'Tiny (4 nodes)';
+    if (r<=5) return 'Small (8 nodes)';
+    if (r<=12) return 'Medium (12 nodes)';
+    if (r<=17) return 'Big (20 nodes)';
+    if (r<=19) return 'Huge (50 nodes)';
+    return 'Infinite';
+  }
+  if (key === '__dpcType__') {
+    var o=['Bastion','Bastion','Bastion','Mine','Mine','Temple/Monastery','Temple/Monastery','Crypt','Wizard tower','Castle/Palace','Prison','Vault/Archive'];
+    return o[Math.floor(Math.random()*12)];
+  }
+  if (key === '__dpcArch__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r<=12) return 'Human';
+    if (r<=15) return 'Luxurious';
+    if (r<=17) return 'Dwarven';
+    if (r===18) return 'Elven';
+    if (r===19) return 'Foreign';
+    return 'Elder/Alien';
+  }
+  if (key === '__dpcAesthetic__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r<=12) return 'None';
+    if (r===13) return 'Burnt';
+    if (r===14) return 'Crystalline';
+    if (r===15) return 'Demonic';
+    if (r===16) return 'Flooded';
+    if (r===17) return 'Fortified';
+    if (r===18) return 'Fungal';
+    if (r===19) return 'Haunted';
+    return 'Vegetal';
+  }
+  if (key === '__dpcEntrance__') {
+    var r = Math.floor(Math.random()*12)+1;
+    if (r<=5) return 'Nothing';
+    if (r<=8) return 'Guards';
+    if (r<=10) return 'Trap';
+    return 'Magic';
+  }
+  if (key === '__dpcLinkNum__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r===1) return 'One';
+    if (r<=4) return 'Two';
+    return 'Three';
+  }
+  if (key === '__dpcLinkDir__') {
+    var o=['North','North-East','East','South-East','South','South-West','West','North-West'];
+    return o[Math.floor(Math.random()*8)];
+  }
+  if (key === '__dpcLinkType__') {
+    var r = Math.floor(Math.random()*12)+1;
+    if (r<=6) return 'Horizontal';
+    if (r<=10) return 'Obstacle';
+    if (r===11) return 'Vertical';
+    return 'Secret';
+  }
+  if (key === '__dpcObstacle__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r<=10) return 'Stuck door';
+    if (r<=15) return 'Locked wooden door';
+    if (r<=18) return 'Portcullis';
+    if (r===19) return 'Magic door';
+    return 'Locked metal door';
+  }
+  if (key === '__dpcVertBoth__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r<=5) return 'Stairs';
+    if (r<=8) return 'Broken stairs';
+    if (r<=11) return 'Spiral stairs';
+    if (r<=14) return 'Ladder';
+    if (r<=16) return 'Incline';
+    if (r<=18) return 'Rope';
+    if (r===19) return 'Dumbwaiter';
+    return 'Elevator';
+  }
+  if (key === '__dpcVertDown__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r<=5) return 'Hole in the ground';
+    return 'Chute';
+  }
+  if (key === '__dpcPOIType__') {
+    var r = Math.floor(Math.random()*20)+1;
+    if (r<=10) return 'Room';
+    if (r<=18) return 'Corridor';
+    return 'Natural room (e.g. cavern)';
+  }
+  if (key === '__dpcContent__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r===1) return 'Trap (25% treasure)';
+    if (r<=3) return 'Empty (15% treasure)';
+    if (r===4) return 'Special (variable)';
+    return 'Monsters (50% treasure)';
+  }
+  if (key === '__dpcFactionAnimal__') {
+    var r = Math.floor(Math.random()*3)+1;
+    if (r===1) return 'Hostility';
+    if (r===2) return 'Distrust';
+    return 'Trade';
+  }
+  if (key === '__dpcFactionInt__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r===1) return 'Hostility';
+    if (r<=3) return 'Distrust';
+    if (r<=5) return 'Trade';
+    return 'Alliance';
+  }
+  if (key === '__dpcTrap__') {
+    var o=['Acid pool','Alarm','Banana peel','Blade','Cage','Caltrops','Circular saw','Crossbow','Crushed glass','Crushing ceiling','Crushing wall','Dart thrower','Electric shock','Electrified ground','Elevator to another level','Extreme temperature','Fills with sand','Fills with water','Flamethrowers','Flammable gas','Flashing light','Gas (death, sleep, confusion)','Illusory floor','Landslide','Lasso','Lava flow','Lava pool','Magic (triggers scroll effect)','Mist diffuser','Piston','Pit','Poisoned caltrops','Portcullis closing','Projectile wall (arrows, marbles)','Quicksands','Ram','Rolling stone','Slippery floor','Spray (acid, sticky, smelly)','Sticky ground','Spike pit','Stretched spiky branch','Taut rope','Trapdoor (pit)','Trapdoor (spike pit)','Trapdoor (to a lower level)','Vacuum chamber','Violent airstream','Violent waterstream','Wolf trap'];
+    return o[Math.floor(Math.random()*50)];
+  }
+  if (key === '__dpcEmpty__') {
+    var o=['Abandoned guard post','Adventurer nailed to a wall','Alchemy table','Alcoves','Aligned beds','Aligned benches','Altar','Anatomical skeleton','Aquarium','Banquet table','Barrels','Barricade','Bear skin','Bed','Bench','Blood spots','Broken trap','Carpet','Cells','Chained skeletons','Chains','Charred remains','Crates','Cryogenic/formol tubes','Cushions','Dance parquet','Dark area','Desk','Drums','Dummy door','Empty chest','Excavation site','Extinguished campfire','Fireplace','Flooded zone','Floor covered with oil','Fog','Food reserve','Forge','Fountain','Frames on the walls','Fresco','Furnished library','Gargoyle','Gears in the walls','Gong','Graffiti','Guano covered ground','Hammock','Hieroglyphics','Idol','Iron maiden','Ivy','Latrines','Leaking water pipe','Leftovers on a table','Mushroom culture','Organ','Oubliette','Pedestal','Pentagram','Piano','Pile of ashes (smoking)','Pile of bones','Pile of bricks','Pile of logs','Pile of skulls','Pillars','Pool','Puddle of vomit','Puddles of blood','Religious symbols','Rotting corpse','Rotting library','Rotting tapestries','Rubble','Sarcophagus','Shelf','Showcases','Signs of combat','Sink','Slime','Smokehouse','Stained glass','Statues','Summoning circle','Table and chairs','Telescope','Throne','Tools','Torture easel','Training dummies','Trophies','Urns','Wardrobe','Waste','Weapons/Armor racks','Wine cellar','Wooden bathtub','Workbench'];
+    return o[Math.floor(Math.random()*100)];
+  }
+  if (key === '__dpcSecretAppear__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r<=4) return 'Camouflaged';
+    return 'In plain sight';
+  }
+  if (key === '__dpcCamo__') {
+    var r = Math.floor(Math.random()*12)+1;
+    if (r<=6) return 'As the wall';
+    if (r===7) return 'Bottom of a cabinet';
+    if (r===8) return 'Illusory wall';
+    if (r===9) return 'Mirror';
+    if (r===10) return 'Painting';
+    if (r===11) return 'Part of a bas-relief';
+    return 'Part of a bookshelf';
+  }
+  if (key === '__dpcClue__') {
+    var o=['Air flow','Cleaner/dirtier floor or wall','Different material or color','Footprints','Ground is worn out','Interrupted trail of blood','Own distinctive mark','Ray of light','None','None','None','None'];
+    return o[Math.floor(Math.random()*12)];
+  }
+  if (key === '__dpcPlainSight__') {
+    var r = Math.floor(Math.random()*8)+1;
+    if (r<=5) return 'Metal door with no handle';
+    if (r<=7) return 'Wooden door with no handle';
+    return 'Fire/steam/energy wall';
+  }
+  if (key === '__dpcMechanism__') {
+    var o=['Align items','Antlers of a deer head','Book in a library','Brick protruding from a wall','Candle holder without a candle/with an unlit candle','Detail of a statue in an unusual position','Extinguish a specific candle','Fireplace poker in a stand','Halberd/Sword of an armor','Hit a target','Inserting a missing piece','Inserting a sword into a hole','Just going through it','Magical detection of a specific monster','Password','Play a series of notes','Pressure plate','Reverse pressure plate (remove its load)','Thirsty mouth','Weapon hanging on the wall behind a shield'];
+    return o[Math.floor(Math.random()*20)];
+  }
+  if (key === '__dpcHiddenDoor__') {
+    var o=['Carpet','Curtains','Furniture','Manhole','Molds','Painting','Plant(s)','Shadows','Spiderwebs','Statue'];
+    return o[Math.floor(Math.random()*10)];
+  }
+  if (key === '__dpcHiddenStairs__') {
+    var o=['Carpet','Curtains','Furniture','Manhole','Molds','Painting','Plant(s)','Shadows','Spiderwebs','Statue','Tapestry','Ventilation grid'];
+    return o[Math.floor(Math.random()*12)];
+  }
+  if (key === '__dpcMagicDoor__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r<=5) return 'Demon door';
+    return 'Sealed by magic';
+  }
+  if (key === '__dpcDemonTask__') {
+    var o=['Bring it a specific item','Do a bad deed before it','Find its \'key\'','Find its password','Kill a specific monster','Listen to it (lie)','Listen to it (monologue)','Listen to it (simple warning)','Solve a puzzle','Take a leap of faith'];
+    return o[Math.floor(Math.random()*10)];
+  }
+  if (key === '__encDeepClover__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Leprechauns'; if(r<=5) return 'Giant slugs'; return 'Unicorns'; }
+  if (key === '__encDeepHaunted__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Werewolves'; if(r<=5) return 'Ghosts'; return 'Killer trees'; }
+  if (key === '__encDeepFlooded__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Eels'; if(r<=5) return 'Fish-men'; return 'Giant beavers'; }
+  if (key === '__encDeepFungal__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Shriekers'; if(r<=5) return 'Mushroom-men'; return 'Fungoids'; }
+  if (key === '__encDeepVolcano__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Fire salamanders'; if(r<=5) return 'Efreet'; return 'Phoenixes'; }
+  if (key === '__encDeepFen__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Bog mummies'; if(r<=5) return 'Green hags'; return 'Ghosts'; }
+  if (key === '__encDeepCursed__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Skeletons'; if(r<=5) return 'Nightmares'; return 'Wights'; }
+  if (key === '__encDeepHotSprings__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Bears'; if(r<=5) return 'Steam mephits'; return 'Nereids'; }
+  if (key === '__encDeepGlacier__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Yeti'; if(r<=5) return 'Frost giants'; return 'Remorhazes'; }
+  if (key === '__encDeepCrystal__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Frost salamanders'; if(r<=5) return 'Stone elementals'; return 'Crysmals'; }
+  if (key === '__encDeepThorn__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Constrictor vines'; if(r<=5) return 'Bushtraps'; return 'Vegepygmies'; }
+  if (key === '__encDeepPrimal__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Carnivorous apes'; if(r<=5) return 'Giant snakes'; return 'Hydras'; }
+  if (key === '__encDeepOasis__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Hippopotamus'; if(r<=5) return 'Nomads'; return 'Manticores'; }
+  if (key === '__encDeepToxic__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Spitting cobras'; if(r<=5) return 'Giant dragonflies'; return 'Basilisks'; }
+  if (key === '__encDeepLost__') { var r=Math.floor(Math.random()*6)+1; if(r<=3) return 'Neanderthals'; if(r<=5) return 'Dinosaurs'; return 'Mastodons'; }
+  if (key === '__settleName__') {
+    var A = ['Abbey','Arch','Bank','Barrack','Bench','Bridge','Castle','Chapel','Church','Court','Cross','Farm','Forge','Gate','Hall','Home','Hospital','House','Inn','Mall','Market','Mill','Mine','Post','Road','Stall','Temple','Tower','Union','Wall'];
+    var B = ['Acorn','Angel','Apple','Atelier','Autumn','Axe','Baker','Bard','Baron','Barrow','Berry','Birch','Bird','Boar','Book','Bow','Butcher','Candle','Cheese','Cloud','Corn','Cow','Crow','Dawn','Day','Deer','Demon','Dragon','Dream','Dusk','Dust','Dwarf','Eagle','Elf','Feather','Fire','Fish','Flower','Fog','Fox','Frog','Ghost','Gnoll','Goblin','Grave','Halfling','Hare','Hawk','Heaven','Hell','Hook','Hope','Horn','Horse','Hunter','Knight','Kobold','Leaf','Letter','Lion','Mage','Moon','Night','Oak','Orchid','Pine','Pork','Rabbit','Rain','Ram','River','Robin','Rose','Salt','Seed','Sky','Snake','Snow','Sorrow','Spice','Spring','Squirrel','Star','Summer','Sun','Sword','Thief','Thorn','Thunder','Toad','Tournament','Tulip','Violet','Warrior','Water','Wind','Winter','Witch','Wolf','Wyvern'];
+    var C = ['Anna','Arthur','Bernard','Charles','Elizabeth','Fanny','George','Helen','Ilia','John','Kathleen','King','Louis','Marcus','Mary','Nicholas','Prince','Princess','Queen','Tilly'];
+    var D = ['Avery','Bayley','Carm','Dun','Ensal','Folton','Galgar','Haye','Idar','Julvet','Kanth','Loy','Marsan','Nisme','Ourar','Peulin','Rundur','Solin','Thaas','Unvary','Vanau','Wark','Yverne','Zalek'];
+    var E = ['Bad','Bad','Black','Black','Bloody','Bloody','Blue','Blue','Bony','Bony','Brave','Brave','Brown','Brown','Burnt','Burnt','Charming','Charming','Coal','Coal','Cold','Cold','Copper','Copper','Coral','Coral','Crystal','Crystal','Damp','Damp','Dark','Dark','Dry','Dry','Dusty','Dusty','False','False','Fast','Fast','Free','Free','Giant','Giant','Glass','Glass','Gold(en)','Gold(en)','Good','Good','Gray','Gray','Great','Great','Green','Green','Hidden','Hidden','Hot','Hot','Indigo','Indigo','Iron','Iron','Light','Light','Long','Long','Metal','Metal','Mithral','Mithral','Obsidian','Obsidian','Purple','Purple','Red','Red','Rock','Rock','Royal','Royal','Silent','Silent','Silver','Silver','Small','Small','Stone','Stone','True','True','White','White','Wild','Wild','Wine','Wine','Yellow','Yellow'];
+    var F = ['Borough','B(o)urg','Camp','Cester','Citadel','City','County','Dorf','Ham','Hamlet','Haven','Heim','Keep','Stead','Town','Village','Ville','Ward','Wihr','Worth'];
+    var G = ['Bottom','Down','East','Far','Fort','Haute','High','Little','Lost','Low','Mount','New','North','Old','Port','Saint','South','Under','Up','West'];
+    var H = ['Bay','Bay','Beach','Beach','Bone','Bone','Break','Break','Burrow','Burrow','Cliff','Cliff','Corner','Corner','Creek','Creek','Dale','Dale','End','End','Fall','Fall','Field','Field','Forest','Forest','Garden','Garden','Glade','Glade','Glen','Glen','Grove','Grove','Heid','Heid','Helm','Helm','Hill','Hill','Hold','Hold','Hole','Hole','Hollow','Hollow','Island','Island','Lake','Lake','Land','Land','Limit','Limit','Marsh','Marsh','Mont','Mont','Moor','Moor','Mount','Mount','Mountain','Mountain','Park','Park','Pass','Pass','Path','Path','Peak','Peak','Plain','Plain','Point','Point','Pool','Pool','Rest','Rest','Run','Run','Source','Source','Summit','Summit','Trail','Trail','Tree','Tree','Valley','Valley','View','View','Way','Way','Well','Well','Wood','Wood'];
+    var p = function(arr){ return arr[Math.floor(Math.random()*arr.length)]; };
+    var structures = [
+      function(){ return p(B)+' '+p(A); },
+      function(){ return p(B)+' '+p(F); },
+      function(){ return p(B)+' '+p(H); },
+      function(){ return p(B)+' '+p(H); },
+      function(){ return p(C)+' '+p(A); },
+      function(){ return p(C)+' '+p(F); },
+      function(){ return p(C)+' '+p(H); },
+      function(){ return p(D); },
+      function(){ return p(D)+' '+p(A); },
+      function(){ return p(D)+' '+p(F); },
+      function(){ return p(D)+' '+p(H); },
+      function(){ return p(D)+'-by-sea'; },
+      function(){ return p(D)+'ington'; },
+      function(){ return p(D)+'-le-'+p(D); },
+      function(){ return p(D)+'-les-bains'; },
+      function(){ return 'Nisme-on-the-hill'; },
+      function(){ return p(D)+'thorpe'; },
+      function(){ return p(D)+'ton'; },
+      function(){ return p(E)+' '+p(A); },
+      function(){ return p(E)+' '+p(B); },
+      function(){ return p(E)+' '+p(D); },
+      function(){ return p(E)+' '+p(F); },
+      function(){ return p(E)+' '+p(H); },
+      function(){ return p(G)+' '+p(B); },
+      function(){ return p(G)+' '+p(D); },
+      function(){ return 'Trou-au-'+p(D); },
+      function(){ return 'Trou-de-'+p(D); },
+      function(){ return 'Val-'+p(D); }
+    ];
+    return structures[Math.floor(Math.random()*structures.length)]();
+  }
+  if (key === '__lmType__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r <= 3) return 'Natural';
+    if (r <= 5) return 'Artificial';
+    return 'Magic';
+  }
+  if (key === '__lmContent__') {
+    var r = Math.floor(Math.random()*6)+1;
+    if (r === 1) return 'Hazard (25% treasure)';
+    if (r <= 3) return 'Empty (15% treasure)';
+    if (r === 4) return 'Special (variable treasure)';
+    return 'Monsters (50% treasure)';
+  }
+  if (key === '__lmNatural__') {
+    var cats = [
+      ['Animal boneyard','Anthill','Beaver dam','Giant animal (exo)skeleton','Giant bird nest','Giant snail shell','Huge galleries','Location covered with crows',"Predator's hunting ground",'Ransacked area'],
+      ['Berry bush','Bramble overgrown area','Burnt area','Centennial tree','Dead tree','Exotic tree','Fallen tree','Flower circle','Fruit tree','Giant flower'],
+      ['Giant mushroom','Hollow tree','Impenetrable thicket','Mushroom circle','Mushroom spot','Mycelial proliferation','Rare plant spot','Root arch','Tree alignment','Water-filled plant'],
+      ['Animal shaped rock','Cave','Chasm','Crater','Crystalline proliferation','Giant crystal','Lava pool','Mudpit','Pit','Precious metal vein'],
+      ['Ravine','Rift','Rock hole','Rock needle','Scree','Sinkhole','Stone arch','Stone bridge','Stone stairs','Very big rock'],
+      ['Ford','Hotspring','Lake','Pond','Rapids','River','Spring','Stream','Water-filled cave','Waterfall']
+    ];
+    var catNames = ['Fauna','Flora (A)','Flora (B)','Geology (A)','Geology (B)','Hydrology'];
+    var ci = Math.floor(Math.random()*6);
+    var item = cats[ci][Math.floor(Math.random()*10)];
+    return catNames[ci] + ': ' + item;
+  }
+  if (key === '__lmArtificial__') {
+    var cats = [
+      ['Barn','Felled trees','Field','Granary','Labor camp','Meadow','Quarry','Straw man','Swidden field','Water tower'],
+      ['Carved rock','Dolmen','Hanging bones','Heads on spikes','Masks','Pile of bones','Rock stack','Standing stones','Straw dolls','Totem'],
+      ['Abandoned tavern','Burnt barn','Collapsed mine entrance','Decrepit mansion','Desecrated church','Destroyed house','Overgrown tower','Pile of rubble','Razed village','Ruined castle'],
+      ['Bench','Bivouac area','Gazebo','Hunter\'s cabin','Hunting tower','Kennel','Outhouse','Palisade','Well','Wooden fence'],
+      ['Boardwalks','Boundary stone','Bridge','Broken bridge','Danger sign','Ledge','Signboard','Stairs','Suspension bridge','Zipline'],
+      ['Bell/Gong','Calvary','Cemetery','Cross','Holy place','Idol','Shrine','Tomb','Tumulus','Vault']
+    ];
+    var catNames = ['Labor','Mystery','Ruin','Small structure','Travel','Worship'];
+    var ci = Math.floor(Math.random()*6);
+    var item = cats[ci][Math.floor(Math.random()*10)];
+    return catNames[ci] + ': ' + item;
+  }
+  if (key === '__lmMagic__') {
+    var cats = [
+      ['Always snowy area','Anti-magic zone','Area bringing back the dead','Area where nothing grows','Bad luck area','Dome of darkness','Force field','Incessant cyclone','Protection from Evil','Time is frozen'],
+      ['Curative basin','Enchanted bell','Fertility stone','Magic fountain/spring','Magic fruits tree','Mutation pit','Stone of knowledge','Sword stuck in a rock','Visions pool','Witch cauldron'],
+      ['Breathable water','Glowing mushrooms trail','Illusory path','Invisible bridge','Levitating staircase','Magic mirror','Rainbow bridge','Riddle bridge','Walkable water','Wormhole'],
+      ['Area covered with fairy dust','Bloody altar','Corpse covered in crystals','Corrupt area','Destroyed golem','Magic battlefield','Old shrine','Petrified travelers','Remnants of a ceremony','Signs of an explosion'],
+      ['Ancient burial grounds','Birthplace/Tomb of a saint','Magic beacon','Mana well','Neolithic rock monument','Preserved natural place','Root of the World Tree','Sacred waters','Sun focal point','Ziggurat of old'],
+      ['Everburning tree','Evermelting ice','Floating crystal','Ghost building','Luminous engravings','Reverse waterfall','Singing crystal','Strong magnetism','Talking rock','Whispers in the wind']
+    ];
+    var catNames = ['Area under a spell','Enchanted item','Magic path','Magic remains','Place of power','Strange phenomenon'];
+    var ci = Math.floor(Math.random()*6);
+    var item = cats[ci][Math.floor(Math.random()*10)];
+    return catNames[ci] + ': ' + item;
+  }
+  if (key === '__lmHazard__') {
+    var opts = ['Acid pits','Allergenic plants','Ancient dormant illness','Curse','Dangerous footing','Easy to get lost','Fog','Fumes (smoke, toxic, etc.)','Ghosts','Hallucinogenic spores','Hidden pits','Hunting traps','Magic corruption','Plague','Quicksands','Radiations','Sabotage/Trap','Unstable/Likely to break','Venomous animals (hornets, snakes, scorpions, etc.)','Volcanic area'];
+    return opts[Math.floor(Math.random()*20)];
+  }
+  if (key === '__lmEmpty__') {
+    var opts = ['Info about nearby monsters (ecology, lair, weakness)','Info about nearby monsters (ecology, lair, weakness)','Info about nearby monsters (ecology, lair, weakness)','Info about nearby monsters (ecology, lair, weakness)','Info about nearby monsters (ecology, lair, weakness)','Alchemy recipe','Curative effects (water, plant)','Directions to a settlement','Dungeon location','Future event','Important past event','Legend/Myth','Local custom','Password','Secret passage location','Spell/Ritual','Tale about a magic weapon','Toxicity of something','Upcoming weather','Words from a (random) monster language'];
+    return opts[Math.floor(Math.random()*20)];
+  }
+  if (key === '__lmSpecial__') {
+    var r = Math.floor(Math.random()*12)+1;
+    if (r === 1) return 'Arbitrate a dispute';
+    if (r === 2) return 'Prevent a threat';
+    if (r === 3) return 'Solve a puzzle/riddle';
+    if (r <= 6) {
+      var mysteries = ['Abductions','Alleged ghost','Curse','Miracle','Missing items','Mutations','Odd footprints/tracks','Stalker','Strange lights/noises','Unexplained deaths'];
+      return 'Uncover a mystery: ' + mysteries[Math.floor(Math.random()*10)];
+    }
+    if (r <= 9) {
+      var npcProbs = ['Amnesia','Attacked/Chased','Disappearance','Hunger/Thirst','Imprisoned/Enslaved','Injured/Sick','Lost','Stuck/Bogged down','Theft','Trapped'];
+      return 'NPC(s)/Monster(s) in need: ' + npcProbs[Math.floor(Math.random()*10)];
+    }
+    var related = [
+      ['Adultery','Broken trade agreement','Division of an inheritance','Murder investigation','Territorial boundaries','Trial'],
+      ['Evil ceremony','Flood','Frenzied migratory animals','Magic corruption','Plague','Wildfire'],
+      ['Abductions','Alleged ghost','Curse','Miracle','Missing items','Mutations','Odd footprints/tracks','Stalker','Strange lights/noises','Unexplained deaths'],
+      ['Amnesia','Attacked/Chased','Disappearance','Hunger/Thirst','Imprisoned/Enslaved','Injured/Sick','Lost','Stuck/Bogged down','Theft','Trapped']
+    ];
+    var relNames = ['Dispute to arbitrate','Threat to prevent','Mystery to uncover','NPC problem'];
+    var ri = Math.floor(Math.random()*4);
+    var arr = related[ri];
+    return 'Related to landmark — ' + relNames[ri] + ': ' + arr[Math.floor(Math.random()*arr.length)];
+  }
+  if (key === '__randomenc__') {
+    var r = Math.floor(Math.random()*6)+1 + Math.floor(Math.random()*6)+1;
+    if (r === 2) return 'Dragon (next lair/tower = their dwelling)';
+    if (r === 3) return 'Other faction (from a nearby hex)';
+    if (r <= 6) return 'Faction (of the current hex)';
+    if (r === 7) return 'NPCs (not belonging to a faction)';
+    if (r <= 11) return 'Biome (roll fitting encounter table)';
+    return 'Wizard (next lair/tower = their dwelling)';
+  }
+  if (key === '__factionsInvolved__') {
+    var r = Math.floor(Math.random()*6)+1;
+    return r <= 4 ? 'Only one faction' : 'Multiple factions';
+  }
+  if (key === '__clustersize__') { return String(Math.floor(Math.random()*12)+1); }
+  if (key === '__emptyroom__') {
+    var opts = ['Abandoned guard post','Alchemy table','Alcoves','Aligned beds','Aligned benches','Altar','Anatomical skeleton','Aquarium','Banquet table','Barrels','Barricade','Bear skin','Bed','Bench','Bloody stains','Broken trap','Carpet','Cells','Chained skeletons','Chains','Charred remains','Corpse nailed to a wall','Crates','Cryogenic/Formaline tubes','Cushions','Dance parquet','Dark area','Desk','Drums','Dummy door','Empty chest','Excavation site','Extinguished campfire','Fireplace','Flooded zone','Fog','Food reserve','Forge','Fountain','Frames on the walls','Fresco','Furnished library','Garbage','Gargoyle','Gears in the walls','Gong','Graffiti','Guano covered floor','Hammock','Hieroglyphics','Idol','Iron maiden','Ivy','Latrines','Leaking water pipe','Leftovers on a table','Mushroom culture','Oil covered floor','Organ','Oubliette','Pedestal','Pentagram','Piano','Pile of ashes (smoking)','Pile of bones','Pile of bricks','Pile of logs','Pile of skulls','Pillars','Pool','Puddle of vomit','Puddles of blood','Religious symbols','Rotting corpse','Rotting library','Rotting tapestries','Rubble','Sarcophagus','Shelf','Showcases','Signs of combat','Sink','Slime','Smokehouse','Stained glass','Statues','Summoning circle','Table and chairs','Throne','Tools','Torture easel','Training dummies','Trophies','Urns','Wardrobe','Waste','Weapons/Armor racks','Wine cellar','Wooden bathtub','Workbench'];
+    return opts[Math.floor(Math.random()*100)];
+  }
+  if (T[key]) return pick(T[key]);
+  return '—';
+}
+
+function rerollEl(el, key) {
+  var result = rollKey(key);
+  el.textContent = result;
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+}
+
+function buildTab(tab) {
+  var html = '<div class="roll-all-bar"><button class="btn-all" data-tab="' + tab.id + '">&#8635; Roll All</button><span class="hint">or click &#8635; on any row to roll just that table</span></div>';
+  for (var s = 0; s < tab.sections.length; s++) {
+    var sec = tab.sections[s];
+    var secId = tab.id + '_sec_' + s;
+    html += '<div class="sec-head" style="display:flex;align-items:center;justify-content:space-between;">'
+          + '<span>' + sec.title + '</span>'
+          + '<button class="btn-sec-all" data-sec="' + secId + '" style="font-family:inherit;font-size:0.68rem;letter-spacing:0.08em;padding:3px 10px;background:rgba(155,127,212,0.25);border:1px solid var(--accent2);color:var(--accent);cursor:pointer;border-radius:2px;text-transform:uppercase;white-space:nowrap;">&#8635; Roll Section</button>'
+          + '</div>'
+          + '<div class="grid" id="' + secId + '">';
+    for (var ri = 0; ri < sec.rows.length; ri++) {
+      var row = sec.rows[ri];
+      var label = row[0], key = row[1];
+      var wide = (sec.rows.length === 1) ? ' wide' : '';
+      var initial = rollKey(key);
+      var uid = tab.id + '_' + s + '_' + ri;
+      html += '<div class="row' + wide + '">'
+            + '<div class="lbl">' + label + '</div>'
+            + '<div class="res" id="res_' + uid + '">' + initial + '</div>'
+            + '<button class="btn-row" data-uid="' + uid + '" data-key="' + key + '">&#8635;</button>'
+            + '</div>';
+    }
+    html += '</div>';
+  }
+  return html;
+}
+
+var tabBar = document.getElementById('tabBar');
+var tabPanes = document.getElementById('tabPanes');
+
+for (var i = 0; i < TABS.length; i++) {
+  var tab = TABS[i];
+  var btn = document.createElement('button');
+  btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+  btn.textContent = tab.label;
+  btn.setAttribute('data-target', tab.id);
+  tabBar.appendChild(btn);
+
+  var pane = document.createElement('div');
+  pane.className = 'tab-pane' + (i === 0 ? ' active' : '');
+  pane.id = 'pane_' + tab.id;
+  pane.innerHTML = buildTab(tab);
+  tabPanes.appendChild(pane);
+}
+
+tabBar.addEventListener('click', function(e) {
+  var btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  var target = btn.getAttribute('data-target');
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('pane_' + target).classList.add('active');
+});
+
+tabPanes.addEventListener('click', function(e) {
+  var btn = e.target.closest('.btn-row');
+  if (btn) {
+    var uid = btn.getAttribute('data-uid');
+    var key = btn.getAttribute('data-key');
+    var el = document.getElementById('res_' + uid);
+    if (el) rerollEl(el, key);
+    return;
+  }
+  var allBtn = e.target.closest('.btn-all');
+  if (allBtn) {
+    var tabId = allBtn.getAttribute('data-tab');
+    var pane = document.getElementById('pane_' + tabId);
+    var btns = pane.querySelectorAll('.btn-row');
+    btns.forEach(function(b) {
+      var uid = b.getAttribute('data-uid');
+      var key = b.getAttribute('data-key');
+      var el = document.getElementById('res_' + uid);
+      if (el) rerollEl(el, key);
+    });
+    return;
+  }
+  var secBtn = e.target.closest('.btn-sec-all');
+  if (secBtn) {
+    var secId = secBtn.getAttribute('data-sec');
+    var grid = document.getElementById(secId);
+    if (grid) {
+      grid.querySelectorAll('.btn-row').forEach(function(b) {
+        var uid = b.getAttribute('data-uid');
+        var key = b.getAttribute('data-key');
+        var el = document.getElementById('res_' + uid);
+        if (el) rerollEl(el, key);
+      });
+    }
+  }
+});
+</script>
+</body>
+</html>
