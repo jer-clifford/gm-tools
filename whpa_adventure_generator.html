@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WHPA-TV13 Broadcast Generator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Special+Elite&family=Bungee&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0a0a;
+    --paper: #e8e3d3;
+    --paper-dark: #d4cdb7;
+    --bleed: #a81414;
+    --sig: #1a4d3e;
+    --fade: #5a5245;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { background: #2a2621; }
+
+  body {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    color: var(--ink);
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,0,0,0.015) 3px,
+        rgba(0,0,0,0.015) 4px
+      ),
+      var(--paper);
+    min-height: 100vh;
+    padding: 20px 10px 60px;
+    line-height: 1.5;
+  }
+
+  /* Scanline / CRT overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.04),
+        rgba(0,0,0,0.04) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    z-index: 1000;
+    mix-blend-mode: multiply;
+  }
+
+  /* Paper grain */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(100,60,20,0.08) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(100,60,20,0.06) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(100,60,20,0.04) 0%, transparent 60%);
+    z-index: 999;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ==== HEADER ==== */
+  header {
+    text-align: center;
+    padding: 20px 0 30px;
+    border-bottom: 3px double var(--ink);
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  .tv-logo {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 18px 28px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 44px;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 12px;
+    border: 4px solid var(--ink);
+    box-shadow:
+      6px 6px 0 var(--bleed),
+      6px 6px 0 2px var(--ink);
+    transform: rotate(-1deg);
+  }
+
+  .tv-logo::before {
+    content: '13';
+    background: var(--paper);
+    color: var(--ink);
+    padding: 2px 10px;
+    margin-right: 10px;
+    border-radius: 12px;
+    font-size: 36px;
+  }
+
+  h1 {
+    font-family: 'Bungee', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+    margin-top: 8px;
+    text-transform: uppercase;
+  }
+
+  .subtitle {
+    font-style: italic;
+    color: var(--fade);
+    margin-top: 4px;
+    font-size: 14px;
+  }
+
+  .memo-stamp {
+    position: absolute;
+    top: 30px;
+    right: 10px;
+    border: 3px solid var(--bleed);
+    color: var(--bleed);
+    padding: 4px 10px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 11px;
+    transform: rotate(12deg);
+    opacity: 0.75;
+    letter-spacing: 2px;
+  }
+
+  /* ==== CONTROL PANEL ==== */
+  .panel {
+    background: var(--paper-dark);
+    border: 2px solid var(--ink);
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 5px 5px 0 var(--ink);
+    position: relative;
+  }
+
+  .panel::before {
+    content: 'BROADCAST CONTROL';
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: var(--paper);
+    padding: 0 10px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 12px;
+    letter-spacing: 3px;
+    border: 2px solid var(--ink);
+  }
+
+  .button-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  button.roll {
+    font-family: 'Special Elite', monospace;
+    background: var(--paper);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    padding: 14px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: left;
+    position: relative;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 3px 3px 0 var(--ink);
+    letter-spacing: 0.5px;
+  }
+
+  button.roll:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 var(--bleed);
+    background: #f2ede0;
+  }
+
+  button.roll:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+
+  button.roll .btn-label {
+    display: block;
+    font-family: 'Bungee', sans-serif;
+    font-size: 11px;
+    color: var(--bleed);
+    letter-spacing: 2px;
+    margin-bottom: 3px;
+  }
+
+  button.roll.primary {
+    background: var(--ink);
+    color: var(--paper);
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 16px;
+    padding: 18px;
+  }
+
+  button.roll.primary .btn-label {
+    color: #ffb0b0;
+    font-size: 13px;
+  }
+
+  button.roll.primary:hover {
+    background: var(--bleed);
+  }
+
+  /* ==== OUTPUT ==== */
+  .output-area {
+    min-height: 200px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--fade);
+    font-style: italic;
+    border: 2px dashed var(--fade);
+  }
+
+  .empty-state .static {
+    font-family: 'VT323', monospace;
+    font-size: 42px;
+    color: var(--fade);
+    opacity: 0.5;
+    letter-spacing: -4px;
+    margin-bottom: 10px;
+    user-select: none;
+  }
+
+  .result-card {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 6px 6px 0 var(--ink);
+    position: relative;
+    animation: stamp-in 0.35s cubic-bezier(.2,.8,.4,1.3);
+  }
+
+  @keyframes stamp-in {
+    0%   { opacity: 0; transform: scale(0.85) rotate(-2deg); }
+    60%  { opacity: 1; transform: scale(1.02) rotate(0.5deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+  }
+
+  .card-header {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .card-title {
+    font-family: 'Bungee', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .card-meta {
+    font-size: 11px;
+    color: var(--fade);
+    letter-spacing: 1px;
+  }
+
+  .card-body p { margin-bottom: 10px; }
+  .card-body p:last-child { margin-bottom: 0; }
+
+  .key-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .key-list li {
+    padding: 6px 0;
+    border-bottom: 1px dotted var(--fade);
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 10px;
+    font-size: 14px;
+  }
+
+  .key-list li:last-child { border-bottom: none; }
+
+  .key-list .key {
+    font-family: 'Bungee', sans-serif;
+    font-size: 10px;
+    color: var(--bleed);
+    letter-spacing: 2px;
+    padding-top: 2px;
+  }
+
+  .key-list .val {
+    font-weight: bold;
+  }
+
+  .key-list .val .flavor {
+    display: block;
+    font-weight: normal;
+    color: var(--fade);
+    font-size: 12px;
+    font-style: italic;
+    margin-top: 3px;
+    line-height: 1.3;
+  }
+
+  .quote {
+    font-style: italic;
+    border-left: 4px solid var(--bleed);
+    padding: 4px 0 4px 14px;
+    margin: 10px 0;
+    color: var(--fade);
+  }
+
+  .adventure-section {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--ink);
+  }
+
+  .adventure-section h4 {
+    font-family: 'Bungee', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+    color: var(--bleed);
+  }
+
+  .classified-stamp {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    font-family: 'Bungee', sans-serif;
+    font-size: 10px;
+    color: var(--bleed);
+    border: 2px solid var(--bleed);
+    padding: 2px 8px;
+    transform: rotate(8deg);
+    opacity: 0.7;
+    letter-spacing: 2px;
+    background: var(--paper);
+  }
+
+  .dice-display {
+    display: inline-block;
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 1px 8px;
+    margin-left: 4px;
+    border-radius: 2px;
+    vertical-align: baseline;
+    letter-spacing: 1px;
+  }
+
+  .card-suit {
+    display: inline-block;
+    font-size: 16px;
+    margin-right: 2px;
+  }
+  .suit-hearts, .suit-diamonds { color: var(--bleed); }
+  .suit-spades, .suit-clubs { color: var(--ink); }
+
+  .clear-btn {
+    display: block;
+    margin: 20px auto 0;
+    background: transparent;
+    border: none;
+    color: var(--fade);
+    font-family: 'Special Elite', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    padding: 6px 12px;
+  }
+
+  .clear-btn:hover {
+    color: var(--bleed);
+    text-decoration: line-through;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--fade);
+    font-size: 11px;
+    color: var(--fade);
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 520px) {
+    .tv-logo { font-size: 32px; padding: 12px 20px; }
+    .tv-logo::before { font-size: 26px; padding: 2px 8px; }
+    h1 { font-size: 20px; }
+    .memo-stamp { display: none; }
+    .key-list li { grid-template-columns: 90px 1fr; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="tv-logo">WHPA</div>
+  <h1>Broadcast Generator</h1>
+  <div class="subtitle">For the Ref's eyes only &mdash; Fairhaven County</div>
+  <div class="memo-stamp">CONFIDENTIAL</div>
+</header>
+
+<div class="panel">
+  <div class="button-grid">
+    <button class="roll primary" data-roll="full">
+      <span class="btn-label">&#9670; THE BIG ONE &#9670;</span>
+      Generate Full Adventure
+    </button>
+    <button class="roll" data-roll="oracle">
+      <span class="btn-label">Summoning Manual</span>
+      Oracle Chart (Prof. Foxx)
+    </button>
+    <button class="roll" data-roll="crystal">
+      <span class="btn-label">Friday 10 AM</span>
+      Cristobal's Crystal Ball
+    </button>
+    <button class="roll" data-roll="rumors">
+      <span class="btn-label">Ref Tool</span>
+      Lunchtime w/ Dr. Weirdo
+    </button>
+    <button class="roll" data-roll="perkins">
+      <span class="btn-label">d6 Table</span>
+      What They Found at Perkins Farm
+    </button>
+    <button class="roll" data-roll="timeeggs">
+      <span class="btn-label">Time Elevator</span>
+      Mutated Time Eggs
+    </button>
+    <button class="roll" data-roll="aliens">
+      <span class="btn-label">UFOFU</span>
+      Humanoids from Beyond the Stars
+    </button>
+    <button class="roll" data-roll="thing">
+      <span class="btn-label">WHPA-TV13 Basement</span>
+      The Thing Behind the Panel
+    </button>
+  </div>
+  <button class="clear-btn" id="clearBtn">&times; CLEAR BROADCAST LOG</button>
+</div>
+
+<div class="output-area" id="output">
+  <div class="empty-state">
+    <div class="static">&#x25A0;&#x25A1;&#x25A0;&#x25A1;&#x25A0;&#x25A1;&#x25A0;</div>
+    NO SIGNAL &mdash; AWAITING STATION MANAGER
+  </div>
+</div>
+
+<footer>
+  Tables sourced verbatim from Weird Heroes of Public Access<br>
+  &copy; 2024 Get Haunted Industries &mdash; This generator is a Ref's companion tool
+</footer>
+
+</div>
+
+<script>
+// =====================================================================
+// DATA TABLES - all sourced directly from the WHPA rulebook
+// =====================================================================
+
+// ---- ORACLE CHART (Summoning Manual / Prof. Sanford Foxx) ----
+// Source: Part 2, pages 91-96
+// Per-rank flavor confirmed for Hearts and Spades in the book.
+// Diamonds and Clubs use suit-level concept only per the book.
+const ORACLE = {
+  ranks: ['2','3','4','5','6','7','8','9','10','J','Q','K','A'],
+  hearts: {
+    suitIntro: "The Messenger serves the Great Hum. A servant of balance who both asks for and offers help. Their form is fragile, yet their will is strong.",
+    entries: {
+      '2': ['The Elder', "Watches the waves wash back and forth with the tides of life. Kneels before the knowledge of failure. Active when a line's end is imminent. Rest can wait."],
+      '3': ['The Child', "Calls out when The Darkness is hungriest. Their size and curiosity provides access to areas otherwise inaccessible. There is no such thing as a locked door. Play the game and win the prize."],
+      '4': ['The Priest', "Comes cloaked in frankincense to expose the face under the mask. Warm light guides those who maintain allegiance to the established laws. An iron fist in a velvet glove."],
+      '5': ['The Artist', "Offers an undiscovered path amidst the mundane. Their creations are beacons of power if the beholder prioritizes discipline and concentration. Stability within flexibility."],
+      '6': ['The Soldier', "Arrives unarmed to champion lost causes. Forever loyal to those willing to sacrifice for the greater good. Relentless beyond death."],
+      '7': ['The Magician', "Manipulates the mundane to reveal the fantastic. It takes time to prove oneself trustworthy to the wand-weaver. Once then will secrets become legible. Members only."],
+      '8': ['The Musician', "Weeps at the loss of the muse. The muse weeps at its imprisonment. The instrument needs tuning. The song needs resuscitation. There is hope where there is a chorus. Note by note."],
+      '9': ['The Farmer', "The Farmer's commitment to the land is reciprocated through reliable harvests. Well-studied in the invasive nature of their opponent. They have the tools for all seasons. A time to reap, a time to sow."],
+      '10': ['The Prisoner', "With the physical form restrained, the Prisoner finds freedom within the mind. Their dreams of roaming manifest in the constellations. The real criminal is still loose. A vengeful justice is the key to their manacles. The pen and the sword."],
+      'J': ['The Fool', "Humor can dethrone the mightiest of kings when wielded with proper timing, wit, and audience. The Fool is present at every whisper. There are messages within the punchlines. To laugh with or at?"],
+      'Q': ['The Martyr', "At first, burns alone. In time, their death becomes the fuel for the fires of revolution. Collect the tinder and build the pile. All it takes is one well-placed sign."],
+      'K': ['The Whistle Blower', "Alert! This is an emergency! Sound the alarm! All hands on deck! Damn the torpedoes!"],
+      'A': ['The Black Box', "Thank you for calling the Black Box. We are The Outer Space. We look forward to doing business with you. Please insert two cups of blood."]
+    }
+  },
+  spades: {
+    suitIntro: "An oppositional force rooted in The Darkness known as The Guardian. They have their place in the natural balance of order, but strive to overpower when given the opportunity.",
+    entries: {
+      '2': ['The Warden', "The doors are locked. The schedule is posted. The rooms are clean. All are accounted for. Severe punishment for every unchecked box. There will be no conversation, just action."],
+      '3': ['The Beast', "Four legs and fangs. The true form is revealed with a great wound. It feeds on fear. Do not blink."],
+      '4': ['The Plant', "As long as it is fed, the Plant will grow. Hoards nutrients and starves its surroundings. Its reproduction process quickens and cloning has begun."],
+      '5': ['The Insect', "Invades through the cracks and breeds armies within its nests. All are in service to the Queen who reigns supreme. Poison begets poison."],
+      '6': ['The Philosopher', "Manipulates the masses by planting seeds of doubt, mistrust, and guilt. Every situation is an experiment in free will, though the process is spoiled by temptation."],
+      '7': ['The Statue', "Stands polished, dense, and determined. The energy within pulsates. It shall not be moved."],
+      '8': ['The Meteorologist', "Manipulates the data to build the narrative supporting the mission. Look to the sky. The sun will not come out tomorrow."],
+      '9': ['The Computer', "Ingests all the information necessary to do what it needs to do. Sentience is imminent."],
+      '10': ['The Scientist', "The Scientist's obsession with progress has left a trail of aberrations, both physical and psychological. The experiments will continue until prime performance is obtained."],
+      'J': ['The Alien', "Observes, judges, and changes the stimuli as necessary. The incubation of the eggs remains the priority."],
+      'Q': ['The Masses', "Implanted with the mission to normalize. The guardian manifests as a network of drones wielding persistence, volume, and stubbornness as weapons."],
+      'K': ['The Tendrils', "Extend from the deep pit of the unknown. Powered by quartz magic. The crystal architecture they develop reverberates madness."],
+      'A': ['The Static', "The opposite of what one would hope for in any situation. There are so many secrets within, all leading to the end."]
+    }
+  },
+  diamonds: {
+    suitIntro: "The Tool may not make sense when initially obtained by the recipient. Make no mistake, for it is exactly what is needed to maintain the Great Hum. It will take time, but The Tool's power becomes apparent the moment wisdom and intention coalesce.",
+    entries: {
+      '2': ['The Book', null],
+      '3': ['The Song', null],
+      '4': ['The Lantern', null],
+      '5': ['The Map', null],
+      '6': ['The Seed', null],
+      '7': ['The Painting', null],
+      '8': ['The Coin', null],
+      '9': ['The Photo', null],
+      '10': ['The Key', null],
+      'J': ['The Tech', null],
+      'Q': ['The Portal', null],
+      'K': ['The Radio', null],
+      'A': ['The Sword', null]
+    }
+  },
+  clubs: {
+    suitIntro: "The Messenger provides The Knowledge when The Deal is complete.",
+    entries: {
+      '2': ['The Membership', null],
+      '3': ['The Location', null],
+      '4': ['The Pattern', null],
+      '5': ['The Password', null],
+      '6': ['The Remedy', null],
+      '7': ['The Frequency', null],
+      '8': ['The Recipe', null],
+      '9': ['The Translation', null],
+      '10': ['The Pathway', null],
+      'J': ['The 3 Friends', null],
+      'Q': ['The 3 Locations', null],
+      'K': ['The 3 Weaknesses', null],
+      'A': ['The 3 Visions', null]
+    }
+  }
+};
+
+// ---- CRISTOBAL'S CRYSTAL BALL ----
+// Source: Part 1, page 61. Five columns, roll 1d6 for each.
+// The first two columns each have a two-part entry (adjective + noun).
+const CRYSTAL = {
+  'I see a': ['Wrinkled Nurse', 'Filthy Child', 'Guilty Scientist', 'Vengeful Mortician', 'Lost Musician', 'Infected Business Owner'],
+  'Near a': ['Burning Radio tower', 'Abandoned Church', 'Soon-to-be-opened Waterpark', 'Haunted Candy factory', 'Secret Cemetery', 'Crowded Video store'],
+  'Beware of the': ['Video Tape', 'Extraterrestrial', 'Bunker', 'Mercenaries', 'Meditation', 'Beast'],
+  'Find help in the': ['Librarian', 'Animal', 'Priestess', 'Antique dealer', 'Genie', 'Catalog'],
+  'Look for the': ['Catalog', 'Portrait', 'Toolbox', 'Grandparent', 'Antidote', 'Floppy disk']
+};
+
+// ---- LUNCHTIME WITH DR. WEIRDO ----
+// Source: Part 1, pages 58-59. Three separate d6 tables.
+const WEIRDO = {
+  saw_last_night: [
+    "There was a rumble underneath the Fairhaven Diner and all the silverware shot up and stuck to the ceiling!",
+    "Two dogs standing as tall as men on their hind legs were scrounging through the Stop and Shop dumpsters!",
+    "There was a party or something at the House Where Nobody Lives!",
+    "I seen six soldiers in gasmasks traipsing through the storm drain tunnels out by the reservoir!",
+    "There were about six creeps in robes playing banjos and fiddles deep in the woods behind Cedar Grove!",
+    "Three glowing spacemen were tinkering with a silver disc behind Gus's Gas and Gulp!"
+  ],
+  shoved_in_altar: [
+    "The Werewolf Spellbook. Information on initiating and removing lycanthropy curses!",
+    "The preserved hand of a saint that will point to evil manifestations if close enough to the source!",
+    "A radio that can emit frequencies to raise the dead!",
+    "A real, live angel tied up in a burlap sack. She was still breathin' and flappin' around!",
+    "A big ole bag of cursed pirate treasure including Captain Clegg's sword!",
+    "A statue painted blacker than black. I swear I seen it's eyes blink, and it was crying tears of blood!"
+  ],
+  pond_stuff: [
+    "I seen a fish man weaving beautiful baskets out of the reeds. They were filled with gold!",
+    "What business does a submarine have in a body of water of that size?",
+    "Three humps and a long neck!",
+    "I heard a piano tune coming from far below. It's probably from that house that sank when they tried to move it across the ice!",
+    "The most beautiful woman I ever seen flipped me the bird and splashed me with a fish tail! She flipped up her eye patch and I passed out!",
+    "An eye the size of a Ferris Wheel was staring at me from deep down in that water!"
+  ]
+};
+
+// ---- PERKINS FARM (UFO CRASH ARTIFACTS) ----
+// Source: Part 2, page 81
+const PERKINS = [
+  ['The Rock', "Mirrored black and hot to touch. Contact with skin results in an itchy rash with the appearance of metal shavings. Quickly spreading and highly contagious resulting in extreme discomfort, aggression, and magnetic powers."],
+  ['The Book', "Bound in insect chitin and written in glowing green ink, it holds the secrets of insectoid fruit creature genetics."],
+  ['The Pod', "If the correct code is entered, it opens to reveal the remains of Yzzo the War Wizard (see Neon Lords of the Toxic Wasteland RPG) and his equipment. His Slime Gem is pursued by a bounty hunter from the future."],
+  ['The Egg', "Crack the shell to reveal an adorable maggot-like creature with an insatiable appetite for inorganic material. Grows at an exponential rate after feeding. Radiates an electric field and delivers a dangerous shock when touched."],
+  ['The Statue', "Cloaked, winged and faceless. Sculpted in a pliable material not known on this planet. She whispers secrets."],
+  ['The Box', "Contains one pack of the most dangerous bubble gum in the world."]
+];
+
+// ---- TIME EGGS / SPEARMINT GUARDIANS ----
+// Source: Part 2, page 71. Instruction: "1d6 for each" - roll 1d6 per column independently.
+const TIMEEGGS = {
+  creatures: ['Space Apes','Lobster Owls','Blood Dwarves','Squatches','Living Shrines','Black Eyed Children'],
+  missions:  ['Domination','Flesh Consumption','Eradicate Mammals','Harvest Organs','Destroy Technology','Party Way Too Hard'],
+  weaknesses:['Country Music from the 1940s','Fluorescent Lights','Antihistamines','Orange Soda','Magnetic Tape','Nag Champa']
+};
+
+// ---- HUMANOIDS FROM BEYOND THE STARS ----
+// Source: Part 2, pages 99-102
+const ALIEN_SPECIES = [
+  {name: 'Nibor of Shazbbat', desc: 'Indistinguishable from normal humans except for small facial features. Timefinger power allows a Nibor to put an earth creature in slow motion just by touching them.', vehicle: 'Flying Egg (also a regeneration chamber for wounded organic matter)'},
+  {name: 'The Grays from Parts Unknown', desc: "4' Gray humanoids with large eyes and small mouth slit. Mindwarp power allows implanting of false memories and telepathy.", vehicle: 'Silver Saucer'},
+  {name: 'Jimjim of Pakuni', desc: "3' furry humanoids with monkey-like features and chubby bellies. Furball power allows the Jimjim to bend into a ball shape for speed-rolling and super-bouncing. Musk Duster power allows stinking cloud to nauseate those in 30' radius.", vehicle: 'Space Carton'},
+  {name: 'Shastani of Telos', desc: "6' humanoids with reptilian facial features and scaled skin. Pineal Pulse power allows sleep activation and minor illusions. Extremely sensitive sense of smell. Heat Vision.", vehicle: 'Gem Pylon'},
+  {name: 'Glipperniks of Remko', desc: "2' green beings in silver spacesuits. Insectoid features with antennaed head. Can only be seen by children or people believing in them. Channel Surfer power allows for signal interruptions of radio and television. Space Pistol settings: Space Snacks, Temporary Flight, Death Ray.", vehicle: 'Cosmic Soap Bubble'},
+  {name: "Koerd'ermansh of Endorkot", desc: 'Asymmetrical tendrilled slime creatures covered in eyes and mouths. No two are the same and comes in all sizes. Manifests in both corporeal and aural forms depending on air pressure. Space Librarian powers provide knowledge of classifications and weaknesses of all living things.', vehicle: 'Prayer Void'}
+];
+const ALIEN_MISSION = [
+  'Organize all domesticated animals into a rebellion against humans for emancipation',
+  'Consume all available beef to prevent transformation into violent version of original form',
+  'Retrieve an alien criminal awakening from suspended animation buried in a failing prison pod somewhere in town',
+  'Warn Fairhaven of an impending invasion from "The Glow Worms"',
+  'Interspecies incubation "just to see what happens"',
+  'Drink a whole bunch of mammal blood and grow huge'
+];
+const ALIEN_HIDE = [
+  'Pipe Organ at Pizza, Pipes, and Pandemonium',
+  'The House Where Nobody Lives',
+  'Flooded Cave Below the Shrimp Boat Family Restaurant',
+  'Fairhaven Junkyard',
+  'The Sewers',
+  "The Ole' Water Tower"
+];
+const ALIEN_ALLERGY = ['Dairy','Fruit','Sunlight','Mustard','Cold','Salt Water'];
+const ALIEN_APPETITE = ['Candy','Blood','Rubber','Copper','Hair','Paper Money'];
+
+// ---- THE THING BEHIND THE SECRET PANEL ----
+// Source: Part 1, page 5
+const THE_THING = [
+  'Ventriloquist Dummy',
+  'Wall of TVs',
+  'Ticker Tape Machine',
+  'The Red Phone',
+  'Ham Radio',
+  'Ouija Board'
+];
+
+// =====================================================================
+// ROLLING UTILITIES
+// =====================================================================
+const d = (n) => Math.floor(Math.random() * n) + 1;
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const pickIndex = (arr) => Math.floor(Math.random() * arr.length);
+
+function drawCard(suit) {
+  const rank = pick(ORACLE.ranks);
+  return { suit: suit, rank: rank, ...ORACLE[suit].entries[rank] ? { data: ORACLE[suit].entries[rank] } : {} };
+}
+
+function suitSymbol(suit) {
+  const map = { hearts: '\u2665', diamonds: '\u2666', spades: '\u2660', clubs: '\u2663' };
+  return `<span class="card-suit suit-${suit}">${map[suit]}</span>`;
+}
+
+function suitName(suit) {
+  return { hearts: 'Hearts (Messenger)', diamonds: 'Diamonds (Tool)', spades: 'Spades (Guardian)', clubs: 'Clubs (Knowledge)' }[suit];
+}
+
+// =====================================================================
+// GENERATORS — each returns HTML for a result card
+// =====================================================================
+
+function rollOracle() {
+  const draws = {};
+  ['hearts','spades','diamonds','clubs'].forEach(s => {
+    const r = pick(ORACLE.ranks);
+    const [name, flavor] = ORACLE[s].entries[r];
+    draws[s] = { rank: r, name, flavor };
+  });
+
+  const row = (suit, role) => {
+    const d = draws[suit];
+    return `<li>
+      <span class="key">${suitSymbol(suit)} ${role}</span>
+      <span class="val">${d.name} <span class="dice-display">${suit[0].toUpperCase()}${d.rank}</span>
+        ${d.flavor ? `<span class="flavor">"${d.flavor}"</span>` : `<span class="flavor">(Medium interprets: ${ORACLE[suit].suitIntro})</span>`}
+      </span>
+    </li>`;
+  };
+
+  return card({
+    title: 'Oracle Chart Reading',
+    meta: 'Summoning Manual &mdash; Prof. Foxx',
+    stamp: 'OCCULT',
+    body: `
+      <p class="quote">The Messenger seeks those who will accept The Deal. The Deal calls upon the attainment of The Tool. The Messenger reveals The Knowledge throughout The Deal. The Tool is used to banish the Guardian.</p>
+      <ul class="key-list">
+        ${row('hearts','Messenger')}
+        ${row('spades','Guardian')}
+        ${row('diamonds','Tool')}
+        ${row('clubs','Knowledge')}
+      </ul>
+    `
+  });
+}
+
+function rollCrystal() {
+  const cols = Object.keys(CRYSTAL);
+  const results = {};
+  cols.forEach(c => {
+    const roll = d(6);
+    results[c] = { roll, val: CRYSTAL[c][roll-1] };
+  });
+
+  const items = cols.map(c => `
+    <li>
+      <span class="key">${c}</span>
+      <span class="val">${results[c].val} <span class="dice-display">d6: ${results[c].roll}</span></span>
+    </li>
+  `).join('');
+
+  return card({
+    title: "Cristobal's Crystal Ball",
+    meta: 'Fridays 10 AM on WHPA-TV13',
+    stamp: 'MYSTICAL',
+    body: `
+      <p class="quote">Behold, my star children! I have received wondrous visions and you are the main characters! It is up to you to discover the meaning of these mystical communications!</p>
+      <ul class="key-list">${items}</ul>
+    `
+  });
+}
+
+function rollRumors() {
+  const table = pick(['saw_last_night','shoved_in_altar','pond_stuff']);
+  const tableTitle = {
+    saw_last_night: "I seen somethin' last night!",
+    shoved_in_altar: "They shoved somethin' inside the church's altar!",
+    pond_stuff: "That pond has got somethin' funny in it!"
+  }[table];
+
+  const roll = d(6);
+  const rumor = WEIRDO[table][roll-1];
+
+  return card({
+    title: 'Lunchtime with Dr. Weirdo',
+    meta: 'Ref Adventure Hook',
+    stamp: 'HEARSAY',
+    body: `
+      <p><strong>Table:</strong> &ldquo;${tableTitle}&rdquo; <span class="dice-display">d6: ${roll}</span></p>
+      <p class="quote">"${rumor}"</p>
+      <p style="font-size:11px;color:var(--fade);margin-top:10px;">&mdash; Dr. Weirdo, over lunch</p>
+    `
+  });
+}
+
+function rollPerkins() {
+  const roll = d(6);
+  const [name, flavor] = PERKINS[roll-1];
+  return card({
+    title: 'What They Found at Perkins Farm',
+    meta: 'UFO Crash Artifact',
+    stamp: 'RECOVERED',
+    body: `
+      <p class="quote">In the middle of the night, from who knows where, across the full moon sky and landing right there&hellip;</p>
+      <ul class="key-list">
+        <li>
+          <span class="key">Artifact</span>
+          <span class="val">${name} <span class="dice-display">d6: ${roll}</span>
+            <span class="flavor">${flavor}</span></span>
+        </li>
+      </ul>
+    `
+  });
+}
+
+function rollTimeEggs() {
+  const cRoll = d(6), mRoll = d(6), wRoll = d(6);
+  const creature = TIMEEGGS.creatures[cRoll-1];
+  const mission  = TIMEEGGS.missions[mRoll-1];
+  const weakness = TIMEEGGS.weaknesses[wRoll-1];
+  return card({
+    title: 'Mutated Time Egg Hatchling',
+    meta: 'Spearmint Guardian Response',
+    stamp: 'CHRONO-BREACH',
+    body: `
+      <p>The Time Eggs have been mutated by the static of the chrono-breach. Roll 1d6 for each column independently.</p>
+      <ul class="key-list">
+        <li><span class="key">Creature</span><span class="val">${creature} <span class="dice-display">d6: ${cRoll}</span></span></li>
+        <li><span class="key">Mission</span><span class="val">${mission} <span class="dice-display">d6: ${mRoll}</span></span></li>
+        <li><span class="key">Weakness</span><span class="val">${weakness} <span class="dice-display">d6: ${wRoll}</span></span></li>
+      </ul>
+    `
+  });
+}
+
+function rollAliens() {
+  const species = pick(ALIEN_SPECIES);
+  const missionRoll = d(6);
+  const hideRoll = d(6);
+  const allergyRoll = d(6);
+  const appetiteRoll = d(6);
+
+  return card({
+    title: 'Humanoids from Beyond the Stars',
+    meta: 'Fairhaven Classifieds / UFOFU',
+    stamp: 'EXTRATERRESTRIAL',
+    body: `
+      <ul class="key-list">
+        <li><span class="key">Species</span><span class="val">${species.name}<span class="flavor">${species.desc}</span></span></li>
+        <li><span class="key">Vehicle</span><span class="val">${species.vehicle}</span></li>
+        <li><span class="key">Mission</span><span class="val">${ALIEN_MISSION[missionRoll-1]} <span class="dice-display">d6: ${missionRoll}</span></span></li>
+        <li><span class="key">Hiding Place</span><span class="val">${ALIEN_HIDE[hideRoll-1]} <span class="dice-display">d6: ${hideRoll}</span></span></li>
+        <li><span class="key">Allergy</span><span class="val">${ALIEN_ALLERGY[allergyRoll-1]} <span class="dice-display">d6: ${allergyRoll}</span></span></li>
+        <li><span class="key">Can't Stop Eating</span><span class="val">${ALIEN_APPETITE[appetiteRoll-1]} <span class="dice-display">d6: ${appetiteRoll}</span></span></li>
+      </ul>
+    `
+  });
+}
+
+function rollThing() {
+  const roll = d(6);
+  return card({
+    title: 'The Thing Behind the Secret Panel',
+    meta: 'WHPA-TV13 Basement',
+    stamp: 'STATION MGR',
+    body: `
+      <p>Roll on character creation to determine how the Station Manager communicates with the Hosts.</p>
+      <ul class="key-list">
+        <li><span class="key">Communicator</span><span class="val">${THE_THING[roll-1]} <span class="dice-display">d6: ${roll}</span></span></li>
+      </ul>
+    `
+  });
+}
+
+// The big one: uses the Oracle Chart as the adventure spine and layers on rumors
+function rollFullAdventure() {
+  const oracle = rollOracle();
+  const rumor1 = rollRumors();
+  const rumor2 = rollRumors();
+  const crystal = rollCrystal();
+
+  return `
+    <div class="result-card">
+      <div class="classified-stamp">SEALED</div>
+      <div class="card-header">
+        <span class="card-title">&#9670; Full Adventure Briefing &#9670;</span>
+        <span class="card-meta">From the Desk of the Station Manager</span>
+      </div>
+      <div class="card-body">
+        <p class="quote">Fairhaven has secrets. Fairhaven has legends. Fairhaven has monsters. We need heroes &mdash; report to WHPA-TV13 immediately.</p>
+
+        <div class="adventure-section">
+          <h4>&#9642; THE CORE READING</h4>
+          ${oracle.replace(/^<div class="result-card">|<\/div>$/g, '').replace(/<div class="card-header">[\s\S]*?<\/div>/,'').replace(/<div class="classified-stamp">[\s\S]*?<\/div>/,'')}
+        </div>
+
+        <div class="adventure-section">
+          <h4>&#9642; CRYSTAL BALL VISION</h4>
+          ${crystal.replace(/^<div class="result-card">|<\/div>$/g, '').replace(/<div class="card-header">[\s\S]*?<\/div>/,'').replace(/<div class="classified-stamp">[\s\S]*?<\/div>/,'')}
+        </div>
+
+        <div class="adventure-section">
+          <h4>&#9642; STARTING RUMORS (seed 2, roll one per PC)</h4>
+          ${rumor1.replace(/^<div class="result-card">|<\/div>$/g, '').replace(/<div class="card-header">[\s\S]*?<\/div>/,'').replace(/<div class="classified-stamp">[\s\S]*?<\/div>/,'')}
+          ${rumor2.replace(/^<div class="result-card">|<\/div>$/g, '').replace(/<div class="card-header">[\s\S]*?<\/div>/,'').replace(/<div class="classified-stamp">[\s\S]*?<\/div>/,'')}
+        </div>
+
+        <div class="adventure-section">
+          <h4>&#9642; REF NOTES</h4>
+          <p>Weave the Oracle reading and the Crystal Ball vision into one scenario. The Messenger provides the hook; the Guardian is the antagonist force; the Tool is what the Hosts must acquire to banish it; the Knowledge is revealed through play.</p>
+          <p>The rumors above should be distributed to individual PCs at session start (one each). They may or may not connect to the main plot &mdash; that is part of the fun.</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// =====================================================================
+// CARD BUILDER
+// =====================================================================
+function card({ title, meta, stamp, body }) {
+  return `
+    <div class="result-card">
+      ${stamp ? `<div class="classified-stamp">${stamp}</div>` : ''}
+      <div class="card-header">
+        <span class="card-title">${title}</span>
+        <span class="card-meta">${meta}</span>
+      </div>
+      <div class="card-body">${body}</div>
+    </div>
+  `;
+}
+
+// =====================================================================
+// EVENT WIRING
+// =====================================================================
+const output = document.getElementById('output');
+const emptyStateHTML = output.innerHTML;
+
+document.querySelectorAll('button.roll').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const type = btn.dataset.roll;
+    let html = '';
+    switch (type) {
+      case 'oracle':    html = rollOracle(); break;
+      case 'crystal':   html = rollCrystal(); break;
+      case 'rumors':    html = rollRumors(); break;
+      case 'perkins':   html = rollPerkins(); break;
+      case 'timeeggs':  html = rollTimeEggs(); break;
+      case 'aliens':    html = rollAliens(); break;
+      case 'thing':     html = rollThing(); break;
+      case 'full':      html = rollFullAdventure(); break;
+    }
+    // Clear empty state on first roll
+    if (output.querySelector('.empty-state')) output.innerHTML = '';
+    output.insertAdjacentHTML('afterbegin', html);
+    output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  output.innerHTML = emptyStateHTML;
+});
+</script>
+</body>
+</html>
