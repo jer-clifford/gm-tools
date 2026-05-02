@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Nocturnal Table — Rollable Encounter Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,500;0,700;1,400;1,700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #15100c;
+    --bg-mid: #1f1812;
+    --bg-card: #28201a;
+    --bg-card-2: #322620;
+    --ink: #e8dcc4;
+    --ink-dim: #b8a988;
+    --ink-faint: #877358;
+    --gold: #d4a455;
+    --gold-bright: #f0c878;
+    --gold-deep: #8b6a30;
+    --rust: #a85638;
+    --blood: #6b1f1a;
+    --shadow: rgba(0, 0, 0, 0.6);
+    --serif: 'EB Garamond', 'Georgia', serif;
+    --display: 'Cinzel', 'Trajan Pro', serif;
+    --hand: 'IM Fell English', 'EB Garamond', serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg-deep);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  body {
+    background:
+      radial-gradient(ellipse at top, #2a1d14 0%, #15100c 70%),
+      var(--bg-deep);
+    background-attachment: fixed;
+  }
+  .page {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 24px 80px;
+  }
+  /* Header */
+  header.title {
+    text-align: center;
+    margin: 12px 0 28px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--gold-deep);
+    position: relative;
+  }
+  header.title::after {
+    content: "";
+    position: absolute;
+    left: 50%; bottom: -4px;
+    transform: translateX(-50%);
+    width: 60px; height: 8px;
+    background: radial-gradient(ellipse, var(--gold) 0%, transparent 70%);
+  }
+  header.title h1 {
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: 2.4em;
+    letter-spacing: 0.18em;
+    color: var(--gold-bright);
+    margin: 0;
+    text-shadow: 0 0 20px rgba(212, 164, 85, 0.25);
+  }
+  header.title .subtitle {
+    font-family: var(--hand);
+    font-style: italic;
+    font-size: 1.05em;
+    color: var(--ink-dim);
+    margin-top: 6px;
+    letter-spacing: 0.04em;
+  }
+  header.title .attribution {
+    font-size: 0.75em;
+    color: var(--ink-faint);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--gold-deep);
+  }
+  .tab {
+    background: transparent;
+    border: none;
+    padding: 10px 16px;
+    color: var(--ink-dim);
+    font-family: var(--display);
+    font-size: 0.85em;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s ease;
+    text-transform: uppercase;
+  }
+  .tab:hover { color: var(--gold-bright); }
+  .tab.active {
+    color: var(--gold-bright);
+    border-bottom-color: var(--gold);
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Cards / sections */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid #3a2c22;
+    border-radius: 4px;
+    padding: 22px 24px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 8px var(--shadow);
+    position: relative;
+  }
+  .card h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    color: var(--gold);
+    margin: 0 0 14px;
+    font-size: 1.3em;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--gold-deep);
+    padding-bottom: 8px;
+  }
+  .card .hint {
+    color: var(--ink-faint);
+    font-style: italic;
+    font-size: 0.9em;
+    margin-top: -8px;
+    margin-bottom: 14px;
+  }
+
+  /* Roll button */
+  .roll-btn {
+    background: linear-gradient(180deg, #3a2a1a 0%, #2a1d10 100%);
+    color: var(--gold-bright);
+    border: 1px solid var(--gold-deep);
+    border-radius: 4px;
+    padding: 12px 24px;
+    font-family: var(--display);
+    font-size: 1em;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: inset 0 1px 0 rgba(240, 200, 120, 0.15), 0 2px 4px var(--shadow);
+    transition: all 0.1s ease;
+  }
+  .roll-btn:hover {
+    background: linear-gradient(180deg, #4a3520 0%, #322215 100%);
+    color: #fff;
+    border-color: var(--gold);
+  }
+  .roll-btn:active { transform: translateY(1px); }
+  .roll-btn.big {
+    font-size: 1.15em;
+    padding: 14px 32px;
+    width: 100%;
+    margin-bottom: 14px;
+  }
+  .roll-btn.small {
+    font-size: 0.78em;
+    padding: 6px 12px;
+    letter-spacing: 0.08em;
+  }
+  .roll-btn.tiny {
+    font-size: 0.7em;
+    padding: 4px 10px;
+    letter-spacing: 0.05em;
+  }
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .controls-row label {
+    font-size: 0.85em;
+    color: var(--ink-dim);
+    margin-right: 4px;
+  }
+  select, input[type="number"], input[type="text"] {
+    background: var(--bg-deep);
+    color: var(--ink);
+    border: 1px solid var(--gold-deep);
+    border-radius: 3px;
+    padding: 7px 10px;
+    font-family: var(--serif);
+    font-size: 0.95em;
+  }
+  select:focus, input:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+
+  /* Encounter result */
+  .result {
+    background: linear-gradient(180deg, var(--bg-card-2) 0%, var(--bg-card) 100%);
+    border: 1px solid var(--gold-deep);
+    border-left: 4px solid var(--gold);
+    padding: 22px 26px 26px;
+    margin-top: 12px;
+    border-radius: 4px;
+    position: relative;
+    min-height: 80px;
+  }
+  .result .tag-badge {
+    position: absolute;
+    top: 14px; right: 18px;
+    font-family: var(--display);
+    font-size: 1.5em;
+    font-weight: 900;
+    color: var(--gold-deep);
+    letter-spacing: 0.05em;
+    user-select: none;
+  }
+  .result .entry-text {
+    font-family: var(--serif);
+    font-size: 1.08em;
+    line-height: 1.7;
+    color: var(--ink);
+    margin-right: 80px;
+  }
+  .result .entry-text::first-letter {
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: 2.6em;
+    color: var(--gold-bright);
+    float: left;
+    line-height: 0.95;
+    margin-right: 6px;
+    margin-top: 4px;
+  }
+  .result .entry-stats {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--gold-deep);
+  }
+  .stat-block {
+    font-family: var(--serif);
+    font-size: 0.92em;
+    color: var(--ink-dim);
+    margin-bottom: 10px;
+    padding-left: 14px;
+    border-left: 2px solid #4a3a2a;
+    line-height: 1.5;
+  }
+  .stat-block strong { color: var(--gold); }
+  .empty-result {
+    color: var(--ink-faint);
+    font-style: italic;
+    text-align: center;
+    padding: 30px 0;
+  }
+
+  /* Recent rolls */
+  .recent-rolls {
+    margin-top: 14px;
+  }
+  .recent-rolls .label {
+    font-size: 0.75em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 6px;
+  }
+  .pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .pill {
+    background: var(--bg-deep);
+    border: 1px solid var(--gold-deep);
+    color: var(--ink-dim);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    cursor: pointer;
+    font-family: var(--display);
+    letter-spacing: 0.06em;
+    transition: all 0.1s ease;
+  }
+  .pill:hover {
+    color: var(--gold-bright);
+    border-color: var(--gold);
+  }
+
+  /* Browse / search */
+  .browse-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 4px;
+    margin-bottom: 16px;
+  }
+  .browse-tag {
+    background: var(--bg-deep);
+    border: 1px solid #3a2c22;
+    color: var(--ink-dim);
+    padding: 6px 0;
+    text-align: center;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: var(--display);
+    font-size: 0.85em;
+    transition: all 0.1s ease;
+  }
+  .browse-tag:hover {
+    color: var(--gold-bright);
+    border-color: var(--gold);
+    background: var(--bg-card);
+  }
+
+  /* Mad-lib results */
+  .madlib-result {
+    font-family: var(--hand);
+    font-size: 1.4em;
+    line-height: 1.7;
+    color: var(--ink);
+    text-align: center;
+    padding: 22px 16px;
+    background: var(--bg-card-2);
+    border: 1px solid var(--gold-deep);
+    border-radius: 4px;
+    margin: 14px 0;
+    font-style: italic;
+  }
+  .madlib-result .accent {
+    color: var(--gold-bright);
+    font-style: normal;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 0.85em;
+    letter-spacing: 0.06em;
+  }
+  .madlib-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--gold-deep);
+    font-size: 0.85em;
+  }
+  .madlib-field {
+    background: var(--bg-deep);
+    padding: 6px 10px;
+    border-radius: 3px;
+    border: 1px solid #3a2c22;
+  }
+  .madlib-field .field-label {
+    color: var(--ink-faint);
+    font-size: 0.85em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: block;
+  }
+  .madlib-field .field-value {
+    color: var(--gold-bright);
+    font-style: italic;
+  }
+
+  /* Tables */
+  table.lookup {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88em;
+    margin: 8px 0;
+  }
+  table.lookup th, table.lookup td {
+    padding: 6px 8px;
+    text-align: left;
+    border-bottom: 1px solid #3a2c22;
+  }
+  table.lookup thead th {
+    color: var(--gold);
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 0.78em;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--gold-deep);
+  }
+  table.lookup tbody tr:nth-child(even) { background: rgba(58, 44, 34, 0.3); }
+  table.lookup tbody tr:hover { background: rgba(212, 164, 85, 0.08); }
+  table.lookup .num { font-family: var(--display); color: var(--ink-dim); }
+  table.lookup td.match {
+    color: var(--gold-bright);
+    font-weight: 700;
+  }
+  table.lookup tr.match-row { background: rgba(212, 164, 85, 0.18) !important; }
+
+  /* City Encounter System */
+  .city-result {
+    background: var(--bg-card-2);
+    border: 1px solid var(--gold-deep);
+    padding: 16px 20px;
+    border-radius: 4px;
+    margin-top: 14px;
+  }
+  .city-result h3 {
+    margin: 0 0 8px;
+    color: var(--gold-bright);
+    font-family: var(--display);
+    font-size: 0.95em;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .city-result .breakdown {
+    font-size: 0.92em;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .city-result .breakdown .key {
+    color: var(--ink-faint);
+    margin-right: 6px;
+  }
+  .city-result .breakdown .value {
+    color: var(--gold-bright);
+    font-weight: 700;
+  }
+
+  /* Local colour list */
+  .lc-row {
+    padding: 10px 4px;
+    border-bottom: 1px solid #3a2c22;
+    font-size: 0.95em;
+    line-height: 1.55;
+  }
+  .lc-row:last-child { border-bottom: none; }
+  .lc-row .num {
+    display: inline-block;
+    width: 32px;
+    color: var(--gold);
+    font-family: var(--display);
+    font-weight: 700;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    color: var(--ink-faint);
+    font-size: 0.78em;
+    font-style: italic;
+    margin-top: 36px;
+    padding-top: 20px;
+    border-top: 1px solid #3a2c22;
+  }
+
+  /* Search box */
+  .search-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+  .search-row input {
+    flex: 1;
+  }
+  .search-results {
+    max-height: 360px;
+    overflow-y: auto;
+    border: 1px solid #3a2c22;
+    border-radius: 4px;
+    padding: 4px;
+  }
+  .search-result {
+    padding: 8px 10px;
+    border-bottom: 1px solid #3a2c22;
+    cursor: pointer;
+    font-size: 0.88em;
+  }
+  .search-result:hover { background: rgba(212, 164, 85, 0.08); }
+  .search-result .tag {
+    color: var(--gold);
+    font-family: var(--display);
+    font-weight: 700;
+    margin-right: 8px;
+  }
+
+  /* Mobile */
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .page { padding: 16px 12px 60px; }
+    header.title h1 { font-size: 1.6em; letter-spacing: 0.1em; }
+    .tab { padding: 8px 10px; font-size: 0.75em; }
+    .card { padding: 16px 14px; }
+    .result { padding: 18px 16px 22px; }
+    .result .entry-text { margin-right: 50px; }
+    .result .tag-badge { font-size: 1.1em; }
+    .browse-grid { grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); }
+    .madlib-result { font-size: 1.1em; }
+  }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg-deep); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-deep); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="title">
+    <h1>The Nocturnal Table</h1>
+    <div class="subtitle">night-time encounters for a large, sinful, vaguely oriental city</div>
+    <div class="attribution">EMDT57 by Gabor Lux &middot; rollable companion</div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-panel="nocturnal">Nocturnal Table</button>
+    <button class="tab" data-panel="city">City Encounter</button>
+    <button class="tab" data-panel="bazaar">Bazaar of the Bizarre</button>
+    <button class="tab" data-panel="pocket">What's in Their Pocket?</button>
+    <button class="tab" data-panel="storehouses">Storehouses of Sin</button>
+    <button class="tab" data-panel="meeting">The Meeting</button>
+    <button class="tab" data-panel="colour">Local Colour</button>
+    <button class="tab" data-panel="purpose">Encounter Purpose</button>
+    <button class="tab" data-panel="browse">Browse</button>
+  </nav>
+
+  <!-- ============== NOCTURNAL TABLE ============== -->
+  <section class="panel active" id="panel-nocturnal">
+    <div class="card">
+      <h2>The Nocturnal Table &mdash; 1d300</h2>
+      <div class="hint">300 entries (numbered 100&ndash;399) for night-time encounters in the city. Press <kbd>Space</kbd> to roll again.</div>
+      <button class="roll-btn big" id="noct-roll">&#127922; Roll Encounter</button>
+      <div class="controls-row">
+        <label>Jump to #:</label>
+        <input type="number" id="noct-jump" min="100" max="399" placeholder="100&ndash;399" style="width: 110px;">
+        <button class="roll-btn small" id="noct-go">Go</button>
+      </div>
+      <div id="noct-result" class="result">
+        <div class="empty-result">Roll the dice to summon an encounter from the night.</div>
+      </div>
+      <div class="recent-rolls">
+        <div class="label">Recent</div>
+        <div class="pill-row" id="noct-recent"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== CITY ENCOUNTER SYSTEM ============== -->
+  <section class="panel" id="panel-city">
+    <div class="card">
+      <h2>City Encounter System</h2>
+      <div class="hint">Roll a random encounter using the d100 lookup tables: pick district & time, then roll for type, class, and (optionally) NPC level.</div>
+      <div class="controls-row">
+        <label>District:</label>
+        <select id="city-district">
+          <option value="Hightown">Hightown</option>
+          <option value="Bazaar">Bazaar</option>
+          <option value="Port">Port</option>
+          <option value="Thieves Quarter">Thieves Quarter</option>
+        </select>
+        <label>Time:</label>
+        <select id="city-time">
+          <option value="day">Day</option>
+          <option value="night" selected>Night</option>
+        </select>
+        <label>Quality:</label>
+        <select id="city-quality">
+          <option value="auto" selected>Auto (per class)</option>
+          <option value="avg">Avg.</option>
+          <option value="elite">Elite</option>
+        </select>
+      </div>
+      <button class="roll-btn big" id="city-roll">&#127922; Roll Random Encounter</button>
+      <div id="city-result" class="city-result" style="display: none;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Encounter Type</h2>
+      <table class="lookup" id="city-type-table">
+        <thead><tr><th>Type</th><th>Hightown</th><th>Bazaar</th><th>Port</th><th>Thieves Q.</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>NPC Level by Type</h2>
+      <table class="lookup" id="npc-level-table">
+        <thead><tr><th>Level</th><th>Avg.</th><th>Elite</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Citizens / Travellers / Special Lookup</h2>
+      <div class="hint">Showing the column for the current district & time selected above. <button class="roll-btn small" id="city-tables-refresh">Refresh</button></div>
+      <h3 style="font-family:var(--display); color:var(--gold); margin:14px 0 8px; letter-spacing:0.1em;">Citizens</h3>
+      <table class="lookup" id="citizens-table">
+        <thead><tr><th>Class</th><th>Nr.</th><th>Class</th><th>Lvl</th><th id="citizens-col-head">Range</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <h3 style="font-family:var(--display); color:var(--gold); margin:18px 0 8px; letter-spacing:0.1em;">Travellers</h3>
+      <table class="lookup" id="travellers-table">
+        <thead><tr><th>Class</th><th>Nr.</th><th>Class</th><th>Lvl</th><th id="travellers-col-head">Range</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <h3 style="font-family:var(--display); color:var(--gold); margin:18px 0 8px; letter-spacing:0.1em;">Special</h3>
+      <table class="lookup" id="special-table">
+        <thead><tr><th>Class</th><th>Nr.</th><th>Class</th><th>Lvl</th><th id="special-col-head">Range</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============== BAZAAR ============== -->
+  <section class="panel" id="panel-bazaar">
+    <div class="card">
+      <h2>Bazaar of the Bizarre</h2>
+      <div class="hint">"[Nature] [Persona] is selling [Wares], [with Complications]" &mdash; Nature & Complication are rolled twice (1d2).</div>
+      <button class="roll-btn big" id="bazaar-roll">&#127922; Roll Vendor</button>
+      <div id="bazaar-result" class="madlib-result" style="display: none;"></div>
+      <div class="madlib-fields" id="bazaar-fields" style="display: none;"></div>
+    </div>
+  </section>
+
+  <!-- ============== POCKETS ============== -->
+  <section class="panel" id="panel-pocket">
+    <div class="card">
+      <h2>What's in Their Pocket?</h2>
+      <div class="hint">Pocket loot for the four social classes, plus a d100 odd object.</div>
+      <div class="controls-row">
+        <label>Class:</label>
+        <select id="pocket-class">
+          <option value="0">Outlander / Plebeian</option>
+          <option value="1">Merchant / Craftsman</option>
+          <option value="2">Patrician</option>
+          <option value="3">Aristocrat / Magnate</option>
+        </select>
+      </div>
+      <button class="roll-btn big" id="pocket-roll">&#127922; Roll Pocket Contents</button>
+      <div id="pocket-result" class="city-result" style="display: none;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Loot Reference</h2>
+      <table class="lookup" id="pocket-loot-table">
+        <thead><tr><th>Class</th><th>Silver</th><th>Electrum</th><th>Gold</th><th>Gems</th><th>Jewelry</th><th>Magical</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>d100 Odd Objects</h2>
+      <button class="roll-btn small" id="pocket-obj-roll">&#127922; Roll One</button>
+      <div id="pocket-obj-result" style="margin-top: 12px; display:none;" class="madlib-result"></div>
+      <details style="margin-top: 14px;">
+        <summary style="cursor: pointer; color: var(--gold-bright); font-family: var(--display); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.85em;">Show full table</summary>
+        <div class="browse-grid" id="pocket-obj-grid" style="margin-top: 12px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));"></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============== STOREHOUSES ============== -->
+  <section class="panel" id="panel-storehouses">
+    <div class="card">
+      <h2>Storehouses of Sin</h2>
+      <div class="hint">Roll d100 twice: once for an adjective, once for a noun. Combine for a wonderfully suspicious cargo.</div>
+      <button class="roll-btn big" id="store-roll">&#127922; Roll Cargo</button>
+      <div id="store-result" class="madlib-result" style="display: none;"></div>
+      <div class="madlib-fields" id="store-fields" style="display: none;"></div>
+    </div>
+  </section>
+
+  <!-- ============== MEETING ============== -->
+  <section class="panel" id="panel-meeting">
+    <div class="card">
+      <h2>The Meeting Will Take Place&hellip;</h2>
+      <div class="hint">"&hellip;[Relation to] [Location], [with Circumstances]" &mdash; three independent d100 rolls.</div>
+      <button class="roll-btn big" id="meeting-roll">&#127922; Roll Meeting</button>
+      <div id="meeting-result" class="madlib-result" style="display: none;"></div>
+      <div class="madlib-fields" id="meeting-fields" style="display: none;"></div>
+    </div>
+  </section>
+
+  <!-- ============== LOCAL COLOUR ============== -->
+  <section class="panel" id="panel-colour">
+    <div class="card">
+      <h2>Local Colour &mdash; 1d100</h2>
+      <div class="hint">Atmosphere, oddities, and street vignettes to dress up a scene.</div>
+      <button class="roll-btn big" id="colour-roll">&#127922; Roll Local Colour</button>
+      <div id="colour-result" class="result" style="display: none;"></div>
+    </div>
+    <div class="card">
+      <h2>Full Table</h2>
+      <div id="colour-list"></div>
+    </div>
+  </section>
+
+  <!-- ============== ENCOUNTER PURPOSE ============== -->
+  <section class="panel" id="panel-purpose">
+    <div class="card">
+      <h2>Encounter Purpose (optional)</h2>
+      <div class="hint">When you need a hook: 1d10 selects both the band (Confrontation 1&ndash;4 / Proposition 5&ndash;7 / Subterfuge 8&ndash;10) and the verb on that row.</div>
+      <button class="roll-btn big" id="purpose-roll">&#127922; Roll Purpose</button>
+      <div id="purpose-result" class="madlib-result" style="display: none;"></div>
+    </div>
+    <div class="card">
+      <h2>Full Table</h2>
+      <table class="lookup" id="purpose-table">
+        <thead><tr><th>1d10</th><th>1&ndash;4 Confrontation</th><th>5&ndash;7 Proposition</th><th>8&ndash;10 Subterfuge</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============== BROWSE ============== -->
+  <section class="panel" id="panel-browse">
+    <div class="card">
+      <h2>Browse / Search the Nocturnal Table</h2>
+      <div class="hint">Click any number, or search by keyword (name, profession, monster, etc.).</div>
+      <div class="search-row">
+        <input type="text" id="search-input" placeholder="Search&hellip; (e.g. 'wererat', 'beggar', 'cult')">
+        <button class="roll-btn small" id="search-clear">Clear</button>
+      </div>
+      <div id="search-results" class="search-results" style="display: none;"></div>
+      <div class="browse-grid" id="browse-grid"></div>
+    </div>
+  </section>
+
+  <footer>
+    Tables &copy; Gabor Lux / EMDT Ultrareality &middot; rollable interface for personal table use
+  </footer>
+</div>
+
+<script>
+"use strict";
+const DATA = {"nocturnal_main":[{"tag":100,"text":"Academic Lucius (Fighter 2, cane sword, poison) and 1d10 assistant guards (Fighter 2) making a survey of nocturnal street illumination for detailed annual report. 01-80 flies into uncontrollable rage if diverted in any manner.","stats":[]},{"tag":101,"text":"Academic Melchiades of Pentastadion (Fighter 1) and merchant Ratoglek Gorp (Thief 4), returning from bacchanalian feast with 1d6 veteran guards (Fighter 3), and discussing the merits of candied jellyfish. 01-10 one falls dead from exotic but poisonous treat.","stats":[]},{"tag":102,"text":"Academic Ninax the Geographer, mortified that the world outside his study doesn’t conform to his theories, requests escort home for 1d6*25 gp reward and bonus treasure map. 01-80 pure conjecture.","stats":[]},{"tag":103,"text":"Adventurers Hasim Bey (Fighter 4), Ivrahim Wooth (Fighter 5) and Theldon the Grave (Thief 3), wounded and pursued by 11 veteran guards (Fighter 3). 01-40 mistaken identity, 41-60 Ivrahim tosses pearl to lead PC to gain favour in fighting them off.","stats":["Hasim Bey: Fighter 4; AC 4 (chain, shield); Atk scimitar 1d8 or javelin 1d6; ML 8; AL CE; XP 156. Hp 27/30 Ivrahim Wooth: Fighter 5; AC 4 (chain, shield); Atk battleaxe 1d8; ML 7; AL CN; XP 158; 1500 gp, the pearls of Wasnoth (1000 gp, 1200 gp, 1800 gp), platinum gorgon medal (900 gp). Hp 12/44 Theldon the Grave: Thief 3; AC 7 (leather, Dex); Atk shortsword 1d6; Spec backstab*2, PP 40%, OL 33%, FT 30%, MS 27%, HS 20%, HN 15%, CW 87%; ML 6; AL N; XP 98; 9*snake heads. Hp 9/15"]},{"tag":104,"text":"Adventurers N’Ogthog (caveman Fighter 1 Str 18), Naviolus Yarg (Illusionist 3), Silmoran (Fighter 3), Avim Hasim (Thief 2), Tharog the Nomad (Fighter 3) and two porters, returning from expedition to weird mountain enclave; altar piece of the Battling God bearing radioactive curse.","stats":["N’Ogthog: caveman Fighter 1; AC 7 (furs); Atk two-handed axe 1d10+3; Spec +1 to saves, keeps fighting until -5 Hp; Str 18/10; ML 9; AL N; XP 25.","Hp 10 Naviolus Yarg: Illusionist 3; AC 10; Atk trident (can’t use in combat); Spec hypnotism 1/day; ML 7; AL NE; XP 102; moss opal (180 gp), jade dust (350 gp). Spells: 2/1; 1: audible glamer, dancing lights, hypnotism, ph. force; 2: mirror image, magic mouth. Hp 11 Silmoran: Fighter 3; AC 6 (ring mail, shield, Dex); Atk flail 1d6+1 or javelin 1d6; Con 17; ML 8; AL LE; XP 112; holy scriptures of the Battling God. Hp 31 Avim Hasim: Thief 2; AC 6 (leather, Dex); Atk scimitar 1d8 + poison (15/0 Hp) or 2*shortbow; Spec backstab*2, PP 35%, OL 34%, FT 25%, MS 21%, HS 15%, HN 10%, CW 86%; Dex 16; ML 4; AL LE; XP 70; 2000 electrum, 2*jasper necklaces (500 gp, 750 gp), 3*poison. Hp 10 Tharog the Nomad: Fighter 3; AC 6 (chain shirt); Atk 2*longbow 1d6 or shortsword 1d6; Spec tracking; ML 8; AL LG; XP 84; 100 gp. Hp 17"]},{"tag":105,"text":"Adventurers Oxantes (Fighter 3) and Zoraidus the Elephant-killer (Fighter 6) triumphantly leading Rumil Yerp (Thief 2) to... 01-50 his doom, 51-80 their doom, 81-00 equal opportunity destruction.","stats":["Oxantes: Fighter 3; AC 6 (chain shirt); Atk 2*longbow +1 1d6 or cutlass 1d8; ML 8; AL CN; XP 92; golden bird amulet (1100 gp). Hp 21 Zoraidus the Elephant-killer: Fighter 6; AC 4 (banded mail); Atk glaive-guisarme 2d4 or javelin 1d6; ML 10; AL CE; XP 382; ceremonial shortsword 500 gp, 200 gp, legionary’s badge. Hp 37 Rumil Yerp: Thief 2; AC 10; Atk -; Spec backstab*2, PP 35%, OL 29%, FT 25%, MS 21%, HS 15%, HN 10%, CW 86%; ML 5; AL LE; XP 54. Hp 4/6"]},{"tag":106,"text":"Adventurers Thamra of Narlenk (Fighter 4, circlet of hypnosis), the brothers Abu Kaz and Yildiz Kaz (both Thief 3, circlet of hypnosis), Sangra, She-Devil of Polysyne (Thief 4, circlet of hypnosis) and Darius the Osmotic (Thief 7, circlet of hypnosis, effect subverted by ring of inversion and enjoying the control being granted over rest of group) on a geas spell. 01-10 they have been sent to assassinate player characters and are extremely surprised when they accidentally meet them.","stats":["Thamra of Narmlenk: Fighter 4; AC 6 (ring mail, shield); Atk longsword 1d8+1; Str 16; ML 12; AL CN; XP 147; circlet of hypnosis. Hp 24 Abu Kaz and Yildiz Kaz: Thief 3; AC 8 (leather); Atk scimitar 1d8 or 2*dagger 1d4; Spec backstab*2, PP 40%, OL 33%, FT 30%, MS 27%, HS 20%, HN 15%, CW 87%; ML 12; AL LN; XP 108/106; circlet of hypnosis, Abu Kaz has a potion of heroism. Hp 14 13 Sangra, She-Devil of Polysyne: Amazon Thief 4; AC 4 (Dex, cloak +2, Amazon); Atk longsword 1d8 or 2*dagger 1d4; Spec backstab*2, PP 45%, OL 42%, FT 35%, MS 33%, HS 25%, HN 15%, CW 88%; Dex 16; ML 12; AL LN; XP 180; circlet of hypnosis, gossamer cloak +2, ruby ring of feather fall (2700 gp), 700 gp, 25 pt. Hp 15 Darius the Osmotic: Thief 7; AC 4 (elven chain +1); Atk shortsword 1d6 or 2*dagger 1d4; Spec backstab*3, PP 60%, OL 52%, FT 50%, MS 55%, HS 43%, HN 25%, CW 94%, RL 35%; ML 8; AL NE; XP 657; circlet of hypnosis (unaffected), ring of inversion, 500 sp, 1250 electrum, 1000 gp. Hp 24"]},{"tag":107,"text":"Adventurers Valhor the Fine (Fighter 2), Irene the Tea-Drinker (Amazon 3), Nallong the Wild Man (Fighter 3), Ali Bek (Thief 3) and Sonora (Thief 4), all dressed in black. 01-30 break-in, 31-60 mourning, 61-80 cult members, 81-00 new fashion.","stats":["Valhor the Fine: Fighter 2; AC 5 (chain shirt, shield); Atk longsword 1d8; ML 9; AL LE; XP 60; scarab amulet (180 gp). Hp 15 Irene the Tea-Drinker: Amazon 3; AC 3 (chainmail, shield, Amazon); Atk spear 1d6 or net; ML 8; AL LN; XP 86; 150 gp, old key worn as a necklace. Hp 18 Nallong the Wild Man: Fighter 3; AC 5 (scale mail, shield); Atk 2*two-handed axe 1d10; Spec fights to death once wounded; ML 11; AL NG; XP 102; 2*healing balm (1d3+1 Hp). Hp 19 Ali Bek: Thief 3; AC 10; Atk shortsword; Spec backstab*2, PP 40%, OL 33%, FT 30%, MS 27%, HS 20%, HN 15%, CW 87%; ML 5; AL N; XP 110; prayer book, potion of healing. Hp 10 Sonora: Thief 5; AC 8 (leather); Atk 2*shortbow 1d6 or 2*dagger 1d4; Spec backstab*3, PP 50%, OL 42%, FT 40%, MS 40%, HS 31%, HN 20%, CW 90%, RL 25%; ML 9; AL CN; XP 270; black mask, map, 500 electrum, 100 gp. Hp 20"]},{"tag":108,"text":"Adventurers Yggbleid the Horse-Eater (Fighter 2, composite bow), Yesukai the Half-Nomad, nomad (Magic-User 3), Yakka, nomad (Assassin 4) and Yarhilda, amazon (Cleric 2) leading two war dogs, setting out on expedition to haunted manor.","stats":["Yggbleid the Horse-Eater: Fighter 2; AC 4 (chain, shield); Atk longsword 1d8 or 2*composite longbow 1d6+2; Spec +2 damage with bows, silver or +1 to hit; ML 8; AL NE; XP 59; brass diadem, wolf medallion (medallion of lycanthropy), silver pin (30 gp). Hp 19 Yesukai the Half-Nomad: Magic-User 3; AC 10; Atk 2*dagger 1d4+spider venom (save vs. paralysis); ML 9; AL NE; XP 104; red raven wine (as potion of heroism, but save vs. magic or rage uncontrollably 2d10 r), 3*spider venom, 450 gp. Spells: 2/1; 1: detect magic, magic missile, read magic, shield; 2: ESP, knock. Hp 12 Yakka: Assassin 4; AC 5 (chain shirt, shield); Atk longsword 1d8 or 2*shortbow 1d6; Spec surprise, backstab *2, assassination 0-1 65%, 2-3 60%, 4-5 50%, 6-7 40%, 8-9 25%, PP 35%, OL 29%, FT 25%, MS 21%, HS 15%, HN 10%, CW 86%; ML 8; AL LE; XP 205; wolftrap, colourful symbol, tiger mask, anti-venom, 100 gp. Hp 20 Yarhilda: Amazon Cleric 2; AC 4 (chain, shield); Atk warhammer 1d6+1; ML 6; AL NG; XP 48; holy symbol, 3*anti-venom, 16 gp. Spells: 2; 1: detect evil, cure light wounds. Hp 8 War dogs (2): HD 2+2; AC 6; Atk bite 2d4; ML 7; AL N; XP 66. Hp 8 8"]},{"tag":109,"text":"Advocate Kalltrom, knows the Art of the Deal, and ready to take up any cause at court for 250 gp per diem. 5% cumulative per day of reaching important dignitary, 1% of Overlord. 01-30 a sting operation by secret police.","stats":[]},{"tag":110,"text":"Alchemist Multiphage of Lam (Illusionist 6) selling 1d6+1 potions from beaker of potions (01-40 delusion); also provides horoscopes (all ambiguous).","stats":["Multiphage of Lam: Illusionist 6; AC 7 (Dex); Atk –; Dex 17; ML 6; AL CE; XP 478; 2*pouchful of “Mummy’s Breath” (save vs. poison or 4d6 Hp and mummy rot), 300 gp, beaker of potions. Spells: 4/3/1; 1: change self, dancing lights, detect invisibility, hypnotism, ph. force, light; 2: improved ph. force, mirror image, misdirection; 3: paralysation, spectr. force. Hp 13"]},{"tag":111,"text":"Alchemist Unctuous Malévol, peddling dark philtres from a small stand; all made of flavoured water and pig’s fat. 01-20 irate customer demands money back.","stats":[]},{"tag":112,"text":"Amazon Antiope (Amazon 9) contemplating rank of stone statues depicting other amazons. 01-25 steps on empty pedestal and turns into lifeless marble.","stats":["Antiope: Amazon 9; AC -2 (chain shirt, shield, Amazon, cloak +3); Atk footman’s mace +3 1d6+4; ML 10; AL N; XP 1572. Hp 56"]},{"tag":113,"text":"Amazons Velmilis Mil (Amazon 8), Yana the Fair (Amazon 5) and Yillis of the Lowmarks (Amazon 9) on urgent mission of revenge against spider-cult. 01-60 immediate attack by 3d10 cultists (Fighter 2) and 2d6 trained giant spiders.","stats":["Velmilis Mil: Amazon 8; AC -1 (chain shirt, shield +2, Amazon); Atk bastard sword 2d4 or 2*dagger +1, +2 vs. smaller 1d4+1; ML 9; AL LG; XP 990; 6*3000 gp gems, potion of polymorph self. Hp 44 Yana the Fair: Amazon 5; AC 5 (leather, shield, Amazon); Atk spetum 1d6+1; Spec psionic ESP 3/day, mind waves 1/day (save vs. paralysis, 1d6+1 r); ML 8; AL NG; XP 316; 1750 gp, 3000 gp fake spider idol filled with explosives (6d8 Hp when exposed to fire), flask of curses (4x). Hp 29 Yillis of the Lowlands: Amazon 9; AC 0 (chain shirt, shield +1, Amazon); Atk longsword +2 1d8+4; Str 18; ML 10; AL LG; XP 1152; oil of etherealness, rope of climbing, stone of controlling earth elementals. Hp 56 Giant spiders (2d6): HD 4+4; AC 4; Atk bite 2d4+poison (1d3 r, 25/10 Hp); Spec poison; ML 7; AL CE; XP 325 +5/Hp. Hp 24 28 23 24 20 24 27 19 23 28 30 15"]},{"tag":114,"text":"Aristocrat Bandar Begh (Fighter 2, 1650 gp, 125 pt), the distant kin of a nomad lord – hamster-faced, spoiled lout with 1d10 slaves. He demands to see the city market NOW and only NOW to buy a few exotic products. Quarrelsome, slaves listen patiently.","stats":[]},{"tag":115,"text":"Aristocrat Bilam of Un (Fighter 1) lying in a gutter in his rich finery (jewels 1d6*500 gp). 01-50 drunk, 51-90 dead, 91-00 undead.","stats":[]},{"tag":116,"text":"Aristocrat Guwak Khan (Fighter 8) walking pet tiger in search of prey, will only settle for the best (16+ Cha, wealthy-looking).","stats":["Guwak Khan: Fighter 8; AC 5 (breastplate); Atk scimitar +1 1d8+1; ML 9; AL CE; XP 930; 9000 gp jewelry, The Mask of Dispassionate Contemplation (3800 gp, donned while tiger is feeding) potion of diminution, barrier ring (-4 AC force shield, 10 r/day). Hp 38 Tiger: HD 5+5; AC 6; Atk 2*claws 1d4+1 and bite 1d10; Spec 2*rear claws 2d4, surprised only 1:6; ML 10; AL N; XP 400. Hp 25"]},{"tag":117,"text":"Aristocrat Theodisio of Ganth (Fighter 3), lost in street-maze while taking a walk. 01-40 gratefully offers gold-headed walking stick (2d6*200 gp) for escort back home, but 50% reconsiders promise once at home gate.","stats":[]},{"tag":118,"text":"Aristocrat, Lady Elisae of the Pearly Isles (Assassin 5, poisoned sword) taking a leisurely walk. 01-60 she might be mistaken for a prostitute.","stats":[]},{"tag":119,"text":"Aristocrats Lady Alkione and Lady Eudoxia with 2d10 guards (Fighter 2), stalking the streets in pursuit of man who had slighted them. 01-20 PC identified as culprit, 21-40 NPC is identified and executed on the spot.","stats":[]},{"tag":120,"text":"Assassin Mulbar (Assassin 5) looking for the healing power of love after an especially harrowing kill. He will not be finding it.","stats":[]},{"tag":121,"text":"Barber Kitalam (Assassin 3) prowls streets in search of victims with sharpened razor; seeing party, runs away sobbing and screaming “Unclean! All unclean!”","stats":["Kitalam: Assassin 3; AC 7 (Dex); Atk razor 1d6; Spec surprise, backstab *2, assassination 0-1 60%, 2-3 55%, 4-5 45%, 6-7 35%, 8-9 20%, PP 30%, OL 25%, FT 20%, MS 15%, HS 10%, HN 10%, CW 85%; Dex 17; ML 7; AL CE; XP 109. Hp 7"]},{"tag":122,"text":"Barber Robosius Verm selling huge sack of human hair to shady type.","stats":[]},{"tag":123,"text":"Bath-man Godai the Stooped (Thief 2) morosely counting day’s profits. 01-25 1d3 rings/jewellery.","stats":[]},{"tag":124,"text":"Bath-man Uglai the Bow-legged, heating up large tub for night customers. 01-30 group of 1d6 guests arrives, casually discarding valuable clothes.","stats":[]},{"tag":125,"text":"Beggar Kallikrates, former poet and ladies' man, clutching golden lyre (2200 gp) and stumbling in his ragged kaftan of golden thread towards hovel. 01-70 still has Overlord’s protection in form of 1d6 5th level Assassins following every step.","stats":[]},{"tag":126,"text":"Beggar Unceps (Fighter 2), former ship captain ruined by thieves guild. 01-30 knows secret back entrance to hideout.","stats":[]},{"tag":127,"text":"Beggar Valmous the Flim, infamous thug (Fighter 2), using trained great ape to rob passersby. 01-15 ape goes ape and attacks Valmous instead.","stats":["Carnivorous ape: HD 5; AC 6; Atk 2*claws 1d4 and bite 1d8; Spec rending 1d8 Hp on two claw hits; ML 8; AL N. Hp 23"]},{"tag":128,"text":"Beggar-catcher Oaak Buffo (Fighter 3, flail +1) looking for non-guilded almsmen. Frog amulet around neck and unctuous disposition. 01-40 solicits party help in apprehending an unruly group.","stats":[]},{"tag":129,"text":"Beggars (1d10) hanging an interloper on their turf. 01-25 thieves guild operative, scarily grateful if rescued.","stats":[]},{"tag":130,"text":"Beggars (1d10) wailing over sick comrade.","stats":[]},{"tag":131,"text":"Beggars (1d100) dancing to discordant tunes of robed piper, 01-15 hostile. 60% unveiled piper’s face is a mass of tubular protrusions.","stats":[]},{"tag":132,"text":"Beggars (2d10) huddled around small kettle of dog stew. 01-80 head plainly visible.","stats":[]},{"tag":133,"text":"Beggars (2d10), swilling sour wine. 01-20 invite characters, 21-40 \"What are you looking at, you are no better than us!\", 41-60 shakedown attempt, 61-80 one keels over and writhes in terrible contortions.","stats":[]},{"tag":134,"text":"Beggars (3d10) sleeping in huddled group. 01-60 watched by 1d6 guard dogs, 61-75 light shines on fat idol behind group.","stats":[]},{"tag":135,"text":"Bodyguard Bron the Elder (Fighter 3, trident +2), fired for indecency before employer Sabra of Gwane, looks for companions to exact his due payment from villa treasury.","stats":[]},{"tag":136,"text":"Bones piled up by the walls, wind-blown garbage and rags. Confused man wandering around claims this had been the place for an evening revelry of the Gatekeepers' Synod just half an hour ago, and yes, he is sure this is the right place. 01-40 bones animate as 3d10 skeletons.","stats":["Skeletons (3d10): HD 1; AC 7; Atk claws 1d6; Spec ½ from sharp/edged, immune (sleep, charm, hold, etc.); ML 8; AL N; XP 15 +1/Hp; handful of rusted keys. Hp 6 2 2 6 3 2 1 1 1 6 8 6 2 2 1 8 4 4 4 4 2 8 4 6 8 4 7 5 4 2"]},{"tag":137,"text":"Bricks fallen from a nearby wall are all stamped with the mark of a cat’s eye. 01-30 reveal dark plaster wall decorated with golden sigils, 31-40 entrance to forgotten part of house sealed up long ago.","stats":[]},{"tag":138,"text":"Candles lit before roadside shrine to forgotten hero (2d6 gp worth of offerings).","stats":[]},{"tag":139,"text":"Cat merchant Yood Gwullim (Magic-User 3) passing the night by levitating hapless merchandise. 3d10 cats in wicker cages, 5 sp to 1d4*250 gp.","stats":["Yood Gwullim: Magic-User 3; AC 10; Atk staff 1d6; ML 4; AL CN; topaz ring 2000 gp. Spells: 2/1; 1: cantrip, detect magic, light, sleep, Tensor’s floating disk; 2: levitation. Hp 9"]},{"tag":140,"text":"Cat swarm stripping corpse of meat.","stats":["Cat swarm: HD 4; AC 6; Atk swarm 2d6; Spec ½ (piercing/slashing); ML 5; AL N; XP 171. Hp 22"]},{"tag":141,"text":"Cats, feeling a strange attraction towards characters, are joined by more and more of their kind until company is surrounded by meowing mass. 01-20 attack after single bad move, 21-50 lead company to interesting place, 51-60 lead company into dream alley.","stats":["Cat swarms (1d4+1): HD 4; AC 6; Atk swarm 2d6; Spec ½ from piercing/slashing; ML 5; AL N; XP 105 +3/Hp. Hp 10 16 24 17 23"]},{"tag":142,"text":"Child Buram, did not get his dinner and got sent out into the street as punishment, will show way into parents' jewellery store for half the loot. 01-20 trap, 21-30 fakes, 31-40 1d6 corpses, 41-50 parents' corpses.","stats":[]},{"tag":143,"text":"City guards (Fighter 2) in contingent of 1d4*5, and lead by Lieutenant Sinar Saam (Ftr 3, horn), watching show put on by three dancing girls. 01-30 take characters for inspectors.","stats":[]},{"tag":144,"text":"City guards Orlat Branna (Amazon 3) and 1d4*5 veterans (Fighter 3), looking for a band of thieves. If the company enjoys a good reputation, 01-60 hiring attempt; if they are considered sketchy, 01-50 interrogated, 51-70 arrested.","stats":["Orlat Branna: Amazon 3; AC 4 (chain shirt, shield, Amazon); Atk longsword 1d8; ML 9; AL LE. Hp 17"]},{"tag":145,"text":"City guards, 2d4*5 militias (Fighter 1), led by Strategos Gonnex (Fighter 4), and walling off cellar entrance with 1d10 slaves. 01-15 undead, 16-30 lepers, 31-45 beggars of Shakkur, 46-60 debtors, 61-75 poisonous vapours, 76-90 mini-dungeon, 91-00 crypt.","stats":[]},{"tag":146,"text":"City guards, 5 veterans (Fighter 5), 5 bowmen (Fighter 2) and tax collector Mazarlon, have erected makeshift barricade in the street to stop passersby and demand a toll. Collection box with 225 sp, 650 gp, two gold earrings (400 gp), fake ivory hand (250 gp).","stats":[]},{"tag":147,"text":"City guards: 1d10+3 off-duty guards (Fighter 2) looking for easy marks to shake down for some cash. 60% of approaching party if they outnumber them at least 3:1; 40% if 2:1, 20% otherwise.","stats":[]},{"tag":148,"text":"City guards: 1d2*5 guards (Fighter 2) carrying slain comrades after altercation. 01-25 in extremely foul mood, react violently to any comment.","stats":[]},{"tag":149,"text":"City guards: 1d4*5 archers (Fighter 2) occupying this sector’s walls and rooftops. 01-30 sting operation, 31-50 military exercise, 51-70 general razzia, 71-85 assassination attempt, 86-98 false alarm, 99-00 rumours of imminent coup d’etat.","stats":[]},{"tag":150,"text":"City guards: 1d4*5 guards (Fighter 2) and Strategos Mirafax (Ftr 4, wolf's paw amulet), carrying confiscated cloth bales. 01-20 sale offer to party, 21-40 bales actually hide valuable contraband.","stats":[]},{"tag":151,"text":"City guards: 1d4*5 militias (Fighter 1) battering down tenement door. 01-40 suspected insurrectionists, 41-60 suspected tax-dodgers, 61-80 suspected draftdodgers, 81-90 personal revenge, 91-00 undead infestation.","stats":[]},{"tag":152,"text":"City guards: 1d4*5 militias (Fighter 1) bowing before Thumai, Prince Radiant (Ftr 4, burning golden eyes, radioactive gaze and touch) and asking arrivals in hushed tones to do same.","stats":["Thumai, Prince Radiant: Fighter 4; AC 2 (Dex, natural); Atk scimitar 1d8+3 or radioactive touch 2d4 + radiation poisoning or eye rays 2d6 + radiation poisoning; Spec hovers above ground, radiation, immune to magical projectiles; Str 18, Int 18, Wis 18, Dex 18, Con 18, Cha 18; ML 10; AL CN; XP 270; 8000 gp kaftan (irradiated). Hp 25"]},{"tag":153,"text":"City guards: 1d4*5 militias (Fighter 1) digging up street under watchful eyes of high-ranking advisor Iskandar Yeg. 30% 3d10 reservists (Fighter 2) lurk nearby. 01-30 heavy leaden coffers are unearthed, 31-60 break-through into old cistern, 61-90 pointless punitive exercise, 91-00 mock excercise to nab a few “spies”.","stats":[]},{"tag":154,"text":"City guards: 1d4*5 veterans (Fighter 3) and corporal Ezid Arack (Fighter 3, plate), escorting 1d6 leashed captives. 01-30 previously encountered NPC, 31-50 cry for help, 51-70 hidden message, 71-90 slavers disguised as guards.","stats":[]},{"tag":155,"text":"City guards: 1d6+2 veterans (Fighter 3) stalking carefully towards snoring adventurer Salmando (Fighter 10) who has seduced Overlord’s daughters.","stats":["Salmando: Fighter 10; AC 9 (shield); Atk warhammer 1d6+1; ML 8; AL LG; XP 1207; 110 gp, gourd. Hp 39"]},{"tag":156,"text":"City guards: 2d4*5 militias (Fighter 1) escorting condemned man, loudly begging for forgiveness of his crimes. Executioner Aglar the Hack (Fighter 4) follows close behind, beating him with snake-headed staff. 01-30 condemned is an old acquaintance.","stats":[]},{"tag":157,"text":"Coal merchant Kaison of Imbash (Thief 2) selling sacks of charcoal from beat-up cart, warms members by brazier. 01-10 the fire speaks in ominous tones, a malice from unknown agency.","stats":[]},{"tag":158,"text":"Collapse: house front and beams fall, save vs. petrifaction or 3d6 Hp. 01-60 immediate encounter follows.","stats":[]},{"tag":159,"text":"Colour out of space (as will-o-wisp), conjured by certain geometric correlations in environment. Departs within 1d6 rounds if attacked, but returns nightly while system of correlations persists.","stats":["Colour out of space: HD 9; AC 0; Atk drain 1d6 Strength; Spec drain (victims at 0 Str are vitrified into greenish-yellow glass), +2 or better to hit, blank out 2d4 r; ML 12; AL N; XP 2080. Hp 40"]},{"tag":160,"text":"Copper tank in closed plaza slithers with mass of 4d6 dark snakes.","stats":["Snakes, poisonous (4d6): HD 1+3; AC 6; Atk bite 1d6 + poison (1d4+1 r, 15/0 Hp); ML 6; AL N; XP 40 +1/Hp. Hp 4 4 4 5 5 10 7 11 5 8 7 8 11 5 5 10 9 10 5 5 10 10 11 8"]},{"tag":161,"text":"Corpses, 2d6 in neat pile of coffins and veiled bundles. 01-30 1d3 guards (Fighter 2), 31-60 treasure in one of the coffins, 61-80 zombies, 81-00 2d6 looters already on site.","stats":[]},{"tag":162,"text":"Corpses, 3d4 torsoes wrapped up in bloody black felt packages next to the wall, with limbs placed neatly nearby. Pieces don't match.","stats":[]},{"tag":163,"text":"Corpses, two robed and hooded figures, still locked in a strangling grip. Yellow spots on face and in throat are yellow mould.","stats":[]},{"tag":164,"text":"Courtier Barani Sinnan (Thief 4, clerical scroll: cure light wounds, sanctuary, protection from fire, slow poison) with 1d3 Northman berserker guards (Fighter 2), hurrying to secret meeting. If characters look like foreigners, 01-40 she tries to hire them to restrain pursuers (?) on her trail, 41-80 believes them to be assassins, and orders guards to attack.","stats":[]},{"tag":165,"text":"Craftsmen: Murad Goldenhand and Zulay Goldenhand, goldsmiths, quarreling about the only one to deserve the Goldenhand moniker, and which of the two should return to his original name. 01-60 they ask a distinguished-looking character in the company to settle their case. Gift of 1d2 random jewelry.","stats":[]},{"tag":166,"text":"Crier Baltho, horn and pennant. 01-25 raising the alarm over a robbery, 26-50 call to arms, 51-75 announcing passage of the Overlord through the streets with retinue of 2d100, 76-00 heralding burial procession of 1d100.","stats":[]},{"tag":167,"text":"Crone, staggers around while wailing in pain from sickness. 01-15 expires on the spot.","stats":[]},{"tag":168,"text":"Cultists (2d6+2) of the God of Peace (Fighter 2, chain, flail & white cloak with insignia of olive branches) monitoring passers-by with detect evil spell. They stalk and kill those who detect as such, and are outnumbered at least 2:1.","stats":[]},{"tag":169,"text":"Cultists (2d6+2) of the Grand Cognate (Fighter 2, flail & green robes) asking groups they outnumber at least 2:1 about religious affiliation; attack anyone but the non-religious.","stats":[]},{"tag":170,"text":"Cultists, (2d6+2 thugs, Fighter 2), followers of the doctrine of Optimalised Objectivism, distributing free nooses among poor-looking passersby. 01-30 to take the workings of the free market into own hands if they spot lone target.","stats":[]},{"tag":171,"text":"Cultists, 2d6+2 hooded figures (Fighter 2), placing lit candles in niches and ledges. 01-30 enchantment to keep away shadows, 31-60 sacrificial rite, 61-80 developments observed by Overlord's spies.","stats":[]},{"tag":172,"text":"Cultists, 2d6+2 robbers (Fighter 2), distributing leather masks for upcoming \"Festival of Exalted Glory\", where the maskless will be devoured by the Crawler from Beneath. 01-30 they attack if someone refuses or does not don mask, and they outnumber the infidels.","stats":[]},{"tag":173,"text":"Dancers of Yabbath (1d100) waltzing through streets to inaudible music, and woe to those who would block their path.","stats":[]},{"tag":174,"text":"Dancing girl Retha performing before captive audience to drums and flutes. 01-20 thieves operating in crowd, 21-40 kidnapped from stage by demonic force, 41-60 lovestruck rake throws pouch of gemstones 3d6*500 gp, 61-70 commits suicide at height of act.","stats":[]},{"tag":175,"text":"Dancing girls Thella, Danae and Polyxene putting on exotic show on makeshift stage. 01-50 dancers and 1d10 attendants are doppelgangers; 51-80 2d10 onlookers are also doppelgangers; 81-00 everyone present is a doppelganger, including a few PCs. Dun-DUN.","stats":["Doppelgangers (1d10+): HD 4; AC 4; Atk strangle 1d12; Spec surprise 4:6, ESP, imitate 90% accuracy, immune (sleep, charm), save as 10th level; ML 6; AL NE; XP 285 +3/Hp. Hp 16 15 9 14 21 20 22 24 19 12 14 12"]},{"tag":176,"text":"Degenerate Quoodt Avourmis sniffing lotus in foul recess. Low-ranking member of Overlord’s spy network. 01-50 has 1d6*40 gp worth of the stuff.","stats":[]},{"tag":177,"text":"Demon in pursuit of true love, bound to this task by perverted magic-user from dream-palace.","stats":[]},{"tag":178,"text":"Demon, shadow, formless shape gliding across walls and disappearing into niches. 01-60 magic jar attempt on random PC to utter abstract philosophical proclamation, fall silent when finished but linger in host with a 25% probability.","stats":["Shadow demon: HD 7; AC 10/5/0 (depending on illumination); Atk 2*claws 1d6; Spec magic jar, darkness 15’ r, fear 1/day, immune (mind-affecting, cold, electricity), ½ damage (fire), +1 or better to hit, light sensitivity (magical light causes 1d6 Hp/caster level); ML 9; AL CE; XP 1116. Hp 27"]},{"tag":179,"text":"Dimensional portal resembling silvery door opens from back alley or shadowed niche, intrusion of 3d10 agents (Assassin 3) from foreign reality in progress. 01-30 closes behind characters if they step through, 31-60 closes in 1d6 rounds, 61-70 returning expedition. Agents (3d10): Assassin 3; AC 8 (leather); Atk shortsword 1d6 + poison (15/0 Hp) or 2*dagger 1d4; Spec surprise, backstab *2, assassination 0-1 60%, 2-3 55%, 4-5 45%, 6-7 35%, 8-9 20%, PP 30%, OL 25%, FT 20%, MS 15%, HS 10%, HN 10%, CW 85%; Dex 17; ML 9; AL LE; XP 110 +2/Hp.","stats":["Hp 12 14 9 13 14 9 11 5 14 12 12 11 12 11 10 13 9 11 9 4 9 11 8 8 6 10 7 8 15 9"]},{"tag":180,"text":"Dog merchant Dabul Mok. 1d3 mangy curs, 1d6 average dogs, 1d3-1 war hounds (125 gp), and 1d3-1 decorative dogs (150 gp), 10 gp in pouch.","stats":[]},{"tag":181,"text":"Dogs (3d6) in wooden cages by store of dog oil merchant Bebum Mool (Thief 3), also selling skins for 1d6 sp each. 01-15 1d3 dogs break free and attack shopkeeper, 16-30 1d6 thugs (Fighter 2) show up with orders to smash up the joint.","stats":[]},{"tag":182,"text":"Dogs (4d6) cornering stray drunk. 01-15 drunk is Ugai Khan, nomad warlord and level 8 Fighter (-2 to rolls due to drunkenness).","stats":["Ugai Khan: Fighter 8; AC 6 (studded leather, shield); Atk 2*composite longbow 1d6 or serpent’s tongue sword +1 1d6+1 (automatic hit on natural 1); ML 9; AL LN; XP 1050; 380 gp, inn key. Hp 50"]},{"tag":183,"text":"Dogs (4d6) fighting over bones and scraps. 01-10 golden ring spotted.","stats":[]},{"tag":184,"text":"Dogs (4d6), sleeping in a pack and blocking the way. 01-30 they become hostile unless bypassed very carefully.","stats":[]},{"tag":185,"text":"Dogs (4d6), whining and fleeing from a proud, fat cat walking down the street.","stats":[]},{"tag":186,"text":"Drums, dull rhytmic sounds from abandoned cistern.","stats":[]},{"tag":187,"text":"Drunk Kuthabond, tries to smash every object in his way with a staff.","stats":[]},{"tag":188,"text":"Dung seller Oillo Offin (Thief 3) checking his fermentation vats and inviting passersby to inspect his merchandise.","stats":[]},{"tag":189,"text":"Elephant, dead, blocking street. 3d10 confused slaves and 1d10 guards (Fighter 2, halberds) running in panic around howdah, master Bullit Singh (Fighter 3, mace +2) in vicious temper.","stats":[]},{"tag":190,"text":"Emissaries from distant lands marvelling at city sights. Leader Rutham Mirza (Fighter 4, gemstone pin in turban 750 gp) and 6 veteran guards (Fighter 3).","stats":[]},{"tag":191,"text":"Executioner Decius Varo (Fighter 3) fixing rope up 30' between two houses for tomorrow's trial by ordeal – those who remain hanging are guilty, those who fall are innocent.","stats":[]},{"tag":192,"text":"Exile: Tyrant Gurcianus (Fighter 6) living up the last gains from his former empire among 2d10 faithful reformist adherents. 01-80 try to sell claim to throne for outrageously low price.","stats":["Gurcianus: Fighter 6; AC 1 (breastplate +1, cloak +3); Atk two-handed sword 1d10; ML 7; AL CN; XP 358; 2000 gp, regal purple cloak +3 (12,500 gp, also magical), lute with golden strings (4500 gp), bottomless sack. Hp 33"]},{"tag":193,"text":"Exile: Tyrant Orglan the Barbarian (Fighter 6), deposed at home and now seeking forgetfulness in his cups. Iron staff +1 is mark of power. 01-25 mistakes party for assassins, 26-35 for capable ruffians to retake his throne, 36-45 for disloyal subjects.","stats":["Orglan the Barbarian: Fighter 6; AC 4 (banded mail); Atk iron staff +1 1d6+1 + hold person 5/day; Spec returns from the dead unless chopped into really small pieces; ML 10; AL CE; XP 614. Hp 44"]},{"tag":194,"text":"Factor Mercand the Off-shore (Thief 4, dust of disappearance 1d4+1) offers deal to have specific past or future crimes annulled by Overlord. An officially approved endeavour, although watched by secret police.","stats":[]},{"tag":195,"text":"Fire-eater Nab-Sagh (Fighter 4) enthralling captive audience of 3d10 with hypnotic flames while chanting drummer implants subliminal suggestions. 01-30 seeks to turn PCs into unwitting agents, 31-60 orders pawns to attack.","stats":[]},{"tag":196,"text":"Fishmonger Abalus Gwooth returning from evening foray with his catch. 01-25 old brass statuette on cart and – look, isn’t that eye a gemstone!?","stats":[]},{"tag":197,"text":"Food vendor Gutamor, selling cold, oily scraps which have remained from the day. 01-50 food poisoning, 51-75 beggars arrive to buy it up for a few coppers.","stats":[]},{"tag":198,"text":"Food vendor Gutho selling songbirds on a stick. Cage of live birds next to knives & boiling pot of oil (4d6); cockatrice in covered basket.","stats":["Cockatrice: HD 5; AC 6; Atk beak 1d3+stone; Spec petrifaction; ML 7; AL N; AC 254. Hp 16"]},{"tag":199,"text":"Food vendor Salman Sankar, knows gossip about 1d3 random encounters (roll). 01-25 roast hedgehog on a stick, 26-50 roots in vinegar, 51-75 blink dg chips, 76-00 hot spicy porridge with dates.","stats":[]},{"tag":200,"text":"Fortune-teller Suhar Haquim, peers at the future (or what he thinks as such) through holes drilled into a ram's skull. His predictions are unsettling, paranoid phantasms. 16 gp, set of drills. Also practices blood-letting \"to balance the humours\", 5 gp and 1d3 Hp.","stats":[]},{"tag":201,"text":"Garbage collector Migular, collects most of it in his pushcart, and the valuable bits in his sack. 01-30 inquires about promising garbage digs, 31-60 blood-curdling rumour, 61-90 has something interesting for sale.","stats":[]},{"tag":202,"text":"Garbage collector Mortho Tass, pushing hand cart full of rags and lamenting the loss of the regal purple robe that was snatched from him.","stats":[]},{"tag":203,"text":"Girl Sinna, hurrying to rendezvous. Pursued by... 01-20 jealous lover, 21-40 enraged father, 41-60 slavers, 61-80 goldsmith from whom she had stolen her jewels.","stats":[]},{"tag":204,"text":"Gladiator Mortag Tullius Severus (Fighter 4) living it up with 1d4+1 scantily clad beauties. 1d10 admirers look on in admiration, whatever the Great Man does. 01-20 takes company for hecklers, 21-40 invites them to join the fun.","stats":[]},{"tag":205,"text":"Goodwife Salmandra rushing to deliver baby. 01-25 beseeches company to escort her through dangerous street, 26-45 beseeches NPCs to save them from “frightening” PCs.","stats":[]},{"tag":206,"text":"Grammatician Archaiometros expounding on obscure conjugation rules to captive audience of 1d6*10. 01-40 violent academic debate develops as provocateur asks leading questions; melee ensues.","stats":[]},{"tag":207,"text":"Grave robber Morthevole selling ossified remains, popular good luck charms among thieves. 01-20 charm inhabited by wraith, 21-40 pursued by 2d8 ghouls, 41-45 has drawn attention of lich.","stats":[]},{"tag":208,"text":"Green hag Markinda, fermenting killer frogs in vats in a backyard, ghoul familiar. 01-30 has poison to sell, 31-60 has 1d2 potions to sell.","stats":["Markinda, green hag: HD 9; AC -2; Atk 2*claws 1d2+6; Spec imitate voices, spells 1/r: audible glamer, dancing lights, invisibility, pass without trace, change self, speak with monsters, water breathing, weakness, surprise 5:6; Str 18/00; ML 7; AL CE; XP 2028. Hp 44 Ghoul: HD 2; AC 6; Atk 2*claws 1d3 + paralysis and bite 1d6 + paralysis; Spec immune (sleep, charm); ML 5; AL CE; XP 90. Hp 10"]},{"tag":209,"text":"Grey ooze, glistening pile on bare skeleton; stands up and attacks. Glowing nuclei in eye sockets are 2*1200 gp gemstones.","stats":["Grey ooze skeleton: HD 3+3; AC 5; Atk ooze 2d8; Spec corrosion, immune to spells, heat, cold; ML 12; AL N; XP 205; 2*250 gp gems. Hp 20"]},{"tag":210,"text":"Hagglers Ventho and Samid bargaining hysterically for their souls and internal organs with hunchbacked form under ragged clothing. 01-30 full of eyes, 31-60 full of mouthsuckers, 61-80 entirely devoid of features, 81-00 oddly attractive for some reason. Moves with frightful hopping jumps.","stats":["The Stealer of Organs: HD 6 MAX; AC 0; Atk extract and devour organs on successful attack roll; Spec immune (mind-affecting), returns from death in 1d6 turns and pursues vanquishers; ML 12; AL LE; XP 758. Hp 48"]},{"tag":211,"text":"Hermit Ayrahar, filthy ascetic, and his teenage disciple Tammur, sleeping next to enormous stone. 01-40 surrounded by sacrificial gifts (2500 electrum, 22*arrows +1, potion of truth).","stats":[]},{"tag":212,"text":"Hermit, an animalistic, nameless wreck, digging in street garbage. 01-30 meaningless babbling, 31-50 deadly disease, 51-70 disillusioned aristocrat, 71-80 cursed priest, 81-90 aesthete of peculiar views.","stats":[]},{"tag":213,"text":"Horse-headed men (2d10), approaching in neighing, galopping, jumping mob; hostile. 01-60 to turn back into regular men once slain.","stats":["Horse-heads (2d10): HD 2; AC 6; Atk kick 1d6 or bite 1d6; Spec charge with two kicks and one bite; ML 7; AL CE; XP 40 + 1/Hp. Hp 9 10 8 7 11 3 8 11 8 10"]},{"tag":214,"text":"Hypnotist Kakuo the Munificent (Thief 3, hypnosis 3/day) offering confidenceenhancing hypnosis treatment for 1d6*10 gp. +1 to all rolls for a day, but reckless.","stats":[]},{"tag":215,"text":"Idolator Suthum and 1d3 apprentices offer to perform tiresome and timeconsuming religious rites in stead of character for 1d6*5 gp. 01-10 something goes horribly wrong, 11-15 idolators are blessed with wealth and bounty by mistaken deity.","stats":[]},{"tag":216,"text":"Immured man, crouching in a small, barred wall niche (50% curtains on the outside), muttering inarticulately. 01-30 watched by one guard (Fighter 2), 31-60 owner Ramollah Singh stands next to bars with small collection plate.","stats":[]},{"tag":217,"text":"Insane artist Hosai Mirza (Fighter 2) carefully covering latest posed victim in plaster, is influential member of secret police.","stats":[]},{"tag":218,"text":"Insane artist Salvador (Illusionist 8, ring of invisibility) walking pet anteater in search of prey, will only settle for the best. 01-10 attack by 3d10 giant ants.","stats":["Salvador: Illusionist 8; AC 8 (cloak +2, Dex); Atk cane dagger 1d4 + poison (1 r, 35/0 Hp); ML 7; AL CN; XP 1170. Spells: 4/3/2/1; 1: audible glamer, colour spray, detect illusion, hypnotism*2, ph. force; 2: fog cloud, improved ph. force, invisibility, mirror image, ventriloquism; 3: hallucinatory terrain, sp. force, suggestion; 4: confusion, phantasmal killer. Hp 22 Anteater: HD 3; AC 4; Atk tongue –; Spec kills ants dead, CW 80%; ML 8; AL N; XP 70. Hp 10 Giant ants (3d10): HD 2; AC 3; Atk bite 1d6; Spec immune (mind-affecting); ML 12; AL N; XP 40 +1/Hp. Hp 8 13 12 9 8 9 3 13 13 5 10 8 11 11 6 9 15 7 14 9 8 11 9 9 13 8 11 8 2 8"]},{"tag":219,"text":"Invisible person passes by. 01-15 invisible stalker.","stats":["Invisible stalker: HD 8; AC 3; Atk claws 4d4; Spec invisible, surprise 5:6; ML 10; AL N. Hp 33"]},{"tag":220,"text":"Junkman Koornay, removing brass ornaments from old house with assistant Ali Kuuth. If spoken to, 01-60 to become nervous, swearing up and down he has a permit, and showing it openly (fake).","stats":[]},{"tag":221,"text":"Leper Kasim Mirza dying in the gutters, whispers for light in his final hour. 01-20 bestows jewelled belt on helping character, 21-40 mutters dark secret.","stats":[]},{"tag":222,"text":"Lepers (1d10), sitting in group and wailing mournfully. 01-20 to offer audience with the Leper Lord, keeper of many secrets, for one gold per leper.","stats":[]},{"tag":223,"text":"Living statues (1d10), seeking victims to crush and kill. 01-50 all have identical faces, and speak as they attack: \"Let Kitham Arham's will be done!\"","stats":["Living statues(1d10): HD 4; AC 2; Atk 2*strike 1d8; Spec +1 or better to hit, immune (fire, cold, mind-affecting); ML 12; AL N; XP 135 +3/Hp. Hp 20 21 13 23 10 16 11 12 16 30"]},{"tag":224,"text":"Lovers Rodion of Almoor and Helena the Fire-bird embracing in silence; surprised Rodion looks exactly like PC (both are doppelgangers).","stats":["Doppelgangers (2): HD 4; AC 4; Atk strangle 1d12; Spec surprise 4:6, ESP, imitate 90% accuracy, immune (sleep, charm), save as 10th level; ML 6; AL NE; XP 357, 354. Hp 24 23"]},{"tag":225,"text":"Madman Kutargi-Bhati “the Noose Man” (Assassin 7), catches victims with nooses dropped from rooftop or outcropping, flees through thieves' highway and attics once deed is done.","stats":["Kutargi-Bhati: Assassin 7; AC 6 (studded leather, Dex); Atk noose 1d6 or 2*shortbow 1d6; Spec surprise, backstab*3, assassination 0-1 80%, 2-3 75%, 4-5 65%, 6-7 55%, 8-9 40%; PP 50%, OL 42%, FT 40%, MS 40%, HS 31%, HN 20%, CW 90%, RL 25%; ML 7; AL CE; XP 769. Hp 23"]},{"tag":226,"text":"Madman Mehtab Shaan (Magic-User 5, dirty rags are cloak +2 reduced to +1 effectiveness) begging for blood and bones; using spells to supply 2d8 ghouls in cellar and keep them away from himself.","stats":["Mehtab Shaan: Magic-User 5; AC 9 (cloak +1); Atk –; ML 6; AL CN; XP 211. Spells: 4/2/1; 1: cantrip, detect magic, burning hands, spider climb, sleep; 2: forget, hypnotic pattern, web; 3: hold person, slow. Hp 14"]},{"tag":227,"text":"Madman Rantran the Sackman (Fighter 1), dragging away a strugling child who had not eaten his vegetables.","stats":[]},{"tag":228,"text":"Madman Yassir Yarouk, walks through streets naked as the moon, obviously proud of himself.","stats":[]},{"tag":229,"text":"Magic mouth - fresco of mouth on wall, with barred opening below, speaks 30%: \"Who would call on the Prophet of Khitab? Who would give his riches to the deeps, so that it might repay his generosity?\" Scheme by crafty illusionist, who regularly empties pit below bars through secret door. Current spoils are 50 sp, 200 gp, gold ring (650 gp), and torn, useless magic scroll amidst all the other garbage.","stats":[]},{"tag":230,"text":"Magic-User Orvas Baddu-Barani Sinnan (Magic-User 7), walking the streets in halo of undying fire shield, with a gaze of smouldering fire. Maniacal laughter, looking for test subjects.","stats":["Orvas Baddu-Barani Sinnan: Magic-User 7; AC 10; Atk –; Spec immune (fire), reflects 2× physical damage; ML 9; AL LE; XP 1041; 6*gemstone teeth 220 gp ea, potion of speed, crown of hubris (6000 gp, turns wearer into ruthless megalomaniac). Spells: 4/3/2/1; 1: burning hands*2, charm person, detect magic, identify, light, magic missile*2; 2: ESP, invisibility, magic mouth, pyrotechnics*2, ray of enfeeblement; 3: hold person, multiplied missiles, protection from normal missiles; 4: [fire shield]. Hp 22"]},{"tag":231,"text":"Magic-user Thaggak the Malevent (Magic-User 5) riding primordial demon through street. 01-25 not actually in control and shrieking for help.","stats":["Thaggak the Malevent: Magic-User 5; AC 10; Atk staff 1d6; ML 6; AL CE; XP 322; wand of lightning (30 charges), pentacle ring 4500 gp, yellow ceramic skull, saffron dust 1800 gp. Spells: 4/2/1; 1: cause fear, detect magic, jump, magic missile*2, prot. good; 2: ray of enfeeblement, scare, Tahssa’s ltr; 3: gust of wind, fireball. Hp 13 Primordial demon: HD 7; AC 2; Atk 2*claws 1d10; Spec fire breath 3/day 14 Hp (save ½); immune (mind-affecting, electricity), ½ damage (fire, acid), MR 40%, +1 or better to hit; ML 9; AL CE; XP 1033. Hp 31"]},{"tag":232,"text":"Masked men (2d10), thug equivalent (Fighter 2), standing before back alley entrance and refusing anyone to pass.","stats":[]},{"tag":233,"text":"Masseur Umvum Hakhim offering treatment of steam, leeches and ointments (heals 1d6+1 Hp but 01-05 leech is rot grub).","stats":[]},{"tag":234,"text":"Mercenaries (1d6), veterans (Fighter 3) just off a ship and looking for work. They only speak one known language, money. 01-15 actually foreign spies, 16-30 will waylay and kill employer at opportunate moment.","stats":[]},{"tag":235,"text":"Merchant Gnastak Overades (Thief 3, 2250 gp bird amulet by neck) seeking certain manuscripts from the Avian Tower, old archives sealed by a previous Overlord. Offers generous payment.","stats":[]},{"tag":236,"text":"Merchant Onesimos Zotikos beckoning passersby to tent to try on his fabulous kaftans and turbans. 01-40 one kaftan contains scroll of 3 M-U spells in pocket.","stats":[]},{"tag":237,"text":"Messenger Sanghar desperately seeking men to recover stolen letter, reward of 1d3*250 gp and \"owes you one\".","stats":[]},{"tag":238,"text":"Metrician Orastes shaving small bits off weights and measures, too distracted by highly illegal task to notice anyone around.","stats":[]},{"tag":239,"text":"Mob (2d4*10) men looting neighbourhood. 01-30 city guards intervene, 31-50 city guards intervene on looters’ side.","stats":[]},{"tag":240,"text":"Mob (3d10) seeking kidnappers of child. 01-30 attack PCs, 31-60 attack random NPC.","stats":[]},{"tag":241,"text":"Mob (4d6) lynching thief. 01-25 innocent.","stats":[]},{"tag":242,"text":"Mould: bulbous globules hanging under awning or arch. 01-60 contain valuable airborne poisons or hallucinogenics but burst unless handled expertly.","stats":[]},{"tag":243,"text":"Mourning family (3d10) and city guards (1d4*5, Fighter 2) following litter of aristocrat Kasoxis Verm, forbidden by Overlord to be given a public burial. 01-20 eldest daughter to be buried with him alive.","stats":[]},{"tag":244,"text":"Mummy merchant Yakub Zahoob (Thief 2) transporting his cargo. 01-15 undead mummy rises from slumber.","stats":["Mummy: HD 6+3; AC 3; Atk hit 1d12 + rot; Spec fear, mummy rot, +1 to hit, ½ damage from weapons, susceptible to fire; ML 12; AL CE; XP 1289. Hp 38"]},{"tag":245,"text":"Nomad chief Gwazir Khan (Fighter 3), drunk on koumiss, stumbles through streets, insulting random strangers. 01-60 followed from discrete distance by 2d10 nomads (Fighter 2), 61-75 of assassination attempt from roof.","stats":["Gwazir Khan: Fighter 3; AC (studded leather, Dex); Atk 2*composite longbow 1d6 or shortsword 1d6; ML 9; AL NG, XP 72; 99 gold tassels on cloak. Hp 21"]},{"tag":246,"text":"Nomads (2d10, Fighter 2) and chief Talumek Khan (Fighter 2) returning from bride-taking; Lady Shanzee Didias (Thief 1), 01-40 jubilant to be rid of family, 41-70 struggling in vain, 71-00 too afraid to even make a sign.","stats":[]},{"tag":247,"text":"Officer and retired strategos Lannark Sulm (Fighter 7) beating up street urchins who have disturbed his evening rest. 01-20 wears gladius worth 3000 gp, 21-30 opportunistic thief sneaks into unguarded apartment.","stats":["Lannark Sulm: Fighter 7; AC 4 (breastplate, shield); Atk gladius 1d6; Con 15; ML 9; AL LN. Hp 55"]},{"tag":248,"text":"Official Barbatos (Magic-User 4) and 2d10 slaves inspecting merchandise from public procurement for faults and defects. 01-95 foul play discovered, 96-00 treason as well.","stats":["Barbatos: Magic-User 4; AC 8 (ring +2); Atk commander’s staff 1d6; ML 7; AL N; XP 144. Spells: 3/2; 1: detect magic, light, identify, invisible servant, Tensor’s fl. disk; 2: continual light, strength. Hp 13"]},{"tag":249,"text":"Official Elvialis Wennh, escorted by 1d6 militias (Fighter 1), counting the corners of a building for tax assessment. 01-40 impresses party into task, 41-50 finds secret entrance.","stats":[]},{"tag":250,"text":"Official Titho Buwes carrying cases of documents to austere home. 01-30 loses random case.","stats":[]},{"tag":251,"text":"Official Wenreith and 1d3 bodyguards (Fighter 3), inquires about PCs’ well-being and how they like it in the city. Takes down notes and leaves satisfied.","stats":[]},{"tag":252,"text":"Officials Bonolius Varo and Barbaz Menar, stumbling in drunken haze while discussing reform ideas. 01-30 tax increase, 31-50 deregulation, 51-70 regulation, 71-90 tax cuts, 91-00 state of emergency. They are so smashed they'll listen to any suggestion, 30% probability suggestion will be proclaimed as law of the land within 1d3 days.","stats":[]},{"tag":253,"text":"Oil merchant Kibak Mer, civilised barbarian (Fighter 4), peddling wares in suggestive way, greatly exaggerating amorous effects.","stats":[]},{"tag":254,"text":"Overseer Philon instructing 2d10 slaves and 1d6+2 militias (Fighter 1) in setting up festive lamps and other decorations for aristocratic street extravaganza. 01-40 trays of exotic treats – flamingo tongues, lotus soufflé, etc. – left unattended.","stats":[]},{"tag":255,"text":"Panderer Alrais Astell (Magic-User 2) using wand of charm to entice guests into exclusive love den in her ownership. Alrais Astell: Magic-user 2; AC 10; Atk –; ML 4; AL N; XP 55; wand of charm (23×).","stats":["Spells: 2; 1: charm person, enlarge, sleep. Hp 5"]},{"tag":256,"text":"Peddler Algron Merth offering range of cosmetics and perfumes from under cloth canopy, 3d6*10 gp total value, potion of levitation.","stats":[]},{"tag":257,"text":"Peddler Jamil Qukar (Thief 2), selling uppers, downers, and all the rest, cabinet of drugs to total value of 2d4*500 gp. \"Blue-22\" (1100 gp, 2 doses), acquired from an exclusive source, with unknown effects.","stats":[]},{"tag":258,"text":"Philosopher and noted epicurean Almarg the Gastronome (Magic-User 5) followed by 2d10 slaves carrying valuable ingredients from night market. 01-15 tentacles emerge from amphora and begin to choke random slave.","stats":["Almarg the Gastronome: Magic-User 5; AC 10; Atk staff 1d6; Spec fat and slow; ML 6; AL LN; XP 211; electrum jewellery (1000 gp), 750 gp, scroll of recipes. Spells: has not used them in a long time, only a single sleep left. Hp 14 Tentacles: HD 4; AC 4 (amphora); Atk tentacle 1d6 plus grab; Spec strangle 2d6/r; ML 9; AL N; XP 141. Hp 12"]},{"tag":259,"text":"Philosopher Garmand the Elder, discussing his abstract teachings with 1d3 students in the calm of the night. 01-00 immediate encounter follows.","stats":[]},{"tag":260,"text":"Phrenologist Sembai Locus (Cleric 3) offering to read character’s declinations from cranial shape for 1d10 gp. 01-40 quackery, 41-80 divination equivalent (personal fate only), 81-00 character is considered worthy sacrifice to brain-sucker and hypnotised during process.","stats":["Sembai Locus: Cleric 3; AC 10; Atk 2*dagger 1d4; ML 7; AL NE; XP 75; 250 gp, hypnotic perfume*2, acid*3, drills, hooks and saws. Spells: 2/1; 1: command, detect good; 2: silence 15’. Hp 5 Brain-sucker: HD 8+4; AC 5; Atk 4*tentacles 2; Spec suck brain 1d4 r, mind blast, mental powers, MR 90%; ML 4; AL LE; XP 1904. Hp 42"]},{"tag":261,"text":"Pigs (2d4) gorging themselves on garbage, and the swill of a brewery. Kashuk the Pigherd Boy, 01-30 \"speaking with\" his late brother Kashmish, eaten by his pigs.","stats":[]},{"tag":262,"text":"Pilgrim Tertius Sevillius reciting words on prayer scroll next to sleeping pack mule. 01-20 – 21-40 calls out to the gods to bless or curse random PC.","stats":[]},{"tag":263,"text":"Poet Erastos (Fighter 1) laying flowers before statue of succubus who has enthralled him. 01-10 statue animates to draw blood and embrace victim.","stats":["Succubus: HD 6; AC 0; Atk 2*claws 1d3; Spec draining kiss, at will: ethereal, charm person, ESP, clairaudience, suggestion, shape change, gate (01-70 type IV, 71-95 type VI, 96-00 lord/prince), +1 or better to hit; ML 8; AL CE; XP 1702; jewellery 2d4*100 gp. Hp 36"]},{"tag":264,"text":"Poison-merchant Mulficar the Venefice (Assassin 5), also acting as agent of secret police, selling his products to appropriately sinister-looking customers. 01-40 poison is ineffective junk if character doesn’t look like he knows his stuff.","stats":[]},{"tag":265,"text":"Porters (1d10) carrying foodstuffs for morning market. 01-25 arguing with night watchmen over passage through street.","stats":[]},{"tag":266,"text":"Porters (1d10) carrying fowl being followed by hungry dogs. 01-20 pack grows to 4d6 and attacks in frenzy.","stats":[]},{"tag":267,"text":"Porters (2d10) carrying vats of brined eels, one to four. 01-20 one slips, 21-40 pelted from above by hired thugs.","stats":[]},{"tag":268,"text":"Potters Galzoun and Musbekh firing their kilns for the next day. 01-25 1d4+1 old books among the kindling, 26-00 live goat is burned as good luck sacrifice.","stats":[]},{"tag":269,"text":"Priest Agroth (Cleric 4) inviting passers-by for night prayers, asks for donations. 01-15 participating nets high-ranking contact.","stats":[]},{"tag":270,"text":"Priest Fragord (Cleric 2, currently weak as a child), smokes a hookah in a filthy den, his vestments (350 gp) and holy symbol next to him in the dirt.","stats":[]},{"tag":271,"text":"Priest Parghani (Cleric 8), with flower wreaths around his neck, is preparing before 1d100 awed observers to perform a few final miracles, and then return to the earth like his teachers of old. Periapt of foul rotting, successor is the radiantly beautiful Djaliit Irlum (Cleric 2).","stats":["Parghani: Cleric 8; AC 10; Atk staff 1d6+1; ML 10; NG; XP 790; periapt of foul rotting. Spells: 3/3/3/2; 1: bless*2, cure light wounds; 2: augury*2, slow poison; 3: cure blindness, cure disease, remove curse; 4: divination, exorcise. Hp 24 Djaliit Irlum: Cleric 2; AC 7 (ring +3); Atk staff of temples 1d6+3; ML 8; AL N; XP 51; holy symbol 160 gp, the golden mirror of exaltation (2800 gp), jade figurine (900 gp), staff of temples (27×, can cast augury at 1×, wyvern watch at 2× and protection from evil 10’ at 2×). Spells: 2; 1: command, protection from evil. Single-use: cause disease*2, wind wall, gate, finger of death. Hp 11"]},{"tag":272,"text":"Priest Velmulis Thang (Cleric 3) murmurs below ornamental copper lantern hanging from house niche, 2d12 bystanders looking in awe at rainbow light. 01-15 1d12 discorporate, inciting panic.","stats":["Velmulis Thang: Cleric 3; AC 5 (chain); Atk heavy iron staff 1d6+1; ML 7; AL N; XP 103. Spells: 2/1; 1: protection from evil, sanctuary; 2: chant. Hp 18"]},{"tag":273,"text":"Priest Yog the Elder (Cleric 6, walks with a limp), carrying sacrificial lamb towards corner shrine. 01-15 golden wool 1d6*500 gp.","stats":["Yog the Elder: Cleric 6; AC 4 (bracers AC 4); Atk dagger 1d4; ML 6; CG; XP 404. Spells: 3/3/2; 1: bless, cure light wounds, purify food and drink; 2: augury, reversion [keeps foe at bay], spiritual hammer; 3: cure disease, speak with dead. Hp 29"]},{"tag":274,"text":"Priest Zhotallan Zhubbortan (Cleric 4) and 2d6+2 cultists, looking for flawless human skin (Cha 17+) for their master's altar.","stats":["Zhotallan Zhubbortan: Cleric 4; AC 2 (plate, shield); Atk warhammer 1d6+1; ML 7; AL CE; XP 153. Spells: 3/2; 1: cause light wounds*2, command; 2: hold person, reversion [keeps foe at bay]. Hp 16 Cultists (2d6+2): HD 2; AC 10; Atk club 1d6 or lasso; ML 10; AL CE; XP 30 +1/Hp. Hp 5 16 15 13 10 13 7 9 9 14 10 2 11 7"]},{"tag":275,"text":"Priestess Yliam Radi (Illusionist 2) escorted through streets by 2d8 armed men (thugs, Fighter 2) in black dress and red cowls. To... 01-20 hidden palace, 21-50 temple garden, 51-70 place of subaqueation, 71-90 clandestine lover, 91-00 departing skysphere. Taste of bitter metal while group is nearby.","stats":["Yliam Radi: Illusionist 2; AC 10; Atk –; ML 5; AL NE; XP 43;10 pt, emerald necklace 3500 gp. Spells: 2; 1: audible glamer, hypnosis, ph. force. Hp 3"]},{"tag":276,"text":"Priests: Fravarti, wealthy merchant, proclaims the sublime miracle of the resurrection. From behind, 6 clerics (Cleric 3) of Fedafuce follow with collection box, praising the virtues of advance payments for those days when you really need that raise dead spell. Clerics of Fedafuce (6): Cleric 3; AC 8; Atk mace 1d6+1; ML 7; AL N; XP 50 +2/Hp; no spells ready.","stats":["Hp 14 11 9 18 17 18"]},{"tag":277,"text":"Procession of 1d100 ecstatic worshippers of the Kaxian Mysteries led by vestal Eupraxia (Magic-User 7) and 1d10 lictors (Fighter 4), proceeding to open the Mausoleum of the 11th Mystery. Great wooden chest on litter has 1500 electrum, 7500 gp, chainmail +1, bracers of defencelessness. The imminence of a major change hangs in the air.","stats":["Eupraxia: Magic-User 7; AC 4 (bracers AC 6, ring +2); Atk asclepian staff 1d6 + deadly poison; ML 11; AL N; XP 809; potion of clairvoyance*2. Spells: 4/3/2/1; 1: detect magic, magic missile, read magic*2, shield, unseen servant; 2: continual light, detect evil, knock, levitation, pyrotechnics; 3: dispel magic, fireball, prot. evil 10’ r, prot. norm. missiles; 4: dig. Hp 23"]},{"tag":278,"text":"Procession of 1d100 with torches, in the memory of their benefactor, the great humanist Severus Tarquinius. Whores, gangsters, 2d4*5 city guards, a few artists and officials. 01-30 his surviving debtors celebrate their lessened burden, 31-60 group changes direction and heads over to put beggars' quarter to the torch.","stats":[]},{"tag":279,"text":"Procession of 1d100, 01-20 protest against the mule-cart act, 21-40 for the general public good, 41-60 for urgent whip reform, 61-80 for the freedom of the unjustly persecuted chariot racer Ameer ben Livius, 81-00 just for fun. 2d4*5 guards (Fighter 2) follow, 60% to initiate the usual atrocities.","stats":[]},{"tag":280,"text":"Procession of the goat-cult, 3d10 drunken men in accoutrements of fur and hoof. 01-50 carrying 1d6 giggling prostitutes.","stats":[]},{"tag":281,"text":"Procession of the peacock-worshippers: 6d10 hooded figures and cowled priest Jaggath Wlerm (Cleric 4) on way to pleasure garden; litter bearing peacock idol 1d3*5000 gp, 3*turquoises (1500 gp each) on golden offering plate (2500 gp).","stats":["Jaggath Wlerm: Cleric 4; AC 0 (golden halo); Atk staff 1d6; ML 10; AL LN; XP 171; mask of the peacock (1800 gp), emerald necklace of the peacock (20,000 gp). Spells: 3/2; 1: bless, command, purify food & drink; 2: chant, hold person. Hp 22"]},{"tag":282,"text":"Prophet Zaidan Mulx (Illusionist 2), disenchanted with his own teachings and disclaiming them on street corner. 01-20 rushed by own disciples to silence him, 21-40 2d10 onlookers wail and tear own clothes.","stats":["Zaidan Mulx: Illusionist 2; AC 10; Atk staff 1d6; ML 6; AL NE; XP 48. Spells: 2; 1: dancing lights, detect illusion, detect invisibility, ph. force, wall of fog. Hp 8"]},{"tag":283,"text":"Prophet Zetho Fum wailing from dry cistern where he was left by urchin band; can heal wounds and remove/bestow curses.","stats":[]},{"tag":284,"text":"Prostitute Dulcinea stalked by jealous merchant client Vonith Dohr (Fighter 7), will attack anyone soliciting her. 01-25 demonic possession shows through hysterical demeanour.","stats":["Vonith Dohr: Fighter 7; AC 3 (banded mail, shield); Atk military pick 1d6+1; ML 9; AL CN; XP 561. Hp 42"]},{"tag":285,"text":"Prostitute Licienna, in company of 1d12 fawning admirers. 01-30 mocks PC’s masculinity.","stats":[]},{"tag":286,"text":"Prostitute Lupacula, formerly virginal amazon princess with sad life story, 01-100 made up.","stats":[]},{"tag":287,"text":"Prostitute Shrit (Thief 4), pretending to be wealthy thrill-seeker, and robbing clients at the right moment. 3d6*50 gp jewelry, perfumes.","stats":[]},{"tag":288,"text":"Prostitute Syntyche sipping a slender cup of spirits off the job. 01-25 flicks forked tongue or scaly skin on shoulder is spotted.","stats":[]},{"tag":289,"text":"Quarrel from second-story window. 01-20 wife, 21-40 husband, 41-60 clay pot, 61-80 random valuable, 81-90 cat, 91-00 naked lover is thrown out of window.","stats":[]},{"tag":290,"text":"Rat catcher Udo’s modest shack, with today’s haul, a rat king (swarm of several rats stuck together by tangled tails and dried sewage) hanging from a nail. 01-50 swarm speaks in sibilant tones, promising wealth and power for slaying Udo and setting it free.","stats":["Rat king: HD 4; AC 7; Atk bites 2d4; Spec hypnotism 3/day; ML 5; AL CE; XP 153. Hp 16"]},{"tag":291,"text":"Rats, fleeing from the cellar of a house, to collapse within 1d12 hours.","stats":[]},{"tag":292,"text":"Rats: 2d4*5 giant rats climbing up wall and disappearing through dark window. 01-40 muffled screams from within.","stats":[]},{"tag":293,"text":"Rats: 2d4*5 giant rats eagerly licking milk from smashed up dairy store while owner Caius Secundus Maro watches helplessly from between two hired thugs (Fighter 2) who were ordered to do the job.","stats":[]},{"tag":294,"text":"Rats: rat swarm from canal opening to sounds of wild piping.","stats":[]},{"tag":295,"text":"Rats: 2d4 rat swarms besieging residence of magician Rufil Mirza (Magic-User 5), will soon break through glass windows unless stopped. 01-40 failed conjuration, 41-80 rival’s weird, 81-00 Overlord’s assassination order.","stats":["Rufil Mirza: Magic-User 5; AC 10; Atk 2*dagger 1d4+1; Str 16; ML 6; AL LG; XP 215; potion of longevity. Spells: 4/2/1; 1: detect magic, light, magic missile, read magic, sleep, ventriloquism; 2: forget, knock, mirror image; 3: clairvoyance, feign death. Hp 15"]},{"tag":296,"text":"Revellers, 3d6 young men and women in an inebriated state. 01-20 hurl insults at party, 21-40 ask PCs to join, 41-50 dragging unwilling participants.","stats":[]},{"tag":297,"text":"Robber: Oltremor the Barbarian (Fighter 8), robs his victims all on his own, and the six slaves are only there to cart off the swag. 600 gp, a cartload of cloth, decorative sword (scimitar +1).","stats":["Oltremor the Barbarian: Fighter 8; AC 6 (chain shirt); Atk two-handed sword 1d10+3; Spec +1 to all saves; Str 18/43, Con 15; ML 9; AL N; ring of healing (23 charges, 1d6 Hp/charge). Hp 56"]},{"tag":298,"text":"Robbers (2d6+2), swarthy, bearded fellows (mob, Fighter 1) with 1d3+1 guard dogs. These uncouth fellows are 50% to let loose their dogs even if they are paid.","stats":[]},{"tag":299,"text":"Robbers Hablon (Fighter 3) and 2d8 followers (mob, Fighter 1), have had ill luck for a long time, ready to give up the business if they can't pull a job tonight.","stats":[]},{"tag":300,"text":"Robbers Quintulus the Gladiator (Fighter 2) and Losos the Charioteer (Fighter 2), long fallen out of favour, discussing best ways to rob their victims. 01-30 Losos is visited by 1d6 old fans to pay their respects to their unjustly neglected hero.","stats":[]},{"tag":301,"text":"Robbers Sigurd Vlex (bowman, Fighter 2) and 2d10 robbers (Fighter 2), spoils 300 gp and 240 gp drinking horn. Half are heavily wounded, binding wounds or deadening the pain with alcohol, but still in high spirits. 01-70 pick quarrel with company.","stats":[]},{"tag":302,"text":"Robbers Talum Khan (Thief 2) and 2d6 followers (Fighter 1), relieving tied captives of their valuables. 01-50 cry for help.","stats":[]},{"tag":303,"text":"Robbers Vaikonnis (Fighter 4) and 2d8 robbers, escorting cart of stolen alcohol. 01-20 already drunk, 21-40 sale attempt, 41-80 fence approaches, 81-00 barrel rolls off cart and breaks – surely, the characters are to blame!","stats":[]},{"tag":304,"text":"Robbers, Sigurd the Stave (Fighter 2) and 2d6 Northman berserkers (Fighter 2), their ship in port, trying to earn a little extra on shore leave. They don't know the city, and multiple local gangs would like to see them gone. 5 electrum ingots (250 gp each), decorative drum (50 gp).","stats":[]},{"tag":305,"text":"Robbers: Alexandros (Fighter 2) and 1d10 companions, former city guards (Fighter 2) still on good terms with their former comrades – 70% to get away with anything “for old times’ sake”.","stats":[]},{"tag":306,"text":"Robbers: Elsyon the urchin (Fighter 1) and 2d8 companions (1 HD), all armed with clubs. They are collecting money for real weapons so they can grow up and become real criminals!","stats":[]},{"tag":307,"text":"Robbers: Granto Gygas (Fighter 6), greying mercenary, and 1d6+1 veteran companions (Fighter 3), supplementing their pension with a little extra. They own a small villa outside the city, and have currently looted 2400 gp of valuables.","stats":["Granto Gygas: Fighter 6; AC 4 (chain, shield); Atk bastard sword 2d4 or javelins 1d6 (x6); ML 9; AL N; XP 346; alarm horn, bottle of drink (he knows his stuff!). Hp 31 Grognards (1d6+1): Fighter 3; AC 5 (chain); Atk glaive-guisarme 2d4 or shortsword 1d6; ML 8; AL N; XP 50 +2/Hp. Hp 13 18 22 13 14 19"]},{"tag":308,"text":"Robbers: Quanzar the Minstrel (Fighter 2, bowman) and 2d8 desert nomads (Fighter 2). Quanzar plays his lute in a side alley, and his men block the way when they spot a victim. Temporary lair in commandeered pottery store, loot is 750 sp, 420 gp, stuffed crocodile with amber eyes, six vials of perfume, pair of gaudy slippers (550 gp).","stats":[]},{"tag":309,"text":"Robbers: Shamur the King of the Streets (thug, Fighter 2) and 1d10 more thugs disciplining watermelon merchant who did not pay the protection money. Seeing the characters, 01-60 greet them jovially, 61-90 cry out \"The watch!\", and run for it.","stats":[]},{"tag":310,"text":"Robbers: Talborthan the Nomad (Fighter 3), former watch officer, and 3d6 riff-raff (Fighter 1), hanging kicking and screaming beggar who would not report to them. They are so preoccupied by the fun that nobody watches the sack of valuables (900 sp, 400 gp, 2d6*500 gp objects).","stats":[]},{"tag":311,"text":"Robbers: Telquanar the Pirate (Fighter 4, balm against skin disease) and 8 pirates (Fighter 2); four throw a weighted net from above, the rest grab the goods and run.","stats":[]},{"tag":312,"text":"Robbers: Yusuf Muraad Khusi (Illusionist 4) and 2d6 robbers (Fighter 2); the hunchbacked Yusuf, hiding in a curtained hiding place, creates the illusion of several more companions surrounding locale; if needed, covers companions' escape with spell scroll.","stats":["Yusuf Muraad Khusi: Illusionist 4; AC 12 (hunchback); Atk 2*dagger 1d4-1 + poison (15/0 Hp); ML 5; AL NE; XP 159; scroll (hallucinatory terrain*2, sp. force*2). Spells: 3/2; 1: audible glamer, ph. force, wall of fog; 2: hypnotic pattern, ventriloquism*2. Hp 8"]},{"tag":313,"text":"Rug merchant Tarquis looking nervously from half-closed store. Waiting for... 01-20 extortionists, 21-40 stolen goods, 41-60 exquisite rug from dream-world.","stats":[]},{"tag":314,"text":"Sacks (1d6) in random nook, message: \"I have brought your advance, and the next installment will arrive in due time\". Sacks contain heavy chains.","stats":[]},{"tag":315,"text":"Sacks (1d6) in shadowy corner contain neatly severed cat heads sorted by size and type.","stats":[]},{"tag":316,"text":"Secret agent Aristo (Thief 4) depositing scroll in wall niche with list of names for proscription. 01-30 location is watched by 1d10 city guards (Fighter 2).","stats":[]},{"tag":317,"text":"Sedan chair with grotesque carvings litter lies abandoned and overturned in the street; signs of recent struggle.","stats":[]},{"tag":318,"text":"Senator Grastus (Fighter 3) with escort of 1d10 lictors (Fighter 4), carrying scrolls with state secrets, concerning… 01-25 proscription list, 26-50 military manoeuvres, 51-75 pretender to throne, 76-85 doppelganger infiltration, 86-95 false-flag attack, 96-00 vampire conspiracy. Extremely paranoid.","stats":[]},{"tag":319,"text":"Servant Alkhoun selling master’s gold jewelry from vacant merchant’s stall. 01-15 distinct marks, 16-00 fake.","stats":[]},{"tag":320,"text":"Servant Idamar (Fighter 3, chainmail) dragging body of drunk master Eilon. 01-20 mugging attempt, 21-40 mistaken for mugger.","stats":[]},{"tag":321,"text":"Servants Omarthane, Omnikrates and Wenth swapping vile rumours about employers.","stats":[]},{"tag":322,"text":"Shadow form of Princess Yisia walking alleys to explore the city with this magical spell; one hit dissipates and wounds real princess. 01-25 1d6 undead shadows.","stats":[]},{"tag":323,"text":"Shadows (1d12) dancing around broken stump of a statue. 01-60 necromancer Yallith Thoon (Illusionist 4), looks on from safe distance to learn their purpose; 40% mesmerises weak-looking group to see how they react to an attack.","stats":["Yallith Thoon: Illusionist 4; AC 10; Atk 2*daggers 1d4 + poison (15/0 Hp); ML 7; AL LE; XP 162; bag of rat skulls, unholy water*2, poison (hallucinative). Spells: 3/2; 1: detect illusion, hypnosis*2, light, ph. force; 2: fog cloud (used to disperse poison!), invisibility. Hp 9"]},{"tag":324,"text":"Shadows (1d12) in procession through streets. 01-50 leader casts hypnosis on random PC to join their company.","stats":[]},{"tag":325,"text":"Shoe merchant Wolthinia selling decorative slippers for 2d10 gp each. Son Agnax, Fighter 3 (Str 18/00) always nearby to make sure the customers don't diss either Wolthinia or her handmade merchandise.","stats":[]},{"tag":326,"text":"Sick man Olam Gan, wandering in fever, oblivious to his physical surroundings – “all burns like coals”, “the metals... the metals! the hue!” – suffers from synesthesia, feels sounds as heat.","stats":[]},{"tag":327,"text":"Slanderer Radulus (Thief 3), offers to spread slander about selected person or group, 1d6*50 gp. 01-60 starts to spread slander about company whether hired or not.","stats":[]},{"tag":328,"text":"Slave hunchbacks Gosso and Oongla (Fighter 3, warhamers) transporting crates of pressed giant rat pulp to oil brewery. These brutes are very cowardly despite tough demeanour.","stats":[]},{"tag":329,"text":"Slaves (1d10) in simple tunics, trying to drag improbably large amphora to their master's dwelling. 01-40 they dare not talk to anyone.","stats":[]},{"tag":330,"text":"Slaves (1d10), sleeping in the open entrance of their master's house, having been ordered outside while a secret meeting takes place within. 01-40 to ignore anyone entering, 41-80 to offer a fair warning.","stats":[]},{"tag":331,"text":"Slaves (1d6+1) plotting escape while returning from night market. 01-60 realise characters are aware of their conversation.","stats":[]},{"tag":332,"text":"Slaves (2d10) and 1d6 militias (Fighter 1) working on clearing rubble from collapsed house; official Thydon compiling tally of the dead and damages.","stats":[]},{"tag":333,"text":"Slaves (2d10) and 6 guards (Fighter 3), carrying Lord Dak on a sedan chair for his daily sightseeing. The lord has been dead for a while, but since he has not given any orders to the contrary, they keep with his daily routine. 3d6*500 gp in jewelry.","stats":[]},{"tag":334,"text":"Slaves (2d10) escorted to barracks on a leash by 5 guards (Fighter 2). 01-20 one cries out, accusing PC of being an escapee.","stats":[]},{"tag":335,"text":"Slaves (2d10) removing plague victims from nearby house, overseer Bendo the Bent. 01-60 2d3*500 gp worth of looted valuables recovered.","stats":[]},{"tag":336,"text":"Slaves (3d6), robber equivalent (Fighter 2), looking for strangers to waylay for cannibalistic feast. 01-20 under magical hypnosis, acting strangely.","stats":[]},{"tag":337,"text":"Slaves, 1d6+1 miserable, chained men in loinclothes, tied here for the night for doing shoddy work. Terrified of the consequences of escaping, but not too happy of returning to their master either – beg passersby to purchase them. 01-80 they are indeed lazy scoundrels.","stats":[]},{"tag":338,"text":"Smoke flows down from chimney pots and gathers in the street, strong smell of coal.","stats":[]},{"tag":339,"text":"Snake-headed woman: Rufelza, veiled dancing girl, carrying water from well to exclusive love nest frequented by degenerates who are into the dangerous stuff. Sisters Tharza, Rhen and Liannar, 2d4*1000 gp worth of carpets and decorative items, chain +2.","stats":["Snake-headed women (4): HD 3; AC 4; Atk bite 1d6 + poison (1 r, 35/0 Hp); Spec charm person 1/day, immune to same; ML 7; AL CE; XP 140 +2/Hp. Hp 11 10 11 16"]},{"tag":340,"text":"Snake-worshipper Salundus invites party to brotherhood meeting. 01-30 trap, 31-60 work offer, 61-80 recruitment attempt, 81-00 good, harmless fun at snake orgy.","stats":[]},{"tag":341,"text":"Spectre Taulan the Dream-bringer, 2d4 giant moths fluttering around him, spreading dream dust. He is looking for one of his lost dreams in the city streets, and nothing else will occupy his attention for long.","stats":["Taulan the Dream-Bringer, Spectre: HD 6; AC 2; Atk touch 1d8+drain; Spec energy drain, +1 or better to hit, immune (mind-affecting, cold); ML 8; AL LE; XP 582. Hp 27 Giant moths (2d4): HD 2; AC 8; Atk tongue 1d4 + poison (1d4+1 r, 15/0 Hp); Spec narcoleptic pollen 3/day (save or sleep), immune (mind-affecting); ML 6; AL N; XP 60 +1/Hp. Hp 8 11 5 5 8 3 9 7"]},{"tag":342,"text":"Spilled oil in great pools next to... 01-40 wrecked store, 41-80 defiled shrine, 81-00 upturned cart. 20% of spark and flame.","stats":[]},{"tag":343,"text":"Spirit speaking from old statue calling for uncovering of secret mass grave created by old sin; will lead to undead invasion.","stats":[]},{"tag":344,"text":"Spy and secret police member Salbum Mirza (Assassin 7, dagger of venom) preparing long list of infringements in secluded spot. Unruly PCs have 80% of getting on it for high treason; courteous have 20% of offer to include selected persons with price based on social standing.","stats":["Salbum Mirza: Assassin 7; AC 6 (leather, Dex); Atk 2*dagger of venom hidden in turban 1d4 + poison; Spec surprise, backstab*3, assassination 0-1 80%, 2-3 75%, 4-5 65%, 6-7 55%, 8- 9 40%; PP 50%, OL 42%, FT 40%, MS 40%, HS 31%, HN 20%, CW 90%, RL 25%; Dex 16; ML 9; AL LE; XP 1089; 250 electrum, diamond ring (4000 gp, N’s magical aura). Hp 23"]},{"tag":345,"text":"Spy Ummil tal Apsis (Thief 4) discussing state secrets with palace official Lekh Singh (Magic-User 5). 01-50 suspect characters of eavesdropping.","stats":["Ummil tal Apsis: Thief 4; AC 6 (leather); Atk scimitar 1d8; Spec Spec backstab*2, PP 45%, OL 42%, FT 35%, MS 33%, HS 25%, HN 15%, CW 88%; Dex 16; ML 6; AL LN; XP 165; 750 gp, 150 pt. Hp 10 Lekh Singh: Magic-User 5; AC 6; Atk 2*dagger 1d4; Dex 18; ML 7; AL NG; splendid turban (200 gp), palace entry permit (blank), arrest order (blank), signet ring 500 gp. Spells: 4/2/1; 1: dancing lights, detect magic, enlarge, shield, unseen servant; 2: invisibility, knock, strength, wizard lock; 3: dispel magic, lightning bolt. Hp 14"]},{"tag":346,"text":"Statue: antique falls from top of house, save vs. petrifaction or take 3d8 points. 01-50 failed assassination attempt, 51-80 malicious prank, 81-00 statue emits shrieking laugh and flies away as gargoyle. Gemstone eyes 2*750 gp.","stats":["Gargoyle: HD 4+4; AC 5; Atk 2*claws 1d3 and gore 1d6 and bite 1d4; Spec +1 or better to hit; ML 6; AL CE; XP 229. Hp 19"]},{"tag":347,"text":"Statues left under an overhang in various stages of completion; all horribly disfigured.","stats":[]},{"tag":348,"text":"Stonecarver Yehelleth Gloor working feverishly to restore failed masterpiece already installed. 01-30 arrested for vandalism, 31-60 cries ‘Unclean! Unclean!’ as he flees into darkened streets.","stats":[]},{"tag":349,"text":"Strongman Bubbuth Gol (Fighter 3, Str 18/10) challenges passersby to contest of strength; pays 2:1 in fake coins. Also sells strength-developing tonics and toning ointments, 5 gp per dose. 01-25 character catches glimpse of scorpion amulet around neck.","stats":["Bubbuth Gol: Fighter 3; AC 7 (studded leather); Atk wrassling 1d6+3 or hand axe 1d6+3; Str 18/10; ML 7; AL CE. Hp 18"]},{"tag":350,"text":"Swindler Markession (Fighter 6) and 2d8 pirates (Fighter 2) in stolen guard uniform collecting tithes for passage through street gate. Prior garrison clubbed or drugged. 01-20 those who pay tithe will be charged with financing crime a few days later by angered authorities.","stats":["Markession: Fighter 6; AC 4 (chain, shield); Atk scimitar 1d8+1 or 2*daggers 1d4+1; ML 7; AL N; XP 304; skeleton key (1:3 to fit any common lock), mouth-harp, pipe, opium*5. Hp 24"]},{"tag":351,"text":"Tax collector Hirudo Officinalis in company of 3d10 city guards (Fighter 2) halting random passersby for surprise audit. 01-80 singles out player character, 101% to find something dire.","stats":[]},{"tag":352,"text":"Thief Ali Hennari (Thief 2), sitting cross-legged on stolen silk bales, waiting for his partner who will never come. If approached, 01-20 weeps hysterically, 21-40 cries out in defence of \"his property\", 41-60 attacks in blind rage.","stats":[]},{"tag":353,"text":"Thief Khosatra Dhevi (Thief 4, 2*pearl chains 240 gp, golden candlestick 150 gp, gem box 450 gp), fleeing swiftly from pursuers. 01-30 pretends to be innocent victim, 31-60 throws purse to company to distract or hold back pursuers (1d10*5 gp + 1d6*50 cp).","stats":[]},{"tag":354,"text":"Thief Kusai Khan (Thief 7) mistakenly descends from rooftop in front of party with stuffed bag of swag. 01-30 offers bribe for silence, 31-00 runs like hell.","stats":["Kusai Khan: Thief 7; AC 8 (leather); Atk shortsword 1d6 or crossbow 1d6+1; Spec backstab*3, PP 60%, OL 52%, FT 50%, MS 55%, HS 43%, HN 25%, CW 94%, RL 35%; ML 7; AL CN; XP 989; 900 gp, potion of speed. Hp 28"]},{"tag":355,"text":"Thief Shamir the Tiger (Thief 3) dragging clubbed victim into back alley. 250 gp and gem bracers 2500 gp.","stats":["Shamir the Tiger: Thief 3; AC 6 (leather, Dex); Atk club 1d6; Spec backstab*2, PP 40%, OL 38%, FT 30%, MS 27%, HS 20%, HN 15%, CW 87%; Dex 16; ML 7; AL LE; XP 98; climbing hooks. Hp 9"]},{"tag":356,"text":"Thief Smardis (Thief 4, deep blue turban, 4*opium), smoking a hookah and offering empty tower apartment for sale at 900 gp. 01-40 not his, 41-60 obstinate tenants, 61-70 dark secret, 71-80 monsters inhabit the two stories below.","stats":[]},{"tag":357,"text":"Thief: torches illuminate hanging cage of Melzak the Mouth (Thief 4, Hp 2), repentant thief returned to guild by corrupt guards, and now close to death. 01-40 knows way to guildmaster’s secret love-den.","stats":[]},{"tag":358,"text":"Thieves Babbu Ketha (Fighter 3) and Ugguth Bisma (Thief 3) casing wealthy home when party disturbs them. 01-40 patrol arrives and 20% of mistaken identity.","stats":["Babbu Ketha: Fighter 3; AC 7 (leather, shield); Atk longsword 1d8 or 2*shortbow 1d6; ML 8; AL N; XP 92; potion of levitation. Hp 21 Ugguth Bisma: Thief 3; AC 9 (Dex); Atk longsword 1d8; Spec backstab*2, PP 40%, OL 33%, FT 30%, MS 27%, HS 20%, HN 15%, CW 87%; ML 7; AL NG; XP 104; coil of cat's hair rope, oil*5. Hp 12"]},{"tag":359,"text":"Thieves Kathuris Khan (Thief 1), Mandai the Nose (Assassin 4) and Isam Thag (Assassin 2) dividing stolen bejewelled goblet (1500 gp) with hammer and chisel in niche apartment; everything audible through copper grille window.","stats":["Kathuris Khan: Thief 1; AC 10; Atk shortsword 1d6; Spec backstab*2, PP 30%, OL 25%, FT 20%, MS 15%, HS 10%, HN 10%, CW 85%; ML 6; AL CE; XP 23. Hp 3 Mandai the Nose: Assassin 4; AC 4 (leather, Dex); Atk shortsword 1d6 or noose 1d6; Spec surprise, backstab *2, assassination 0-1 65%, 2-3 60%, 4-5 50%, 6-7 40%, 8-9 25%, PP 45%, OL 43%, FT 30%, MS 31%, HS 25%, HN 10%, CW 86%; Dex 18; ML 9; AL CN; XP 177; cat key. Hp 14 Isam Thag: Assassin 2; AC 8 (leather); Atk shortsword 1d6; Spec surprise, backstab *2, assassination 0-1 55%, 2-3 50%, 4-5 40%, 6-7 35%, 8-9 15%; ML 7; AL CE; XP 58; potion of speed. Hp 8"]},{"tag":360,"text":"Thugs (1d6, Fighter 2) in unconscious pile, left here on a dung heap by rival gang after a thorough beating.","stats":[]},{"tag":361,"text":"Thugs (2d8) hanging by the neck in a neat row in side street. 01-40 proclamation of crimes affixed, 41-80 purse of 30 sp stuffed into each mouth, 81-00 lewd game gone bad.","stats":[]},{"tag":362,"text":"Thugs (2d8, Fighter 2) beating old woman. 01-20 offer characters 3d6*50 gp for silence.","stats":[]},{"tag":363,"text":"Thugs (2d8, Fighter 2) in brawl with 2d10 city guards (Fighter 2) over right of passage through narrow gate. 01-60 brawl turns violent and weapons are drawn.","stats":[]},{"tag":364,"text":"Thugs (2d8, Fighter 2) looking for a shakedown. 01-80 avoid powerful-looking groups.","stats":[]},{"tag":365,"text":"Thugs (2d8, Fighter 2) roughing up 1d10 urchins for infringing on their territory.","stats":[]},{"tag":366,"text":"Thugs (2d8, Fighter 2) swapping sordid tales by firelight. 01-60 invite toughlooking group, may know of odd jobs.","stats":[]},{"tag":367,"text":"Thugs, 1d8 muscled fellows (Ftr 2) in leather pants and naked from the waist up, makeshift wrestling match between two gangs. 4d10 sightseers, 1d3 pickpockets, flute players. The grand prize is... 01-40 a beautiful golden jug (360 gp), 41-80 a beautiful dancing girl, 81-00 the leadership of the now united gang.","stats":[]},{"tag":368,"text":"Traveller Quabral the Firm (Fighter 3) and his horse, has been looking for safe lodgings for half a day, but has only found suspicious places so far. 01-50 asks for directions, 51-70 warns characters not to approach, 71-90 heavily wounded (25% Hp).","stats":["Quabral the Firm: Fighter 3; AC 5 (scale mail, shield); Atk scimitar +1 1d8+2 or 2*longbow 1d6; Str 17; AL CG; XP 94; 75 gp, gilded shield (550 gp), 9*arrows+2. Hp 22"]},{"tag":369,"text":"Undertaker Aberan and his apprentice Mug the Muted loading bags full of bones and dry skin on their cart. 01-20 sibilant piping from bag.","stats":[]},{"tag":370,"text":"Urchins (2d8) beating up ragged old man Murad the Catch (Thief 3), who had previously employed them as pickpockets and petty robbers.","stats":["Murad the Catch: Thief 3; AC 12 (crutches); Atk crutch 1d4; ML 5; AL CN; XP 70. Hp 10"]},{"tag":371,"text":"Urchins (2d8) carrying bones and gristle in cart for soap-maker.","stats":[]},{"tag":372,"text":"Urchins (2d8), throwing stones at window shutters of... 01-40 old man, 41-80 young maiden, 81-00 petty bureaucrat. 50% acting on a commission.","stats":[]},{"tag":373,"text":"Urchins (2d8), tormenting tied donkey.","stats":[]},{"tag":374,"text":"Vampire alchemist Abu Kasim stalks through street. 1d6 potions. 01-25 carries limp body of maiden, 26-50 offers party’s life if he can suck some blood from random PC. Disturbingly influential at Overlord’s court.","stats":["Abu Kasim: HD 8+3; AC 2; Atk claws 1d6+4 + drain; Spec drain, regenerate 3 Hp/r, gaseous form or change into bat at will, charm gaze, summon 10d10 rats or bats, +1 or better to hit, immune (sleep, charm, hold); Str 18/76; ML 10; AL CE; XP 4230; 20,000 gp ruby locket. Hp 35"]},{"tag":375,"text":"Victim Parvus, robbed and beaten, staggers in confusion.","stats":[]},{"tag":376,"text":"Watchman Amax (Fighter 2, banded mail), his armour worn and old, stands watch with guard dog. He is guarding a curio store, but he is a talkative sort, and always happy to spin wild tales of the wonders he is protecting. 01-60 he would join a break-in.","stats":[]},{"tag":377,"text":"Watchman Fladus Fum (Fighter 1), young lad, standing proudly before grimy smugglers' depot, gold medal (20 gp) on his breast. Still believes in what he's doing, cheerfully calls out everyone not to dare try a break-in.","stats":[]},{"tag":378,"text":"Watchman Morthanac (Fighter 1) by a back entrance, \"debating\" with a carved ornament in his boredom. Happy to speak to anyone else, knows a thing or two, and has good wine.","stats":[]},{"tag":379,"text":"Watchman Palidor the Nomad (Fighter 3), once an infamous barbarian, now an aging opportunist with a beer gut and a bad back. 01-40 he has never seen anyone leave through the door he is guarding.","stats":["Palidor the Nomad: Fighter 3; AC 6 (studded leather, shield); Atk spear 1d6; ML 7; AL N; ram’s head amulet (offers 4*augury). Hp 22"]},{"tag":380,"text":"Watchmen Ali Madoor (Fighter 2) and Borlag Northorg (Fighter 3), sitting on top of a pile of barrels, and berating security system of the storehouse they are guarding.","stats":[]},{"tag":381,"text":"Watchmen Torris Wer and Yusuf Wer (desert nomad Fighter 2), identical clothing and weapons – they are half-brothers, guarding a thick grille sunk into the ground. Call characters' attention to 1d2 nearby encounters. No idea what lies below grille.","stats":[]},{"tag":382,"text":"Water-seller Feldon leading donkey cart with jugs through dark street, doggedly avoids conversation. 01-60 coming from cult gathering with two jugs filled with bloody clothing, 61-00 going to cult gathering with one jug filled with opium wine.","stats":[]},{"tag":383,"text":"Water-seller Licinius dragging dead mule into rival’s source in closed-off courtyard. Offers an impressive bribe (1d3*500 gp) for party’s silence over this heinous crime if interrupted and questioned.","stats":[]},{"tag":384,"text":"Wererats (2d4), carrying diseased rags in enormous bundles, and scattering them everywhere.","stats":["Wererats (2d4): HD 3+1; AC 6; Atk longsword 1d8; Spec surprise 4:6, lycanthropy, summon 2d6 giant rats, silver or +1 to hit; ML 5; AL LE; XP 150 +4/Hp. Hp 9 11 10 21 17 9 16 19"]},{"tag":385,"text":"Widow Illistran asking party Cleric (or well-dressed PC) to bless dead husband for 1d10 gp. 01-10 will offer 1d100*5 electrum (her former dowry) in gratitude.","stats":[]},{"tag":386,"text":"Widower Skakarzek Mons, suffering the dementia of old age, stumbles door to door, beating each with staff and begging for admittance in desperate search for his home.","stats":[]},{"tag":387,"text":"Wight Kathurios in burial shroud and 3000 gp crown, wielding cursed sword +3 leading army of 6d10 skeletons to sealed ossuary to raise the dead and overthrow the Overlord. Cites failure to protect mausoleum from looters as cause of haunting.","stats":["Kathurios: HD 4+3; AC 0 (chainmail); Atk cursed sword +3 1d10+3 or claws 1d6 + drain; Spec drain, silver or magic to hit; ML 9; AL LE; XP 600. Hp 20 Skeletons (6d10): HD 1; AC 7; Atk spears 1d6; Spec ½ from sharp/edged; ML 8; AL N; XP 15 +1/Hp. Hp 2 5 4 3 5 6 6 3 1 2 3 3 3 2 3 6 1 2 3 3 4 6 6 4 1 4 6 8 2 2 8 5 4 6 3 5 1 5 7 5 8 8 5 8 7 1 8 7 5 1 1 3 6 8 1 5 3 7 8 1"]},{"tag":388,"text":"Wight, hooded figure on long chain. It has crawled forth from an underground recess to drag back a victim... will pursue while chain allows.","stats":["Wight: HD 4+3; AC 5; Atk claws 1d6 + drain; Spec drain, silver or +1 to hit; ML 7; AL LE; XP 608. Hp 22"]},{"tag":389,"text":"Wights (2d6) stalking through streets towards their sinister goal. 01-20 willing to make a small detour for PCs or other victims.","stats":["Wights (2d6): HD 4+3; AC 5; Atk claws 1d6 + drain; Spec drain, silver or +1 to hit; ML 7; AL LE; XP 520 +4/Hp. Hp 23 16 22 24 24 19 19 24 23 19 19 21"]},{"tag":390,"text":"Wine seller Agramenes watering up a vat of his finest in half-closed shop; actually an improvement.","stats":[]},{"tag":391,"text":"Wine seller Toghral selling hyacinth-flavoured drink for 5 gp a cup, a crowd favourite (heals 1d3 Hp but save vs. magic or become addicted).","stats":[]},{"tag":392,"text":"Witch Tethys the Sea-maiden (Magic-User 3, Cha 4) pushes cart with jars of dead man’s fat; insults bring forth 3d10 killer frog followers.","stats":["Tethys the Sea-Maiden: Magic-User 3; AC 10; Atk staff of many warts 1d6+1 (slimed on max damage, 19×); Cha 4; ML 7; AL CE; XP 149. Spells: 2/1; 1: cause fear, dancing lights, detect magic, spider climb; 2: stinking cloud. Hp 12 Killer frogs (3d10): HD 1+4; AC 8; Atk 2*claws 1d2 and bite 1d4+1; Spec hop-attack +2; ML 5; AL N; XP 40 +1/Hp. Hp 11 9 5 12 10 11 5 5 6 12 11 8 11 8 10 12 12 7 10 10 9 7 10 11 8 11 9 6 5 10"]},{"tag":393,"text":"Warrior woman Algordis (Fighter 3) discussing heist with comrades Ollandra (Fighter 1) and Lady Ilwaz (Fighter 3). 01-50 already undertaken, 51-75 this is the night!, 76-00 still in a planning phase.","stats":["Algordis: Fighter 3; AC 9 (Dex); Atk club 1d6; Dex 15; ML 8; AL N; XP 72; pearl necklace (300 gp). Hp 21 Ollandra: Fighter 1; AC 10; Atk 4*dagger 1d4; ML 8; AL CE; XP 18; perfumes*3. Hp 8 Lady Ilwaz: Fighter 3; AC 10; Atk longsword +2; ML 9; AL LN; XP 98; potion of giant strength. Hp 24"]},{"tag":394,"text":"Workman Ormak and 1d10 apprentices returning from aqueduct repairs, discussing the next day’s tasks. 01-25 one mentions walled-up entrance in guarded terminus.","stats":[]},{"tag":395,"text":"Workmen (2d10) sleeping rough on construction project, overseer Nabzan discussing tomorrow’s tasks with hooded man. 01-30 topic drifts to sabotage, 31-50 to protection money.","stats":[]},{"tag":396,"text":"Workmen (2d10), placing torches and brands by street to prepare for procession. 01-20 1d4*5 city guards follow, 21-40 2d6+2 robbers, 41-60 gawkers start to gather.","stats":[]},{"tag":397,"text":"Workmen (2d10), sleeping in the street and very suspicious of passersby. They are strangers to the city, and are working on a confidential project, to which they are escorted under blindfolds.","stats":[]},{"tag":398,"text":"Workmen (3d10) under overseer Ganth Joban (Thief 2, jewel-belt 450 gp) repairing gaps among cobblestones and mortar in walls in anticipation of tomorrow’s official visit. 01-20 impressed to help, 21-40 offer of recompense for extra workers acquired by any means.","stats":[]},{"tag":399,"text":"Zombies (3d8) guarding street, raised by fleeing Ralliborn (Magic-User 6) to cover his tracks.","stats":["Ralliborn: Magic-User 6; AC 10; Atk pouch of “mummy’s breath” (1d3 r, 25/0 Hp + mummy rot); ML 6; AL NG; XP 458; ring of the dead (animate dead, 22×). Spells: 4/2/2; 1: charm person, detect magic, identify, light, magic missile, sleep, spider climb; 2: darkness 15’ r, levitation, mirror image, shatter; 3: dispel magic, slow, suggestion. Hp 18"]}],"local_colour":[{"n":1,"text":"A beckoning hand has been painted on the wall of narrow alleyway."},{"n":2,"text":"Abundant berries and fat gourds grow from vines in back street. A single, vivid red flower can be  seen high on one of the stalks."},{"n":3,"text":"Arrow in charcoal points at cellar entrance with dead rat hanging on hook next to it."},{"n":4,"text":"Badly beaten man tries to stand up. Too scared to speak about perpetrators."},{"n":5,"text":"Barefoot stranger laments theft of fine boots, offers reward for a new pair (paid “tomorrow”)."},{"n":6,"text":"Barrels packed with seaweed have been left to ferment in side alley. Some have ruptured, and  are crawling with flies."},{"n":7,"text":"Beggar explains to companion about “blind” windows which never open, citing 1d6 examples."},{"n":8,"text":"Beggars are sleeping off the effects of soporific glasses with 1d6 discarded glass tubes."},{"n":9,"text":"Beggars’ chalk marks on walls warn of “Master of Beatings”."},{"n":10,"text":"Bells jingle and doves flutter in small aviary."},{"n":11,"text":"Boy produces live spider from mouth, offers to tell meaning for 5 gp. Can produce 1d12 more."},{"n":12,"text":"Brackish water swirls in tub half covered with dirty tarp."},{"n":13,"text":"Brass case left behind judge’s statue in niche contains bird mask, two knives, killing contract and  advance of 1d6*50 gp."},{"n":14,"text":"Brick wall has been broken through into lost cellar. Discarded lantern and pair of slippers by entrance."},{"n":15,"text":"Buckets and long hooked poles are stored neatly next to locked shed."},{"n":16,"text":"Buckets hanging from chains suspended from higher-story windows swing and sway ominously."},{"n":17,"text":"Cart loaded with sacks of grain has been left without wheels. Gathering rats."},{"n":18,"text":"Cats are fighting over carcass of dead dog."},{"n":19,"text":"Children are dancing around hat skewered on pointy stick. Fall silent and afraid if asked of origins."},{"n":20,"text":"Children are prodding dead dog with sticks."},{"n":21,"text":"Children are telling stories of their peer eaten by underworld monsters."},{"n":22,"text":"Clothes have been left hanging on lines close to ground, one valuable (2d6*100 gp)."},{"n":23,"text":"Coils of rope (1d6) on row of pegs. Restocked each night."},{"n":24,"text":"Confused man asks what year is this."},{"n":25,"text":"Crone sells earthy roots she grows in “the deep cellars, where they grow the best”."},{"n":26,"text":"Crones engaged in bitter argument about existence of long-forgotten street."},{"n":27,"text":"Disembodied hand grasping random potion drifts by, gradually rising towards rooftop windows."},{"n":28,"text":"Dishevelled man sells painted needles from tin box."},{"n":29,"text":"Doorman inquires about invitation, extremely sharp about tricks or fakes."},{"n":30,"text":"Drunk claims to have seen company member go the same way “just a little while ago”."},{"n":31,"text":"Drunk dances on overturned barrel and offers free drinks to anyone who will sing with him on  dead wife’s birthday."},{"n":32,"text":"Eel-seller with metal pincers selling merchandise next to row of clay pots."},{"n":33,"text":"Expensive-looking cat starts following company, bolts on attempt to catch."},{"n":34,"text":"Eye in pyramid glares from old mural with inscription: “WE BUY AND SELL”"},{"n":35,"text":"Fish have been hung up to dry on a string. Cats gather for the right opportunity."},{"n":36,"text":"Fruit seller’s unsold wares have been left to rot, and are crawling with hard-shelled beetles."},{"n":37,"text":"Gourd of wine and money pouch on snoring nomad already stripped of sword and boots."},{"n":38,"text":"Group of shadowy men size up company, laugh among themselves, then depart."},{"n":39,"text":"Houseplants knocked off high ledge, grappling hook lies stuck in grille next to open shutters."},{"n":40,"text":"Irrecognisable stump of a statue in wall niche is garlanded with flower wreaths."},{"n":41,"text":"Large tomes have been burned in street kiln, cinder floats above smouldering embers."},{"n":42,"text":"Lovers’ quarrel behind open window eventually turns to murder plan."},{"n":43,"text":"Lumps of iridescent metallic stuff are embedded in broken chunks of igneous rock on the ground."},{"n":44,"text":"Man in black toga marked with embroidered silver fish walks into curtained alcove and disappears; blank wall with chalk marks beyond."},{"n":45,"text":"Man in fantastic clothing and bizarre mask lies in the street, ignored by passersby."},{"n":46,"text":"Man looking for glass eye lost in altercation. Claims the eye sees “The big one”."},{"n":47,"text":"Man sells hoods for 2 gp each “For your safety” and “So they don’t recognise you.”"},{"n":48,"text":"Man tied to wooden post demands to be freed."},{"n":49,"text":"Mark of an “X” has been scrawled in chalk on 1d12 shutters."},{"n":50,"text":"Masked man beckons and whispers, “They are watching the transversal”."},{"n":51,"text":"Masses of rats swarming on wooden platform creaking ominously under weight."},{"n":52,"text":"Miser offers one gold piece to clean his out cellar’s rat infestation. If offer is insufficient, he reconsiders, and offers company can take the rats when they are done."},{"n":53,"text":"Miserable furniture is thrown into the street from upstairs window, sounds of altercation."},{"n":54,"text":"Moon man painted on blue banners over street."},{"n":55,"text":"Mother accuses sons of heinous deed behind curtained window."},{"n":56,"text":"Muddy tracks lead across street along the traces of a heavy, dragged pack."},{"n":57,"text":"Mute beggar entrusts key to random character, makes strange sign."},{"n":58,"text":"Mystery man frowns at company, declares “Your path is crooked” before continuing on way."},{"n":59,"text":"Obscure door is bound with several chains and locks."},{"n":60,"text":"Oil lamps have been left in orderly row before empty pedestal."},{"n":61,"text":"Old woman watching from window points, “You are back, fiend!”, reaching for crossbow."},{"n":62,"text":"Padlocked cistern hatch has been marked “WARNING! CLASS III MEGAVORE!”"},{"n":63,"text":"Peeling plaster reveals ancient mural of dancing skeletons in expensive jewelry."},{"n":64,"text":"Picpocket victim is looking for people to accuse."},{"n":65,"text":"Pile of melons left unattended on cart for 1d6 minutes."},{"n":66,"text":"Pipes overhead gurgle ominously, and creak under unseen stress."},{"n":67,"text":"Plum-coloured smoke drifts from open window."},{"n":68,"text":"Polite man asks directions towards nearest whorehouse."},{"n":69,"text":"Prostitute and 2d12 friends celebrating her “Divorce from the bed”, which they burn in middle of street."},{"n":70,"text":"Prostitute offers key to whorekeep’s stash box for half the proceeds therein."},{"n":71,"text":"Puppet player performs macabre play before painted shack to no audience."},{"n":72,"text":"Ragged curtain in bright primary colours embroidered with grinning suns over ingress to narcotic den."},{"n":73,"text":"Rotting wood ornament of potbellied goddess is crawling with fat green slugs."},{"n":74,"text":"Row of old wooden statues has been covered with greasy cloth."},{"n":75,"text":"Scroll cases dropped by fleeing woman contain sealed contracts."},{"n":76,"text":"Shadow in brazier animates to point towards gilt spire in distance."},{"n":77,"text":"Shadows lengthen and lights dim. Distant howling fills the area. 1d6 minutes later, it passes, and  it begins to rain."},{"n":78,"text":"Single candle burns next to body of dead beggar."},{"n":79,"text":"Sleeping dog cradles carved bone-hilt dagger (80 gp)."},{"n":80,"text":"Smiling, jowled man with symbol of sun on robe nods, advises “All is illusion” before walking off."},{"n":81,"text":"Smoke cloud over brazier forms shape of panter with ember eyes before drifting away."},{"n":82,"text":"Sour-faced youth has had too much to drink, just about to stumble into character’s arms."},{"n":83,"text":"Stars and comets are painted on a torn canvas over wooden boards. Three stars have been carefully cut out."},{"n":84,"text":"Steam rises from cellar window, splashing and bubbling noises from inside."},{"n":85,"text":"Stone arms (1d8) propped against brick wall."},{"n":86,"text":"Storefront looking abandoned for many years has newly painted “FOR SALE. INQUIRE WITHIN”  sign on dusty windows."},{"n":87,"text":"Stray dogs being fed by scrawny beggar training them into killing fiends."},{"n":88,"text":"Street sweeper brags to comrade about golden chain found around severed arm “down back”."},{"n":89,"text":"Syrup from overturned jug has attracted a black mass of ants."},{"n":90,"text":"Tattered clothes hanging on clothesline must have been worth a fortune… once."},{"n":91,"text":"The croaking of frogs and the thumping of drums comes from behind bolted storefront."},{"n":92,"text":"The drifting scent of spices brings feelings of strange melancholy; people openly weep in the street."},{"n":93,"text":"The mark of six cat’s eyes are visible on an old wooden board above walled-in entrance."},{"n":94,"text":"The smiling face of an enormous stone head has been partially walled over in house foundation."},{"n":95,"text":"Three doors marked with paint on vacated tenements warn of the hazards of unpaid rent."},{"n":96,"text":"Two doors have been freshly painted bright orange and lavender."},{"n":97,"text":"Urchins drawing lewd graffiti and insults to Overlord on wall next to closed shop."},{"n":98,"text":"Vagrant offers ring of false keys “found down the narrow” for 15 gp."},{"n":99,"text":"Wild-eyed man shouts “Doooom! Doooom! Doooom!” while ranting about forthcoming collapse."},{"n":100,"text":"Woman lights lamps in 1d12 house windows, eyes passersby warily."}],"storehouses_adj":[{"n":1,"word":"[colour]"},{"n":2,"word":"[colour]"},{"n":3,"word":"[colour]"},{"n":4,"word":"adulterated"},{"n":5,"word":"anti-"},{"n":6,"word":"antediluvian"},{"n":7,"word":"antique"},{"n":8,"word":"aphrodisiac"},{"n":9,"word":"avant-garde"},{"n":10,"word":"bird-"},{"n":11,"word":"boxed"},{"n":12,"word":"bright"},{"n":13,"word":"burial"},{"n":14,"word":"ceremonial"},{"n":15,"word":"contraband"},{"n":16,"word":"cosmic"},{"n":17,"word":"crude"},{"n":18,"word":"curious"},{"n":19,"word":"dark"},{"n":20,"word":"dragon-"},{"n":21,"word":"dried"},{"n":22,"word":"dyed"},{"n":23,"word":"embalmed"},{"n":24,"word":"engraved"},{"n":25,"word":"erotic"},{"n":26,"word":"euphoria"},{"n":27,"word":"exotic"},{"n":28,"word":"exquisite"},{"n":29,"word":"fabulous"},{"n":30,"word":"false"},{"n":31,"word":"fashionable"},{"n":32,"word":"festive"},{"n":33,"word":"figurative"},{"n":34,"word":"flawed"},{"n":35,"word":"foreign"},{"n":36,"word":"fractured"},{"n":37,"word":"fragrant"},{"n":38,"word":"frog"},{"n":39,"word":"garish"},{"n":40,"word":"gilded"},{"n":41,"word":"grave"},{"n":42,"word":"greased"},{"n":43,"word":"hazardous"},{"n":44,"word":"heresiarchic"},{"n":45,"word":"hieratic"},{"n":46,"word":"illegal"},{"n":47,"word":"imitation"},{"n":48,"word":"imperial"},{"n":49,"word":"insect-"},{"n":50,"word":"interdicted"},{"n":51,"word":"lacquered"},{"n":52,"word":"lewd"},{"n":53,"word":"licensed"},{"n":54,"word":"lizard-"},{"n":55,"word":"luminescent"},{"n":56,"word":"macabre"},{"n":57,"word":"marked"},{"n":58,"word":"mercantile"},{"n":59,"word":"miniature"},{"n":60,"word":"misshapen"},{"n":61,"word":"modern"},{"n":62,"word":"moon-"},{"n":63,"word":"mystical"},{"n":64,"word":"noble"},{"n":65,"word":"oiled"},{"n":66,"word":"oversized"},{"n":67,"word":"painted"},{"n":68,"word":"paintings of"},{"n":69,"word":"pallid"},{"n":70,"word":"pariahs'"},{"n":71,"word":"petrified"},{"n":72,"word":"poor"},{"n":73,"word":"pressed"},{"n":74,"word":"primitive"},{"n":75,"word":"princely"},{"n":76,"word":"proscribed"},{"n":77,"word":"rainbow"},{"n":78,"word":"rancid"},{"n":79,"word":"refined"},{"n":80,"word":"ritual"},{"n":81,"word":"rustic"},{"n":82,"word":"sacred"},{"n":83,"word":"sacrificial"},{"n":84,"word":"scented"},{"n":85,"word":"sealed"},{"n":86,"word":"serpent-"},{"n":87,"word":"shadowy"},{"n":88,"word":"shoddy"},{"n":89,"word":"sinister"},{"n":90,"word":"slave-"},{"n":91,"word":"stained"},{"n":92,"word":"stamped"},{"n":93,"word":"stinking"},{"n":94,"word":"sublime"},{"n":95,"word":"subterranean"},{"n":96,"word":"sun-"},{"n":97,"word":"sun-"},{"n":98,"word":"technological"},{"n":99,"word":"umber"},{"n":100,"word":"unhallowed"}],"storehouses_noun":[{"n":1,"word":"armour"},{"n":2,"word":"aromatics"},{"n":3,"word":"banners"},{"n":4,"word":"beer"},{"n":5,"word":"bells"},{"n":6,"word":"blocks"},{"n":7,"word":"bones"},{"n":8,"word":"boots"},{"n":9,"word":"bowls"},{"n":10,"word":"boxes"},{"n":11,"word":"cadavers"},{"n":12,"word":"canisters"},{"n":13,"word":"carpets"},{"n":14,"word":"carvings"},{"n":15,"word":"ceramics"},{"n":16,"word":"charcoal"},{"n":17,"word":"clay tablets"},{"n":18,"word":"cloak"},{"n":19,"word":"cushions"},{"n":20,"word":"disks"},{"n":21,"word":"dried fruit"},{"n":22,"word":"drums"},{"n":23,"word":"dyes"},{"n":24,"word":"eating utensils"},{"n":25,"word":"equipment"},{"n":26,"word":"essences"},{"n":27,"word":"eye-spoons"},{"n":28,"word":"fish"},{"n":29,"word":"fish sauce"},{"n":30,"word":"flutes"},{"n":31,"word":"fossils"},{"n":32,"word":"furniture"},{"n":33,"word":"furs"},{"n":34,"word":"gasses"},{"n":35,"word":"glassware"},{"n":36,"word":"globes"},{"n":37,"word":"grain"},{"n":38,"word":"headgear"},{"n":39,"word":"herbs"},{"n":40,"word":"idols"},{"n":41,"word":"incense"},{"n":42,"word":"ingots"},{"n":43,"word":"ink"},{"n":44,"word":"instruments"},{"n":45,"word":"jelly"},{"n":46,"word":"jugs"},{"n":47,"word":"kaftans"},{"n":48,"word":"leather"},{"n":49,"word":"lozenges"},{"n":50,"word":"maces"},{"n":51,"word":"meat preserve"},{"n":52,"word":"metal sheets"},{"n":53,"word":"mummies"},{"n":54,"word":"musical instr."},{"n":55,"word":"nets"},{"n":56,"word":"nuts"},{"n":57,"word":"oil"},{"n":58,"word":"ornaments"},{"n":59,"word":"papyrus"},{"n":60,"word":"paraphernalia"},{"n":61,"word":"parchment"},{"n":62,"word":"pelts"},{"n":63,"word":"pigments"},{"n":64,"word":"plates"},{"n":65,"word":"pollen"},{"n":66,"word":"powders"},{"n":67,"word":"pyramids"},{"n":68,"word":"rags"},{"n":69,"word":"remains"},{"n":70,"word":"resin"},{"n":71,"word":"ropes"},{"n":72,"word":"salts"},{"n":73,"word":"sap"},{"n":74,"word":"shields"},{"n":75,"word":"skulls"},{"n":76,"word":"slabs"},{"n":77,"word":"slag"},{"n":78,"word":"spears"},{"n":79,"word":"spices"},{"n":80,"word":"spirits"},{"n":81,"word":"stamps"},{"n":82,"word":"statuary"},{"n":83,"word":"staves"},{"n":84,"word":"sticks"},{"n":85,"word":"sugar"},{"n":86,"word":"swords"},{"n":87,"word":"tapestries"},{"n":88,"word":"tar"},{"n":89,"word":"taxidermy"},{"n":90,"word":"textile"},{"n":91,"word":"tools"},{"n":92,"word":"tubes"},{"n":93,"word":"unguent"},{"n":94,"word":"vases"},{"n":95,"word":"veils"},{"n":96,"word":"vinegar"},{"n":97,"word":"wax"},{"n":98,"word":"wine"},{"n":99,"word":"wood"},{"n":100,"word":"wool"}],"bazaar":[{"n":1,"nature":"agile","persona":"academic","selling":"advice","complication":"all exquisitely made"},{"n":2,"nature":"amorous","persona":"acolyte","selling":"antiques","complication":"apologises, returns money"},{"n":3,"nature":"arrogant","persona":"aesthete","selling":"armour","complication":"as a form of penitence"},{"n":4,"nature":"audacious","persona":"agent","selling":"armour","complication":"as bait"},{"n":5,"nature":"avaricious","persona":"apprentice","selling":"armour","complication":"as collateral"},{"n":6,"nature":"backstabbing","persona":"assassin","selling":"baskets","complication":"as distraction for thieves"},{"n":7,"nature":"beaming","persona":"auctioneer","selling":"baths","complication":"as insurance scam"},{"n":8,"nature":"benevolent","persona":"barbarian","selling":"blown glass","complication":"as last-ditch gambit"},{"n":9,"nature":"bereaved","persona":"bureaucrat","selling":"camels","complication":"as political protest"},{"n":10,"nature":"bloated","persona":"captain","selling":"cards","complication":"as side job"},{"n":11,"nature":"blunt","persona":"castrato","selling":"ceramics","complication":"at reduced prices"},{"n":12,"nature":"brutal","persona":"child","selling":"crystals","complication":"at wit's end"},{"n":13,"nature":"complaining","persona":"craftsman","selling":"dancing girls","complication":"awaiting certain doom"},{"n":14,"nature":"corrupt","persona":"cripple","selling":"documents","complication":"bearing secret identifying signs"},{"n":15,"nature":"cowardly","persona":"crone","selling":"doubts","complication":"but gets prices wrong"},{"n":16,"nature":"craven","persona":"crusader","selling":"dreams","complication":"but it is all a mirage"},{"n":17,"nature":"credible","persona":"dancing beast","selling":"drinks","complication":"but it is all a nightmare"},{"n":18,"nature":"dangerous","persona":"dancing girl","selling":"drugs","complication":"but it is not even his stand"},{"n":19,"nature":"deformed","persona":"dervish","selling":"dusts","complication":"but there is a higher bid"},{"n":20,"nature":"deranged","persona":"drunk","selling":"essences","complication":"but they are adultered"},{"n":21,"nature":"devious","persona":"eunuch","selling":"eye-spoons","complication":"but they are already sold"},{"n":22,"nature":"devoted","persona":"exile","selling":"feathers","complication":"but they are cursed"},{"n":23,"nature":"dim-witted","persona":"explorer","selling":"fetters","complication":"but they are fakes"},{"n":24,"nature":"direct","persona":"factor","selling":"fine wines","complication":"but they are stolen"},{"n":25,"nature":"discreet","persona":"fakir","selling":"geometric","complication":"but they have just been stolen"},{"n":26,"nature":"disgusted","persona":"farmer","selling":"glass panes","complication":"but things don't add up"},{"n":27,"nature":"dishonest","persona":"fisherman","selling":"gourds","complication":"buy two, get three"},{"n":28,"nature":"distant","persona":"fool","selling":"guidance","complication":"carrying plague"},{"n":29,"nature":"distracted","persona":"freebooter","selling":"hair","complication":"change of heart imminent"},{"n":30,"nature":"domineering","persona":"gentleman","selling":"haircut","complication":"claiming false benefits"},{"n":31,"nature":"double-dealing","persona":"gladiator","selling":"heresies","complication":"closing up shop"},{"n":32,"nature":"downtrodden","persona":"god(dess)","selling":"him/herself","complication":"concealing real persona"},{"n":33,"nature":"dreamy","persona":"guard","selling":"horses","complication":"concealing real temperament"},{"n":34,"nature":"driven","persona":"haggler","selling":"houris","complication":"containing illicit additives"},{"n":35,"nature":"dull","persona":"hedonist","selling":"impressions","complication":"drawing small crowd"},{"n":36,"nature":"duplicitous","persona":"horse lord","selling":"incense","complication":"escaped slave"},{"n":37,"nature":"effete","persona":"horseman","selling":"indulgences","complication":"everything must go"},{"n":38,"nature":"elegiac","persona":"housemaid","selling":"instruments","complication":"free product samples"},{"n":39,"nature":"enigmatic","persona":"judge","selling":"intoxicants","complication":"from city property"},{"n":40,"nature":"envious","persona":"justiciar","selling":"jewelry","complication":"from demon dimension"},{"n":41,"nature":"feeble","persona":"khan","selling":"kingdom title","complication":"from foreign dimension"},{"n":42,"nature":"fidgety","persona":"lad","selling":"law books","complication":"from impounded property"},{"n":43,"nature":"flamboyant","persona":"lady","selling":"lizards","complication":"from pile of pillows"},{"n":44,"nature":"foul-mannered","persona":"lictor","selling":"manuscripts","complication":"from silk tend"},{"n":45,"nature":"frowning","persona":"lord","selling":"maps","complication":"from treasury"},{"n":46,"nature":"gaunt","persona":"lotus-eater","selling":"mascara","complication":"from Underworld"},{"n":47,"nature":"gossipy","persona":"lout","selling":"measures","complication":"in exchange for something"},{"n":48,"nature":"greasy","persona":"maid","selling":"metals","complication":"in generous supply"},{"n":49,"nature":"harried","persona":"matron","selling":"mirrors","complication":"in sting operation"},{"n":50,"nature":"heavy-set","persona":"merchant","selling":"mother of pearl","complication":"instead of true wares"},{"n":51,"nature":"helpful","persona":"merchant prince","selling":"mould","complication":"makes secret sign"},{"n":52,"nature":"hot-headed","persona":"monastic","selling":"noble title","complication":"member of secret police"},{"n":53,"nature":"humble","persona":"money-changer","selling":"objects of art","complication":"member of spy network"},{"n":54,"nature":"hungry","persona":"monster","selling":"oils","complication":"member of tax authorities"},{"n":55,"nature":"hypnotised","persona":"mother","selling":"opium","complication":"miscalculates price"},{"n":56,"nature":"indifferent","persona":"nomad","selling":"paintings","complication":"misgenders character"},{"n":57,"nature":"influential","persona":"northerner","selling":"paints","complication":"mourning misfortune"},{"n":58,"nature":"intoxicated","persona":"official","selling":"pendulums","complication":"now on sale"},{"n":59,"nature":"jovial","persona":"outcast","selling":"philtres","complication":"of cats"},{"n":60,"nature":"kindly","persona":"overman","selling":"pillows","complication":"of flowers"},{"n":61,"nature":"lecherous","persona":"palace-slave","selling":"privileges","complication":"of snakes"},{"n":62,"nature":"licentious","persona":"patrician","selling":"prophecy","complication":"offering a deal"},{"n":63,"nature":"lice-ridden","persona":"pauper","selling":"protection","complication":"on a condition"},{"n":64,"nature":"lithe","persona":"peddler","selling":"rare metals","complication":"on brink of insolvency"},{"n":65,"nature":"lordly","persona":"penitent","selling":"reflections","complication":"on the run"},{"n":66,"nature":"loud","persona":"pilgrim","selling":"rights","complication":"out of looted store"},{"n":67,"nature":"malleable","persona":"pirate","selling":"rugs","complication":"out of stock"},{"n":68,"nature":"miserable","persona":"poet","selling":"salts","complication":"pursued by bear"},{"n":69,"nature":"miserly","persona":"porter","selling":"secrets","complication":"pursued by cats"},{"n":70,"nature":"muscular","persona":"priest","selling":"seeds","complication":"pursued by lynch mob"},{"n":71,"nature":"obese","persona":"priestess","selling":"shave","complication":"pursued by mummy"},{"n":72,"nature":"offended","persona":"prophet","selling":"slaves","complication":"pursued by rival"},{"n":73,"nature":"oleaginous","persona":"prostitute","selling":"slaves (1d3 types)","complication":"pursued by undead"},{"n":74,"nature":"orderly","persona":"provocator","selling":"slaves (1d3 types)","complication":"sealed and packed"},{"n":75,"nature":"paranoid","persona":"sailor","selling":"slaves (1d3 types)","complication":"sighing in disgust"},{"n":76,"nature":"penitent","persona":"savant","selling":"slaves (1d3 types)","complication":"to attract new customers"},{"n":77,"nature":"perverted","persona":"scavenger","selling":"slaves (1d3 types)","complication":"to be rid of curse"},{"n":78,"nature":"philosophical","persona":"scribe","selling":"smoke","complication":"to blackmail clients"},{"n":79,"nature":"poetic","persona":"sell-sword","selling":"snacks","complication":"to corner the market"},{"n":80,"nature":"polite","persona":"servant","selling":"snakes","complication":"to enact devious scheme"},{"n":81,"nature":"prestigious","persona":"slave","selling":"soul","complication":"to facilitate arrest"},{"n":82,"nature":"professional","persona":"slum-lord","selling":"spectacle","complication":"to fulfil prophecy"},{"n":83,"nature":"proud","persona":"snake-charmer","selling":"stimulants","complication":"to hide them"},{"n":84,"nature":"prudent","persona":"spirit","selling":"stocks & deriv.","complication":"to plant wares on target"},{"n":85,"nature":"pushy","persona":"stranger","selling":"sugar water","complication":"to ruin competitor"},{"n":86,"nature":"reliable","persona":"strongman","selling":"sugared fruits","complication":"to shame rival"},{"n":87,"nature":"rueful","persona":"subordinate","selling":"sundials","complication":"to sponsor vice"},{"n":88,"nature":"severe","persona":"swordswoman","selling":"tea","complication":"wanted by enemies"},{"n":89,"nature":"shifty","persona":"taskmaster","selling":"teachings","complication":"where thieves wait"},{"n":90,"nature":"sincere","persona":"thane","selling":"textiles","complication":"while moonlighting"},{"n":91,"nature":"slovenly","persona":"thrall","selling":"art of the deal","complication":"while recruiting for cult"},{"n":92,"nature":"smiling","persona":"town crier","selling":"torture impl.ts","complication":"while spouting propaganda"},{"n":93,"nature":"stupid","persona":"trained beast","selling":"turbans","complication":"with a condition"},{"n":94,"nature":"sybaritic","persona":"tribal","selling":"veils","complication":"with bonus tea"},{"n":95,"nature":"testy","persona":"urchin","selling":"warning","complication":"with certain side effects"},{"n":96,"nature":"unassuming","persona":"vagrant","selling":"weapons","complication":"with certification"},{"n":97,"nature":"unctuous","persona":"virgin","selling":"weapons","complication":"with extra offer"},{"n":98,"nature":"untidy","persona":"workman","selling":"weapons","complication":"with generous discount"},{"n":99,"nature":"venerable","persona":"yogi","selling":"winning tips","complication":"with ulterior motives"},{"n":100,"nature":"wise","persona":"youth","selling":"worms","complication":"without licence"}],"pocket_loot":[{"class":"Outlander / Plebeian","silver":"1d6×10 (50%)","electrum":"3d6 (50%)","gold":"3d6 (30%)","gems":"-","jewelry":"-","magical":"-"},{"class":"Merchant / Craftsman","silver":"2d6×10 (50%)","electrum":"2d6×10 (50%)","gold":"1d6×10 (30%)","gems":"-","jewelry":"-","magical":"-"},{"class":"Patrician","silver":"1d6×50 (50%)","electrum":"1d6×50 (50%)","gold":"2d6×20 (25%)","gems":"1 (15%)","jewelry":"1 (10%)","magical":"-"},{"class":"Aristocrat / Magnate","silver":"-","electrum":"2d4×200 (50%)","gold":"2d6×100 (50%)","gems":"1d4 (20%)","jewelry":"1d3 (20%)","magical":"1 (25%)"}],"pocket_objects":["amber disk","animal mask","ankh symbol","bath salts","beeswax","bird amulet","box of ashes","bracelet","brass bell","chalkboard","charcoal stick","copper tube","crocodile necklace","dowsing stick","lotus pods (1d4)","essential oil","eyeshadow","fake beard","finger on a string","fish sauce","flask","flint & steel","funereal coins","gate pass","giant tooth","glass scarab","hardtack","heart locket","herbal mixture","holy symbol","holy water","hood","house key","human wax figure","illicit message","incense (1d6)","iron spikes (1d6)","knife","knot puzzle","lizard jerky","loaded dice","lockpicks","manumission writ","marbles (1d12)","measuring cups (1d6)","mirror, silver","moon ring","mouth-harp","mummified toad","new age crystal","octagram amulet","oil flask","opium (1d6)","ornate key","painted sticks","pangolin amulet","perfume (1d3)","petrified eyeball","pigments","poison (1d3)","poisoned fruit","poisoned hairpin","priapic amulet","refreshing tonic","root","rouge","runestone","SATOR tablet","scales","sealed message","seeds","serpent on a stick","severed hand","shipment voucher","signet ring","silk noose","silv. arrowheads (1d12)","silver box","silver seed","skull lock","small pendulum","snakeskin","sparkling powder","spicy unguent","spinner","spiral ring","sponge","stuffed lizard","tarnished ring","tenement map","tiny key","trident charm","underworld map","vial of mercury","vinegar","water license","weird diagram","wig","wolfsbane (1d2)","wooden hand"],"encounter_purpose":{"columns":[{"range":"1-4","name":"Confrontation"},{"range":"5-7","name":"Proposition"},{"range":"8-10","name":"Subterfuge"}],"rows":[[1,"attacks","offers favour/object","observes"],[2,"attacks","offers favour/object","observes"],[3,"accuses","asks/gives advice","kidnaps"],[4,"bullies","asks/gives information","lures"],[5,"challenges","asks/provides help","lurks around"],[6,"curses","commands","misleads"],[7,"insults","offers work/mission","slanders"],[8,"shoves","questions","steals from"],[9,"stops","requests","trails"],[10,"threatens","seduces","tricks"]]},"encounter_type":{"Hightown":{"citizens":"01-60","travellers":"61-90","special":"91-00"},"Bazaar":{"citizens":"01-50","travellers":"51-90","special":"91-00"},"Port":{"citizens":"01-40","travellers":"41-80","special":"81-00"},"Thieves Quarter":{"citizens":"01-40","travellers":"41-70","special":"71-00"}},"npc_level":[{"level":"green (1)","avg":"01-35","elite":"01-10"},{"level":"experienced (2)","avg":"36-60","elite":"11-25"},{"level":"veteran (3)","avg":"61-80","elite":"26-55"},{"level":"elite (4)","avg":"81-90","elite":"56-70"},{"level":"medium (1d4+4)","avg":"91-97","elite":"71-90"},{"level":"high (1d4+8)","avg":"98-00","elite":"91-00"}],"citizens":[{"name":"Aristocrat","nr":"1+50%","class":"Ftr/Thf","lvl":"elite","h_day":"01-11","h_night":"01-08","b_day":"01-05","b_night":"01-03","p_day":"01-02","p_night":"01-03","t_day":"01-02","t_night":"01-03"},{"name":"Beggar","nr":"1d10","class":"-/Thf","lvl":"avg","h_day":"12-13","h_night":"09-11","b_day":"06-12","b_night":"04-11","p_day":"03-08","p_night":"04-11","t_day":"03-13","t_night":"04-11"},{"name":"Commoner","nr":"1d10","class":"-","lvl":"avg","h_day":"14-18","h_night":"12-14","b_day":"13-20","b_night":"12-16","p_day":"09-16","p_night":"12-17","t_day":"14-29","t_night":"12-22"},{"name":"Craftsman","nr":"2d4","class":"-","lvl":"avg","h_day":"19-21","h_night":"15-16","b_day":"21-31","b_night":"17-20","p_day":"17-19","p_night":"18-20","t_day":"30-33","t_night":"23-24"},{"name":"Crier","nr":"1","class":"-","lvl":"avg","h_day":"22-24","h_night":"-","b_day":"32-36","b_night":"-","p_day":"20-24","p_night":"-","t_day":"34-36","t_night":"-"},{"name":"Drunk","nr":"1d4","class":"any","lvl":"avg","h_day":"25","h_night":"17-21","b_day":"37-39","b_night":"21-28","p_day":"25-28","p_night":"21-28","t_day":"37-43","t_night":"25-36"},{"name":"Entertainer","nr":"3d6","class":"-","lvl":"avg","h_day":"26-28","h_night":"-","b_day":"40-43","b_night":"29-31","p_day":"29-32","p_night":"29-34","t_day":"44-46","t_night":"37-39"},{"name":"Merchant","nr":"1d3","class":"Ftr/Thf","lvl":"elite","h_day":"29-39","h_night":"22-29","b_day":"44-54","b_night":"32-38","p_day":"33-39","p_night":"35-39","t_day":"47-51","t_night":"40-43"},{"name":"Official","nr":"1+10%","class":"Ftr/Thf","lvl":"avg","h_day":"40-50","h_night":"30-37","b_day":"55-57","b_night":"39-41","p_day":"40-44","p_night":"40-42","t_day":"52-53","t_night":"44-46"},{"name":"Officer","nr":"1+25%","class":"Ftr","lvl":"elite","h_day":"51-54","h_night":"38-43","b_day":"58-59","b_night":"42-43","p_day":"45-47","p_night":"43-45","t_day":"54","t_night":"47-49"},{"name":"Patrol","nr":"1d4×5","class":"Ftr","lvl":"avg","h_day":"55-65","h_night":"44-64","b_day":"60-64","b_night":"44-54","p_day":"48-52","p_night":"46-54","t_day":"55-57","t_night":"50"},{"name":"Patrol, reinf.","nr":"2d4×5","class":"Ftr","lvl":"avg","h_day":"66-70","h_night":"65-75","b_day":"65-67","b_night":"55-60","p_day":"53-56","p_night":"55-58","t_day":"58-60","t_night":"51-54"},{"name":"Peddler","nr":"1d12","class":"-","lvl":"avg","h_day":"71-75","h_night":"76","b_day":"68-75","b_night":"61-66","p_day":"57-64","p_night":"59-65","t_day":"61-66","t_night":"55-59"},{"name":"Priest","nr":"1d6","class":"Ftr/Clr","lvl":"elite","h_day":"76-80","h_night":"77-78","b_day":"76-77","b_night":"67-68","p_day":"65-66","p_night":"66-67","t_day":"67-70","t_night":"60-64"},{"name":"Prostitute","nr":"1d6","class":"Thf","lvl":"avg","h_day":"81-82","h_night":"79-84","b_day":"78-81","b_night":"69-75","p_day":"67-72","p_night":"68-78","t_day":"71-78","t_night":"65-75"},{"name":"Ruler","nr":"1+90%","class":"any","lvl":"elite","h_day":"83-84","h_night":"85-86","b_day":"82","b_night":"76","p_day":"73-74","p_night":"79","t_day":"79","t_night":"76-77"},{"name":"Slave","nr":"1d6","class":"-","lvl":"avg","h_day":"85-90","h_night":"87-91","b_day":"83-87","b_night":"77-81","p_day":"75-80","p_night":"80-84","t_day":"80-84","t_night":"78-82"},{"name":"Swindler","nr":"1d3","class":"Thf","lvl":"avg","h_day":"91-92","h_night":"92-93","b_day":"88-89","b_night":"82-86","p_day":"81-83","p_night":"85-88","t_day":"85-88","t_night":"83-87"},{"name":"Thief","nr":"1","class":"Thf","lvl":"elite","h_day":"93-95","h_night":"94-97","b_day":"90-96","b_night":"87-95","p_day":"84-90","p_night":"89-95","t_day":"89-95","t_night":"88-97"},{"name":"Workman","nr":"2d6","class":"-","lvl":"avg","h_day":"96-00","h_night":"98-00","b_day":"97-00","b_night":"96-00","p_day":"91-00","p_night":"96-00","t_day":"96-00","t_night":"98-00"}],"travellers":[{"name":"Amazon","nr":"1d6","class":"Amz","lvl":"elite","h_day":"01-02","h_night":"01-04","b_day":"01-03","b_night":"01-05","p_day":"01-04","p_night":"01-05","t_day":"01-04","t_night":"01-05"},{"name":"Archer","nr":"1d6","class":"Ftr","lvl":"elite","h_day":"03-05","h_night":"05-08","b_day":"04-06","b_night":"06-10","p_day":"05-07","p_night":"06-09","t_day":"05-07","t_night":"06-09"},{"name":"Barbarian","nr":"1d6","class":"Ftr","lvl":"elite","h_day":"06-08","h_night":"09-14","b_day":"07-09","b_night":"11-14","p_day":"08-11","p_night":"10-14","t_day":"08-11","t_night":"10-14"},{"name":"Caravan","nr":"spec","class":"spec","lvl":"spec","h_day":"09-16","h_night":"-","b_day":"10-19","b_night":"-","p_day":"12-16","p_night":"-","t_day":"12-15","t_night":"-"},{"name":"Cleric","nr":"1","class":"Clr","lvl":"elite","h_day":"17-21","h_night":"15-20","b_day":"20-22","b_night":"15-17","p_day":"17-20","p_night":"15-17","t_day":"16-20","t_night":"15-19"},{"name":"Dervish","nr":"2d6+2","class":"Ftr","lvl":"2","h_day":"22-24","h_night":"21","b_day":"23-25","b_night":"18-19","p_day":"21-23","p_night":"18-19","t_day":"21-24","t_night":"20-22"},{"name":"Envoys","nr":"1d3×10","class":"any/Ftr","lvl":"elite","h_day":"25-29","h_night":"22-26","b_day":"26-27","b_night":"20","p_day":"24-26","p_night":"20","t_day":"25-26","t_night":"23"},{"name":"Fighter","nr":"1d6","class":"Ftr","lvl":"elite","h_day":"30-35","h_night":"27-38","b_day":"28-34","b_night":"21-28","p_day":"27-34","p_night":"21-30","t_day":"27-37","t_night":"24-33"},{"name":"Illusionist","nr":"1","class":"Ill","lvl":"elite","h_day":"36-37","h_night":"39-41","b_day":"35","b_night":"29-30","p_day":"35","p_night":"31-32","t_day":"38-39","t_night":"34-36"},{"name":"Magic-User","nr":"1","class":"M-U","lvl":"elite","h_day":"38-41","h_night":"42-45","b_day":"36-39","b_night":"31-36","p_day":"36-39","p_night":"33-38","t_day":"40-43","t_night":"37-41"},{"name":"Mercenary","nr":"1d6","class":"Ftr","lvl":"elite","h_day":"42-52","h_night":"46-60","b_day":"40-44","b_night":"37-46","p_day":"40-46","p_night":"39-48","t_day":"44-53","t_night":"42-51"},{"name":"Merchant","nr":"1d3","class":"Ftr/Thf","lvl":"elite","h_day":"53-57","h_night":"61-67","b_day":"45-55","b_night":"47-61","p_day":"47-54","p_night":"49-58","t_day":"54-58","t_night":"52-56"},{"name":"Nomad","nr":"2d8","class":"Ftr","lvl":"elite","h_day":"58-60","h_night":"68-69","b_day":"56-59","b_night":"62-65","p_day":"55-56","p_night":"59-60","t_day":"59-61","t_night":"57-59"},{"name":"Pilgrim","nr":"d10×10","class":"leaders","lvl":"avg","h_day":"61-70","h_night":"-","b_day":"60-64","b_night":"-","p_day":"57-61","p_night":"-","t_day":"62-66","t_night":"-"},{"name":"Sailor/pirate","nr":"1d20","class":"Ftr","lvl":"avg","h_day":"71-75","h_night":"70-71","b_day":"65-75","b_night":"66-80","p_day":"62-76","p_night":"61-70","t_day":"67-77","t_night":"60-69"},{"name":"Thief","nr":"1","class":"Thf","lvl":"elite","h_day":"76-80","h_night":"72-79","b_day":"76-80","b_night":"81-90","p_day":"77-84","p_night":"71-80","t_day":"78-88","t_night":"70-84"},{"name":"Traveller","nr":"1d12","class":"leaders","lvl":"avg","h_day":"81-00","h_night":"80-00","b_day":"81-00","b_night":"91-00","p_day":"85-00","p_night":"81-00","t_day":"89-00","t_night":"85-00"}],"special":[{"name":"Animal, loose","nr":"1","class":"-","lvl":"varied","h_day":"01-12","h_night":"01-05","b_day":"01-20","b_night":"01-04","p_day":"01-05","p_night":"01-02","t_day":"01-05","t_night":"01-02"},{"name":"Assassin","nr":"1","class":"Asn","lvl":"elite","h_day":"13-18","h_night":"06-15","b_day":"21-25","b_night":"05-12","p_day":"06-11","p_night":"03-10","t_day":"06-13","t_night":"03-10"},{"name":"Breathstealer","nr":"1d4","class":"-","lvl":"4","h_day":"-","h_night":"-","b_day":"-","b_night":"-","p_day":"-","p_night":"-","t_day":"11","t_night":"11-12"},{"name":"Cultist","nr":"2d6+2","class":"Ftr","lvl":"2","h_day":"-","h_night":"16-17","b_day":"-","b_night":"13-17","p_day":"-","p_night":"12-27","t_day":"14-15","t_night":"13-20"},{"name":"Demon, shd.","nr":"1","class":"-","lvl":"7","h_day":"-","h_night":"-","b_day":"-","b_night":"18","p_day":"-","p_night":"28","t_day":"-","t_night":"21-22"},{"name":"Demon, succ.","nr":"1","class":"-","lvl":"6","h_day":"-","h_night":"18","b_day":"-","b_night":"19","p_day":"-","p_night":"29","t_day":"-","t_night":"23-24"},{"name":"Dog","nr":"4d6","class":"-","lvl":"1","h_day":"19","h_night":"19-20","b_day":"26-28","b_night":"20-25","p_day":"12-14","p_night":"30-34","t_day":"16-20","t_night":"25-32"},{"name":"Doppelganger","nr":"1","class":"-","lvl":"4","h_day":"-","h_night":"21-22","b_day":"-","b_night":"26-27","p_day":"-","p_night":"35-36","t_day":"-","t_night":"33-35"},{"name":"Gargoyle","nr":"2d4","class":"-","lvl":"4+4","h_day":"-","h_night":"-","b_day":"-","b_night":"-","p_day":"-","p_night":"-","t_day":"-","t_night":"35-37"},{"name":"Ghost","nr":"1","class":"-","lvl":"10","h_day":"-","h_night":"23-24","b_day":"-","b_night":"28","p_day":"-","p_night":"37","t_day":"-","t_night":"38-39"},{"name":"Ghoul","nr":"2d8","class":"-","lvl":"2","h_day":"-","h_night":"-","b_day":"-","b_night":"29","p_day":"-","p_night":"38-39","t_day":"-","t_night":"40-42"},{"name":"Invis. stalker","nr":"1","class":"-","lvl":"8","h_day":"-","h_night":"25","b_day":"-","b_night":"30","p_day":"-","p_night":"40","t_day":"-","t_night":"43-44"},{"name":"Jackalwere","nr":"1d6+1","class":"-","lvl":"4","h_day":"20-21","h_night":"26-30","b_day":"29-31","b_night":"31-35","p_day":"15-19","p_night":"41-45","t_day":"21-25","t_night":"45-49"},{"name":"Living statue","nr":"1d10","class":"-","lvl":"4","h_day":"-","h_night":"-","b_day":"-","b_night":"-","p_day":"-","p_night":"-","t_day":"36","t_night":"50-51"},{"name":"Messenger","nr":"1","class":"-","lvl":"avg","h_day":"22-50","h_night":"31-56","b_day":"32-51","b_night":"-","p_day":"20-40","p_night":"46-47","t_day":"26-27","t_night":"-"},{"name":"Mob","nr":"4d10","class":"-","lvl":"1","h_day":"51-54","h_night":"57-58","b_day":"52-66","b_night":"37-44","p_day":"41-55","p_night":"48-53","t_day":"28-42","t_night":"52-56"},{"name":"Prophet/F.teller","nr":"1","class":"varied","lvl":"elite","h_day":"55-84","h_night":"59-69","b_day":"67-77","b_night":"45-50","p_day":"56-66","p_night":"54-55","t_day":"43-48","t_night":"57-60"},{"name":"Rat, giant","nr":"2d4×5","class":"-","lvl":"½","h_day":"-","h_night":"-","b_day":"-","b_night":"51-54","p_day":"-","p_night":"56-61","t_day":"49-51","t_night":"61-66"},{"name":"Robber","nr":"3d8","class":"Ftr","lvl":"1","h_day":"85-89","h_night":"70-75","b_day":"78-82","b_night":"55-65","p_day":"67-72","p_night":"62-67","t_day":"52-68","t_night":"-"},{"name":"Shadow","nr":"1d12","class":"-","lvl":"3+3","h_day":"-","h_night":"76","b_day":"-","b_night":"66-68","p_day":"-","p_night":"68-70","t_day":"-","t_night":"67-69"},{"name":"Slaver","nr":"2d6","class":"Ftr/Thf","lvl":"elite","h_day":"90-94","h_night":"77-82","b_day":"83-89","b_night":"69-79","p_day":"73-78","p_night":"71-74","t_day":"69-76","t_night":"-"},{"name":"Spectre","nr":"1","class":"-","lvl":"7+3","h_day":"-","h_night":"83","b_day":"-","b_night":"80","p_day":"-","p_night":"75","t_day":"-","t_night":"70"},{"name":"Swarm, rat","nr":"1d4","class":"-","lvl":"4","h_day":"-","h_night":"84-85","b_day":"-","b_night":"81-83","p_day":"-","p_night":"76-80","t_day":"77-80","t_night":"71-73"},{"name":"Thug","nr":"2d8","class":"Ftr","lvl":"2","h_day":"95-98","h_night":"86-92","b_day":"90-97","b_night":"84-91","p_day":"79-95","p_night":"81-87","t_day":"81-95","t_night":"74-82"},{"name":"Vampire","nr":"1","class":"-","lvl":"7+3","h_day":"-","h_night":"93","b_day":"-","b_night":"92-93","p_day":"-","p_night":"88-89","t_day":"-","t_night":"83-85"},{"name":"Wererat","nr":"1d4","class":"-","lvl":"3+1","h_day":"99-00","h_night":"94-99","b_day":"98-00","b_night":"94-99","p_day":"96-00","p_night":"90-96","t_day":"96-00","t_night":"86-90"},{"name":"Wight","nr":"2d6","class":"-","lvl":"4+3","h_day":"-","h_night":"-","b_day":"-","b_night":"-","p_day":"-","p_night":"-","t_day":"-","t_night":"91-92"},{"name":"Wraith","nr":"1d6","class":"-","lvl":"5+3","h_day":"-","h_night":"00","b_day":"-","b_night":"00","p_day":"-","p_night":"98","t_day":"-","t_night":"93-94"},{"name":"Zombie","nr":"3d8","class":"-","lvl":"2","h_day":"-","h_night":"-","b_day":"-","b_night":"-","p_day":"-","p_night":"99-00","t_day":"-","t_night":"95-00"}],"meeting":[{"n":1,"relation":"a corner from","location":"amphorae","circumstance":"a bribe may be needed"},{"n":2,"relation":"a walk from","location":"arches","circumstance":"talking bird will guide you"},{"n":3,"relation":"a ways away from","location":"archway","circumstance":"after the lamps are lit"},{"n":4,"relation":"above","location":"ascetics","circumstance":"after their meeting"},{"n":5,"relation":"across the condemned","location":"assassin's redoubt","circumstance":"after they leave"},{"n":6,"relation":"adjacent to","location":"barred cellar","circumstance":"anoint yourself w. pigment"},{"n":7,"relation":"alleyway to","location":"barrels","circumstance":"ask for the current prices"},{"n":8,"relation":"archway to","location":"baskets","circumstance":"ask the lepers"},{"n":9,"relation":"around","location":"bas-reliefs","circumstance":"ask to inspect the sap"},{"n":10,"relation":"ask around at","location":"bird-painters' conclave","circumstance":"at midnight"},{"n":11,"relation":"ask beggars at","location":"blind beggars","circumstance":"at nightfall"},{"n":12,"relation":"ask for _____ at","location":"bookbinders","circumstance":"at the appointed hour"},{"n":13,"relation":"ask for directions at","location":"bronze portals","circumstance":"at the darkest hour"},{"n":14,"relation":"at the interdicted","location":"burned-down building","circumstance":"avert your eyes"},{"n":15,"relation":"attic over","location":"cathouse","circumstance":"avoid the patrols"},{"n":16,"relation":"avoid catspaw","location":"corner","circumstance":"avoid their advances"},{"n":17,"relation":"avoiding","location":"cellar","circumstance":"be courteous but firm"},{"n":18,"relation":"balcony above","location":"cistern","circumstance":"before cockscrow"},{"n":19,"relation":"before","location":"cloaca","circumstance":"before dawn-break"},{"n":20,"relation":"behind","location":"clothiers","circumstance":"better hurry"},{"n":21,"relation":"behind the facade of","location":"condemned","circumstance":"beware the gargoyles"},{"n":22,"relation":"below","location":"copper basin","circumstance":"bring candles"},{"n":23,"relation":"benches at","location":"cripples","circumstance":"bring fish-oil"},{"n":24,"relation":"beyond","location":"cross","circumstance":"bring meat"},{"n":25,"relation":"bow before","location":"crumbling halls","circumstance":"bring no weapons"},{"n":26,"relation":"bribe watchman at","location":"crumbling mosaics","circumstance":"bring rope"},{"n":27,"relation":"bring a flower to","location":"dancing plague house","circumstance":"but watch their hands"},{"n":28,"relation":"by the dangerous","location":"decapitated busts","circumstance":"check things twice"},{"n":29,"relation":"by the deserted","location":"diseased emperor","circumstance":"decline invitation to cellar"},{"n":30,"relation":"by the sign near","location":"dreaming fountain","circumstance":"don't ask questions"},{"n":31,"relation":"circle around","location":"falcon's head","circumstance":"don't linger once finished"},{"n":32,"relation":"climb down near","location":"false doorways","circumstance":"don't touch the drink"},{"n":33,"relation":"climb the stairs at","location":"fire-worshippers","circumstance":"drop coin in the boxx"},{"n":34,"relation":"climb up near","location":"fishermen's fresco","circumstance":"exchange gift-birds"},{"n":35,"relation":"close to","location":"flower pots","circumstance":"exercise caution"},{"n":36,"relation":"closed store over","location":"fountains","circumstance":"expect chicanery"},{"n":37,"relation":"continue at","location":"gallows","circumstance":"follow the second guide"},{"n":38,"relation":"corner by","location":"gladiator's memorial","circumstance":"give the dogs a bone"},{"n":39,"relation":"curtained doorway at","location":"grapevines","circumstance":"have an explanation ready"},{"n":40,"relation":"downstairs from","location":"great stone face","circumstance":"have horses close by"},{"n":41,"relation":"downwind of","location":"groaning idols","circumstance":"hide your face"},{"n":42,"relation":"entrance left of","location":"idol","circumstance":"in the widows' hour"},{"n":43,"relation":"find secret door by","location":"imperial plaque","circumstance":"inquire within"},{"n":44,"relation":"follow signs at","location":"jugs","circumstance":"knock five times"},{"n":45,"relation":"follow the man at","location":"khofit makers","circumstance":"leave a message"},{"n":46,"relation":"follow the women at","location":"kilns","circumstance":"leave a tip"},{"n":47,"relation":"fountain next to","location":"lepers","circumstance":"leave quietly"},{"n":48,"relation":"hatch below","location":"lovers' corner","circumstance":"leave the dead to their rest"},{"n":49,"relation":"hidden close to","location":"marble steps","circumstance":"let sleeping dogs lie"},{"n":50,"relation":"hidden entrance from","location":"market stalls","circumstance":"light incense"},{"n":51,"relation":"hole in the wall by","location":"memorial","circumstance":"look for a painted bird"},{"n":52,"relation":"hovel by","location":"mendicants","circumstance":"mention ___________"},{"n":53,"relation":"in alley by","location":"mortuary","circumstance":"never let her behind you"},{"n":54,"relation":"in apartment across","location":"mummy-stealers","circumstance":"patience is essential"},{"n":55,"relation":"in the room above","location":"nameless monks","circumstance":"pay the beggar"},{"n":56,"relation":"in the shadows of","location":"niches","circumstance":"pay the tithe"},{"n":57,"relation":"in the store by","location":"oil jars","circumstance":"praise them effusively"},{"n":58,"relation":"in the vicinity of","location":"old water-well","circumstance":"pretend ignorance"},{"n":59,"relation":"inner court next to","location":"painted stairs","circumstance":"pretend to be lost"},{"n":60,"relation":"inside","location":"painted stairs","circumstance":"rap on the shutters"},{"n":61,"relation":"keep going at","location":"panhandlers","circumstance":"refuse their blessing"},{"n":62,"relation":"ladder close to","location":"peacock mosaic","circumstance":"renounce your name"},{"n":63,"relation":"left from","location":"pile of sacks","circumstance":"show sign to blind man"},{"n":64,"relation":"listen for footsteps at","location":"pilgrims","circumstance":"sing a love song"},{"n":65,"relation":"locked iron door by","location":"pillars","circumstance":"slip by watchmen"},{"n":66,"relation":"lot behind","location":"pipes","circumstance":"small weapons only"},{"n":67,"relation":"near the old","location":"pit","circumstance":"someone will be waiting"},{"n":68,"relation":"next to","location":"potters","circumstance":"tell them I sent you"},{"n":69,"relation":"nook next to","location":"red eye","circumstance":"tell them they owe you"},{"n":70,"relation":"old barrels by","location":"refuse heaps","circumstance":"the bird is not what it seems"},{"n":71,"relation":"opposite","location":"reservoir","circumstance":"the children are spies"},{"n":72,"relation":"out of sight near","location":"rubble piles","circumstance":"the guard will be sleeping"},{"n":73,"relation":"outside, near sealed","location":"bear pit","circumstance":"the hunchback is dangerous"},{"n":74,"relation":"over sealed","location":"entrance","circumstance":"there will be a note"},{"n":75,"relation":"parapets overlooking","location":"secret garden","circumstance":"they detest magic"},{"n":76,"relation":"pass before","location":"shrine of the Great Wheel","circumstance":"they don't like strangers"},{"n":77,"relation":"pass by","location":"shuttered store","circumstance":"they like wine very much"},{"n":78,"relation":"passage near","location":"sign of the moon","circumstance":"turn dials until noise"},{"n":79,"relation":"precisely under","location":"sign of the star","circumstance":"unless you see the sign"},{"n":80,"relation":"public bath at","location":"sign of the sun","circumstance":"use a false alias"},{"n":81,"relation":"retract steps from","location":"small outflow","circumstance":"use subterfuge"},{"n":82,"relation":"right across","location":"snake-handlers","circumstance":"wait for admittance"},{"n":83,"relation":"right from","location":"stack of crates","circumstance":"wait for the sign"},{"n":84,"relation":"round the corner by","location":"statue of the ram","circumstance":"wait until contacted"},{"n":85,"relation":"scaffolds at","location":"stele of laws","circumstance":"watch for an urchin"},{"n":86,"relation":"second store from","location":"storerooms","circumstance":"watch for eavesdroppers"},{"n":87,"relation":"shack at","location":"strangling statues","circumstance":"watch for trouble"},{"n":88,"relation":"spiral stairs at","location":"sundial","circumstance":"wear a rose"},{"n":89,"relation":"steps before","location":"terraces","circumstance":"wear hoods"},{"n":90,"relation":"straight ahead","location":"the indigo palace","circumstance":"wear masks"},{"n":91,"relation":"the lone tree by","location":"tiger's mouth","circumstance":"when the beggar calls"},{"n":92,"relation":"turn back at","location":"tower of owls","circumstance":"when the chimes end"},{"n":93,"relation":"under","location":"trash heap","circumstance":"when the guardians sleep"},{"n":94,"relation":"under arches at","location":"under-cellar","circumstance":"when the lights are lit"},{"n":95,"relation":"under the stairs at","location":"unknown seer","circumstance":"when the store closes"},{"n":96,"relation":"upstairs from","location":"vats","circumstance":"when you can come"},{"n":97,"relation":"watch for a sign at","location":"warehouse doors","circumstance":"with great haste"},{"n":98,"relation":"when you smell","location":"watchman's grave","circumstance":"without fail"},{"n":99,"relation":"window above","location":"water tank","circumstance":"you need a scorpion amulet"},{"n":100,"relation":"worm-eaten statue by","location":"water-wheel","circumstance":"your guide will be present"}]};
+
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+
+// Highlight common stat block tokens with subtle styling
+function formatStatBlock(s) {
+  let out = escapeHtml(s);
+  // Bold the leading "Name:" before colon
+  out = out.replace(/^([A-Z][^:]{1,80}):/, '<strong>$1:</strong>');
+  // Highlight Hp, AC, ML, AL, XP, Spec, HD tokens
+  out = out.replace(/\b(Hp|HP|HD|AC|Atk|ML|AL|XP|Str|Dex|Con|Int|Wis|Cha|Spec|Save|Move)\b/g, '<strong>$1</strong>');
+  return out;
+}
+
+// ================== TABS ==================
+$$('#tabs .tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.panel;
+    $$('#tabs .tab').forEach(b => b.classList.toggle('active', b === btn));
+    $$('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + target));
+  });
+});
+
+// ================== NOCTURNAL TABLE ==================
+const noctRecent = [];
+
+function showNocturnal(tag) {
+  const e = DATA.nocturnal_main.find(x => x.tag === tag);
+  const root = $('#noct-result');
+  if (!e) { root.innerHTML = '<div class="empty-result">No entry found for ' + tag + '.</div>'; return; }
+  let html = '<div class="tag-badge">' + e.tag + '</div>';
+  html += '<div class="entry-text">' + escapeHtml(e.text) + '</div>';
+  if (e.stats && e.stats.length) {
+    html += '<div class="entry-stats">';
+    e.stats.forEach(s => {
+      html += '<div class="stat-block">' + formatStatBlock(s) + '</div>';
+    });
+    html += '</div>';
+  }
+  root.innerHTML = html;
+  // Update recent
+  const idx = noctRecent.indexOf(tag);
+  if (idx !== -1) noctRecent.splice(idx, 1);
+  noctRecent.unshift(tag);
+  if (noctRecent.length > 8) noctRecent.length = 8;
+  renderRecent();
+}
+
+function renderRecent() {
+  const row = $('#noct-recent');
+  row.innerHTML = noctRecent.map(t => '<span class="pill" data-tag="' + t + '">' + t + '</span>').join('');
+  $$('.pill', row).forEach(p => p.addEventListener('click', () => showNocturnal(parseInt(p.dataset.tag, 10))));
+}
+
+function rollNocturnal() {
+  const e = pick(DATA.nocturnal_main);
+  showNocturnal(e.tag);
+}
+
+$('#noct-roll').addEventListener('click', rollNocturnal);
+$('#noct-go').addEventListener('click', () => {
+  const v = parseInt($('#noct-jump').value, 10);
+  if (!isNaN(v)) {
+    // Find nearest valid tag (closest >= v if not exact)
+    const tags = DATA.nocturnal_main.map(e => e.tag).sort((a,b)=>a-b);
+    let target = tags.find(t => t === v);
+    if (!target) {
+      target = tags.find(t => t >= v);
+    }
+    if (target) showNocturnal(target);
+  }
+});
+$('#noct-jump').addEventListener('keydown', e => { if (e.key === 'Enter') $('#noct-go').click(); });
+
+// Spacebar reroll
+document.addEventListener('keydown', (ev) => {
+  if (ev.target.tagName === 'INPUT' || ev.target.tagName === 'SELECT' || ev.target.tagName === 'TEXTAREA') return;
+  if (ev.key === ' ' && $('#panel-nocturnal').classList.contains('active')) {
+    ev.preventDefault();
+    rollNocturnal();
+  }
+});
+
+// ================== CITY ENCOUNTER SYSTEM ==================
+function getColumnKey(district, time) {
+  const map = { 'Hightown': 'h', 'Bazaar': 'b', 'Port': 'p', 'Thieves Quarter': 't' };
+  return map[district] + '_' + time;
+}
+
+function getColumnLabel(district, time) {
+  return district + ' &mdash; ' + (time === 'day' ? 'Day' : 'Night');
+}
+
+function rangeContains(range, n) {
+  if (!range || range === '-') return false;
+  // range like "01-12" or "25" or "01-00" (where 00 = 100)
+  const m = range.match(/^(\d{1,3})(?:-(\d{1,3}))?$/);
+  if (!m) return false;
+  let lo = parseInt(m[1], 10);
+  let hi = m[2] !== undefined ? parseInt(m[2], 10) : lo;
+  if (lo === 0) lo = 100;
+  if (hi === 0) hi = 100;
+  return n >= lo && n <= hi;
+}
+
+function rollCityEncounter() {
+  const district = $('#city-district').value;
+  const time = $('#city-time').value;
+  const colKey = getColumnKey(district, time);
+
+  // Step 1: roll d100 for type
+  const typeRoll = rand(1, 100);
+  const typeRanges = DATA.encounter_type[district];
+  let type = null;
+  for (const k of ['citizens', 'travellers', 'special']) {
+    if (rangeContains(typeRanges[k], typeRoll)) { type = k; break; }
+  }
+  if (!type) type = 'citizens';
+
+  // Step 2: roll d100 within that type table for class
+  const classRoll = rand(1, 100);
+  const tableMap = { 'citizens': DATA.citizens, 'travellers': DATA.travellers, 'special': DATA.special };
+  const table = tableMap[type];
+  const colName = colKey;
+  let chosenClass = null;
+  for (const row of table) {
+    if (rangeContains(row[colName], classRoll)) { chosenClass = row; break; }
+  }
+
+  // Step 3: roll for level (Avg or Elite based on class's "lvl" field)
+  let levelRoll = null, levelResult = null, qualityUsed = null;
+  if (chosenClass) {
+    const lvlField = chosenClass.lvl;
+    let useElite = false;
+    const qualityChoice = $('#city-quality').value;
+    if (qualityChoice === 'elite') useElite = true;
+    else if (qualityChoice === 'avg') useElite = false;
+    else { // auto
+      // The table's "lvl" column says either "elite" or "avg" (or a number for fixed level, or "varied"/"spec")
+      if (typeof lvlField === 'string' && lvlField.toLowerCase() === 'elite') useElite = true;
+      else useElite = false;
+    }
+    qualityUsed = useElite ? 'Elite' : 'Avg.';
+
+    // If lvlField is a number-like string ("4", "2", "4+4"), the level is fixed
+    if (/^\d/.test(String(lvlField))) {
+      levelResult = lvlField; // fixed
+    } else if (lvlField === 'spec' || lvlField === 'varied') {
+      levelResult = lvlField;
+    } else {
+      // Roll on NPC level table with appropriate column
+      levelRoll = rand(1, 100);
+      const lvlRow = DATA.npc_level.find(r => rangeContains(useElite ? r.elite : r.avg, levelRoll));
+      levelResult = lvlRow ? lvlRow.level : '?';
+    }
+  }
+
+  const root = $('#city-result');
+  let html = '';
+  html += '<h3>' + getColumnLabel(district, time) + '</h3>';
+  html += '<div class="breakdown"><span class="key">Encounter type (d100=' + typeRoll + '):</span> <span class="value">' + type + '</span></div>';
+  if (chosenClass) {
+    html += '<div class="breakdown"><span class="key">Class (d100=' + classRoll + '):</span> <span class="value">' + escapeHtml(chosenClass.name) + '</span></div>';
+    html += '<div class="breakdown"><span class="key">Number:</span> <span class="value">' + escapeHtml(chosenClass.nr) + '</span></div>';
+    html += '<div class="breakdown"><span class="key">Class type:</span> <span class="value">' + escapeHtml(chosenClass['class']) + '</span></div>';
+    if (levelResult) {
+      const rollNote = levelRoll ? ' (d100=' + levelRoll + ', ' + qualityUsed + ')' : '';
+      html += '<div class="breakdown"><span class="key">Level:</span> <span class="value">' + escapeHtml(levelResult) + '</span>' + rollNote + '</div>';
+    }
+  } else {
+    html += '<div class="breakdown" style="color:var(--rust)">No class match for roll ' + classRoll + ' in ' + type + ' / ' + getColumnLabel(district, time) + '. Try again.</div>';
+  }
+  root.innerHTML = html;
+  root.style.display = 'block';
+
+  // Highlight matched rows in the lookup tables
+  highlightCityTables(type, classRoll, district, time);
+}
+
+$('#city-roll').addEventListener('click', rollCityEncounter);
+$('#city-district').addEventListener('change', renderCityTables);
+$('#city-time').addEventListener('change', renderCityTables);
+$('#city-tables-refresh').addEventListener('click', renderCityTables);
+
+function renderEncounterTypeTable() {
+  const tbody = $('#city-type-table tbody');
+  const districts = ['Hightown', 'Bazaar', 'Port', 'Thieves Quarter'];
+  const types = ['citizens', 'travellers', 'special'];
+  tbody.innerHTML = types.map(t => {
+    return '<tr><td>' + t + '</td>' +
+      districts.map(d => '<td class="num">' + DATA.encounter_type[d][t] + '</td>').join('') +
+      '</tr>';
+  }).join('');
+}
+
+function renderNpcLevelTable() {
+  const tbody = $('#npc-level-table tbody');
+  tbody.innerHTML = DATA.npc_level.map(r =>
+    '<tr><td>' + r.level + '</td><td class="num">' + r.avg + '</td><td class="num">' + r.elite + '</td></tr>'
+  ).join('');
+}
+
+function renderCityTables() {
+  const district = $('#city-district').value;
+  const time = $('#city-time').value;
+  const colKey = getColumnKey(district, time);
+  const colLabel = getColumnLabel(district, time);
+  ['citizens', 'travellers', 'special'].forEach(group => {
+    const table = DATA[group];
+    const tbody = $('#' + group + '-table tbody');
+    const colHead = $('#' + group + '-col-head');
+    if (colHead) colHead.innerHTML = colLabel;
+    tbody.innerHTML = table.map(r =>
+      '<tr data-name="' + escapeHtml(r.name) + '"><td>' + escapeHtml(r.name) + '</td>' +
+      '<td class="num">' + escapeHtml(r.nr) + '</td>' +
+      '<td>' + escapeHtml(r['class']) + '</td>' +
+      '<td>' + escapeHtml(r.lvl) + '</td>' +
+      '<td class="num">' + (r[colKey] || '-') + '</td></tr>'
+    ).join('');
+  });
+}
+
+function highlightCityTables(type, roll, district, time) {
+  // Clear all match-row classes
+  $$('#citizens-table tbody tr, #travellers-table tbody tr, #special-table tbody tr').forEach(tr => tr.classList.remove('match-row'));
+  // Refresh tables in case district/time changed
+  renderCityTables();
+  const tableId = type === 'citizens' ? '#citizens-table' :
+                  type === 'travellers' ? '#travellers-table' : '#special-table';
+  const colKey = getColumnKey(district, time);
+  const tableData = type === 'citizens' ? DATA.citizens :
+                    type === 'travellers' ? DATA.travellers : DATA.special;
+  let matchedName = null;
+  for (const r of tableData) {
+    if (rangeContains(r[colKey], roll)) { matchedName = r.name; break; }
+  }
+  if (matchedName) {
+    const tr = $$(tableId + ' tbody tr').find(tr => tr.dataset.name === matchedName);
+    if (tr) {
+      tr.classList.add('match-row');
+      tr.scrollIntoView({behavior: 'smooth', block: 'center'});
+    }
+  }
+}
+
+// ================== BAZAAR ==================
+$('#bazaar-roll').addEventListener('click', () => {
+  // Two rolls for nature, two rolls for complication
+  const n1 = pick(DATA.bazaar);
+  const n2 = pick(DATA.bazaar);
+  const persona = pick(DATA.bazaar);
+  const wares = pick(DATA.bazaar);
+  const c1 = pick(DATA.bazaar);
+  const c2 = pick(DATA.bazaar);
+
+  // Combine the two natures and two complications
+  const natures = [n1.nature];
+  if (n2.n !== n1.n) natures.push(n2.nature);
+  const comps = [c1.complication];
+  if (c2.n !== c1.n) comps.push(c2.complication);
+
+  const sentence = '<span class="accent">[' + natures.join(', ') + ']</span> ' +
+                   '<span>' + escapeHtml(persona.persona) + '</span>' +
+                   ' is selling <span>' + escapeHtml(wares.selling) + '</span>, ' +
+                   '<span class="accent">[' + comps.join(', ') + ']</span>.';
+  $('#bazaar-result').innerHTML = sentence;
+  $('#bazaar-result').style.display = 'block';
+
+  $('#bazaar-fields').innerHTML =
+    '<div class="madlib-field"><span class="field-label">Nature 1 (d100=' + n1.n + ')</span><span class="field-value">' + escapeHtml(n1.nature) + '</span></div>' +
+    '<div class="madlib-field"><span class="field-label">Nature 2 (d100=' + n2.n + ')</span><span class="field-value">' + escapeHtml(n2.nature) + '</span></div>' +
+    '<div class="madlib-field"><span class="field-label">Persona (d100=' + persona.n + ')</span><span class="field-value">' + escapeHtml(persona.persona) + '</span></div>' +
+    '<div class="madlib-field"><span class="field-label">Wares (d100=' + wares.n + ')</span><span class="field-value">' + escapeHtml(wares.selling) + '</span></div>' +
+    '<div class="madlib-field"><span class="field-label">Complication 1 (d100=' + c1.n + ')</span><span class="field-value">' + escapeHtml(c1.complication) + '</span></div>' +
+    '<div class="madlib-field"><span class="field-label">Complication 2 (d100=' + c2.n + ')</span><span class="field-value">' + escapeHtml(c2.complication) + '</span></div>';
+  $('#bazaar-fields').style.display = 'grid';
+});
+
+// ================== POCKETS ==================
+function rollDice(formula) {
+  // Parse strings like "1d6*10", "2d4*200", "3d6", "1d6*50"
+  const m = String(formula).match(/^(\d+)d(\d+)(?:\*(\d+))?$/i);
+  if (!m) return null;
+  const n = parseInt(m[1], 10);
+  const sides = parseInt(m[2], 10);
+  const mult = m[3] ? parseInt(m[3], 10) : 1;
+  let total = 0;
+  for (let i = 0; i < n; i++) total += rand(1, sides);
+  return total * mult;
+}
+
+function rollPocketField(formulaWithChance) {
+  // Format: "1d6*10\n50%" or "1d6*10 (50%)" or "-"
+  if (!formulaWithChance || formulaWithChance === '-') return null;
+  const cleanedField = formulaWithChance.replace(/\s+/g, ' ').trim();
+  // Match leading dice formula followed by chance
+  const m = cleanedField.match(/^([\d×x*d+\-]+)(?:\s*\((\d+)%\))?/);
+  if (!m) return null;
+  const formula = m[1].replace(/×/g, '*').replace(/x/g, '*');
+  const chance = m[2] ? parseInt(m[2], 10) : 100;
+  if (rand(1, 100) > chance) return { rolled: false, chance: chance };
+  const value = rollDice(formula);
+  return { rolled: true, value: value, formula: formula, chance: chance };
+}
+
+$('#pocket-roll').addEventListener('click', () => {
+  const idx = parseInt($('#pocket-class').value, 10);
+  const klass = DATA.pocket_loot[idx];
+  const fields = ['silver', 'electrum', 'gold', 'gems', 'jewelry', 'magical'];
+  const labels = { silver: 'Silver', electrum: 'Electrum', gold: 'Gold', gems: 'Gems', jewelry: 'Jewelry', magical: 'Magical' };
+
+  let html = '<h3>' + escapeHtml(klass['class']) + '</h3>';
+  let any = false;
+  fields.forEach(f => {
+    const formulaSpec = klass[f];
+    if (!formulaSpec || formulaSpec === '-') return;
+    const result = rollPocketField(formulaSpec);
+    if (!result) return;
+    if (result.rolled) {
+      any = true;
+      html += '<div class="breakdown"><span class="key">' + labels[f] + ':</span> <span class="value">' + result.value + '</span> <span style="color:var(--ink-faint); font-size:0.85em;">(' + escapeHtml(formulaSpec) + ')</span></div>';
+    } else {
+      html += '<div class="breakdown" style="opacity:0.55;"><span class="key">' + labels[f] + ':</span> <span class="value" style="color:var(--ink-faint)">&mdash; failed ' + result.chance + '% chance</span></div>';
+    }
+  });
+
+  // Always roll one odd object
+  const obj = pick(DATA.pocket_objects);
+  const objIdx = DATA.pocket_objects.indexOf(obj) + 1;
+  html += '<div class="breakdown" style="margin-top:10px; padding-top:8px; border-top: 1px dashed var(--gold-deep);"><span class="key">Odd object (d100=' + objIdx + '):</span> <span class="value">' + escapeHtml(obj) + '</span></div>';
+  if (!any) html = '<div style="color:var(--ink-faint); font-style:italic; margin-bottom:8px;">All wealth rolls failed their chances&mdash;but they still have something on them.</div>' + html;
+
+  $('#pocket-result').innerHTML = html;
+  $('#pocket-result').style.display = 'block';
+});
+
+$('#pocket-obj-roll').addEventListener('click', () => {
+  const idx = rand(1, 100);
+  const obj = DATA.pocket_objects[idx - 1];
+  $('#pocket-obj-result').innerHTML = '<span class="accent">d100 = ' + idx + '</span> &middot; <strong>' + escapeHtml(obj) + '</strong>';
+  $('#pocket-obj-result').style.display = 'block';
+});
+
+function renderPocketTable() {
+  const tbody = $('#pocket-loot-table tbody');
+  tbody.innerHTML = DATA.pocket_loot.map(r =>
+    '<tr><td><strong>' + escapeHtml(r['class']) + '</strong></td>' +
+    '<td>' + escapeHtml(r.silver) + '</td>' +
+    '<td>' + escapeHtml(r.electrum) + '</td>' +
+    '<td>' + escapeHtml(r.gold) + '</td>' +
+    '<td>' + escapeHtml(r.gems) + '</td>' +
+    '<td>' + escapeHtml(r.jewelry) + '</td>' +
+    '<td>' + escapeHtml(r.magical) + '</td></tr>'
+  ).join('');
+
+  const grid = $('#pocket-obj-grid');
+  grid.innerHTML = DATA.pocket_objects.map((o, i) =>
+    '<div class="lc-row"><span class="num">' + String(i+1).padStart(2, '0') + '</span> ' + escapeHtml(o) + '</div>'
+  ).join('');
+}
+
+// ================== STOREHOUSES ==================
+$('#store-roll').addEventListener('click', () => {
+  const adj = pick(DATA.storehouses_adj);
+  const noun = pick(DATA.storehouses_noun);
+  $('#store-result').innerHTML = '<span class="accent">' + adj.n + '/' + noun.n + '</span> &middot; ' +
+    '<strong>' + escapeHtml(adj.word) + '</strong> ' +
+    '<strong>' + escapeHtml(noun.word) + '</strong>';
+  $('#store-result').style.display = 'block';
+  $('#store-fields').innerHTML =
+    '<div class="madlib-field"><span class="field-label">Adjective (d100=' + adj.n + ')</span><span class="field-value">' + escapeHtml(adj.word) + '</span></div>' +
+    '<div class="madlib-field"><span class="field-label">Noun (d100=' + noun.n + ')</span><span class="field-value">' + escapeHtml(noun.word) + '</span></div>';
+  $('#store-fields').style.display = 'grid';
+});
+
+// ================== MEETING ==================
+$('#meeting-roll').addEventListener('click', () => {
+  const r1 = pick(DATA.meeting); // relation
+  const r2 = pick(DATA.meeting); // location
+  const r3 = pick(DATA.meeting); // circumstance
+  const sentence =
+    'The meeting will take place&hellip; ' +
+    '<span>' + escapeHtml(r1.relation) + '</span> ' +
+    '<span>' + escapeHtml(r2.location) + '</span>, ' +
+    '<span>' + escapeHtml(r3.circumstance) + '</span>.';
+  $('#meeting-result').innerHTML = sentence;
+  $('#meeting-result').style.display = 'block';
+  $('#meeting-fields').innerHTML =
+    '<div class="madlib-field"><span class="field-label">Relation (d100=' + r1.n + ')</span><span class="field-value">' + escapeHtml(r1.relation) + '</span></div>' +
+    '<div class="madlib-field"><span class="field-label">Location (d100=' + r2.n + ')</span><span class="field-value">' + escapeHtml(r2.location) + '</span></div>' +
+    '<div class="madlib-field"><span class="field-label">Circumstance (d100=' + r3.n + ')</span><span class="field-value">' + escapeHtml(r3.circumstance) + '</span></div>';
+  $('#meeting-fields').style.display = 'grid';
+});
+
+// ================== LOCAL COLOUR ==================
+$('#colour-roll').addEventListener('click', () => {
+  const e = pick(DATA.local_colour);
+  $('#colour-result').innerHTML = '<div class="tag-badge">' + e.n + '</div><div class="entry-text">' + escapeHtml(e.text) + '</div>';
+  $('#colour-result').style.display = 'block';
+});
+function renderColourList() {
+  const root = $('#colour-list');
+  root.innerHTML = DATA.local_colour.map(e =>
+    '<div class="lc-row"><span class="num">' + e.n + '.</span> ' + escapeHtml(e.text) + '</div>'
+  ).join('');
+}
+
+// ================== ENCOUNTER PURPOSE ==================
+$('#purpose-roll').addEventListener('click', () => {
+  const d = rand(1, 10);
+  const row = DATA.encounter_purpose.rows.find(r => r[0] === d);
+  let band, verb;
+  if (d <= 4) { band = 'Confrontation'; verb = row[1]; }
+  else if (d <= 7) { band = 'Proposition'; verb = row[2]; }
+  else { band = 'Subterfuge'; verb = row[3]; }
+  $('#purpose-result').innerHTML =
+    '<span class="accent">d10 = ' + d + ' &middot; ' + band + '</span><br>' +
+    'NPC <strong>' + escapeHtml(verb) + '</strong> the party';
+  $('#purpose-result').style.display = 'block';
+});
+
+function renderPurposeTable() {
+  const tbody = $('#purpose-table tbody');
+  tbody.innerHTML = DATA.encounter_purpose.rows.map(r =>
+    '<tr><td class="num">' + r[0] + '</td><td>' + escapeHtml(r[1]) + '</td><td>' + escapeHtml(r[2]) + '</td><td>' + escapeHtml(r[3]) + '</td></tr>'
+  ).join('');
+}
+
+// ================== BROWSE / SEARCH ==================
+function renderBrowseGrid() {
+  const grid = $('#browse-grid');
+  grid.innerHTML = DATA.nocturnal_main.map(e =>
+    '<div class="browse-tag" data-tag="' + e.tag + '">' + e.tag + '</div>'
+  ).join('');
+  $$('.browse-tag', grid).forEach(el => {
+    el.addEventListener('click', () => {
+      const tag = parseInt(el.dataset.tag, 10);
+      // Switch to nocturnal panel and show
+      $$('#tabs .tab').forEach(b => b.classList.toggle('active', b.dataset.panel === 'nocturnal'));
+      $$('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-nocturnal'));
+      showNocturnal(tag);
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    });
+  });
+}
+
+const searchInput = $('#search-input');
+const searchResults = $('#search-results');
+let searchTimer = null;
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(doSearch, 120);
+});
+
+function doSearch() {
+  const q = searchInput.value.trim().toLowerCase();
+  if (q.length < 2) {
+    searchResults.style.display = 'none';
+    return;
+  }
+  const matches = DATA.nocturnal_main.filter(e => {
+    return e.text.toLowerCase().includes(q) || (e.stats || []).some(s => s.toLowerCase().includes(q));
+  }).slice(0, 50);
+  if (!matches.length) {
+    searchResults.innerHTML = '<div class="search-result" style="color:var(--ink-faint); font-style:italic;">No matches.</div>';
+  } else {
+    searchResults.innerHTML = matches.map(e =>
+      '<div class="search-result" data-tag="' + e.tag + '"><span class="tag">' + e.tag + '</span>' +
+      escapeHtml(e.text.slice(0, 140)) + (e.text.length > 140 ? '&hellip;' : '') + '</div>'
+    ).join('');
+    $$('.search-result', searchResults).forEach(el => {
+      if (!el.dataset.tag) return;
+      el.addEventListener('click', () => {
+        const tag = parseInt(el.dataset.tag, 10);
+        $$('#tabs .tab').forEach(b => b.classList.toggle('active', b.dataset.panel === 'nocturnal'));
+        $$('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-nocturnal'));
+        showNocturnal(tag);
+        window.scrollTo({top: 0, behavior: 'smooth'});
+      });
+    });
+  }
+  searchResults.style.display = 'block';
+}
+
+$('#search-clear').addEventListener('click', () => {
+  searchInput.value = '';
+  searchResults.style.display = 'none';
+});
+
+// ================== INIT ==================
+renderEncounterTypeTable();
+renderNpcLevelTable();
+renderCityTables();
+renderPocketTable();
+renderColourList();
+renderPurposeTable();
+renderBrowseGrid();
+</script>
+</body>
+</html>
